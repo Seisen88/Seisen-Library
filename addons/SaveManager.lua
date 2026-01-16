@@ -1,62 +1,16 @@
 --[[
-    Seisen UI - SaveManager
-    Handles saving/loading UI configurations
+    Seisen UI - SaveManager (Obsidian-style)
+    Full config save/load with autoload support
 ]]
 
 local HttpService = game:GetService("HttpService")
 
 local SaveManager = {}
 SaveManager.Folder = "SeisenConfigs"
+SaveManager.SubFolder = nil
 SaveManager.Library = nil
 SaveManager.Ignore = {}
 
--- File system functions (executor-specific)
-local function EnsureFolder(path)
-    if isfolder and makefolder then
-        if not isfolder(path) then
-            makefolder(path)
-        end
-    end
-end
-
-local function FileExists(path)
-    if isfile then
-        return isfile(path)
-    end
-    return false
-end
-
-local function ReadFile(path)
-    if readfile then
-        return readfile(path)
-    end
-    return nil
-end
-
-local function WriteFile(path, content)
-    if writefile then
-        writefile(path, content)
-        return true
-    end
-    return false
-end
-
-local function ListFiles(path)
-    if listfiles then
-        return listfiles(path)
-    end
-    return {}
-end
-
-local function DeleteFile(path)
-    if delfile then
-        delfile(path)
-        return true
-    end
-    return false
-end
-
--- Parser for different element types
 SaveManager.Parser = {
     Toggle = {
         Save = function(idx, object)
@@ -98,16 +52,6 @@ SaveManager.Parser = {
             end
         end
     },
-    Keybind = {
-        Save = function(idx, object)
-            return { type = "Keybind", idx = idx, value = object.Value }
-        end,
-        Load = function(idx, data)
-            if SaveManager.Library.Options[idx] then
-                SaveManager.Library.Options[idx]:SetValue(data.value)
-            end
-        end
-    },
     ColorPicker = {
         Save = function(idx, object)
             return { type = "ColorPicker", idx = idx, value = object.Value:ToHex() }
@@ -115,6 +59,16 @@ SaveManager.Parser = {
         Load = function(idx, data)
             if SaveManager.Library.Options[idx] then
                 SaveManager.Library.Options[idx]:SetValue(Color3.fromHex(data.value))
+            end
+        end
+    },
+    Keybind = {
+        Save = function(idx, object)
+            return { type = "Keybind", idx = idx, value = object.Value.Name }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Library.Options[idx] and Enum.KeyCode[data.value] then
+                SaveManager.Library.Options[idx]:SetValue(Enum.KeyCode[data.value])
             end
         end
     }
@@ -127,84 +81,90 @@ end
 
 function SaveManager:SetFolder(folder)
     self.Folder = folder
-    EnsureFolder(folder)
+    self:BuildFolderTree()
 end
 
-function SaveManager:SetSubFolder(subfolder)
-    self.SubFolder = subfolder
-    EnsureFolder(self.Folder .. "/" .. subfolder)
+function SaveManager:SetSubFolder(folder)
+    self.SubFolder = folder
+    self:BuildFolderTree()
 end
 
 function SaveManager:SetIgnoreIndexes(list)
-    for _, v in ipairs(list) do
-        self.Ignore[v] = true
+    for _, key in pairs(list) do
+        self.Ignore[key] = true
     end
 end
 
-function SaveManager:GetConfigPath()
-    local path = self.Folder
-    if self.SubFolder and self.SubFolder ~= "" then
-        path = path .. "/" .. self.SubFolder
-    end
-    return path
+function SaveManager:IgnoreThemeSettings()
+    self:SetIgnoreIndexes({
+        "BackgroundColor", "MainColor", "AccentColor", "OutlineColor", "FontColor", "FontFace",
+        "ThemeManager_ThemeList", "ThemeManager_CustomThemeList", "ThemeManager_CustomThemeName",
+    })
 end
 
+-- Folder management
+function SaveManager:BuildFolderTree()
+    if not isfolder or not makefolder then return end
+    
+    local paths = {self.Folder, self.Folder .. "/settings", self.Folder .. "/themes"}
+    if self.SubFolder then
+        table.insert(paths, self.Folder .. "/settings/" .. self.SubFolder)
+    end
+    
+    for _, path in ipairs(paths) do
+        if not isfolder(path) then
+            makefolder(path)
+        end
+    end
+end
+
+function SaveManager:GetSettingsPath()
+    if self.SubFolder then
+        return self.Folder .. "/settings/" .. self.SubFolder
+    end
+    return self.Folder .. "/settings"
+end
+
+-- Save/Load/Delete
 function SaveManager:Save(name)
-    if not self.Library then return false, "Library not set" end
+    if not name or name == "" then return false, "No config name" end
     
-    local data = { toggles = {}, options = {} }
+    self:BuildFolderTree()
+    local path = self:GetSettingsPath() .. "/" .. name .. ".json"
     
-    -- Save toggles
+    local data = { objects = {} }
+    
     for idx, toggle in pairs(self.Library.Toggles or {}) do
-        if not self.Ignore[idx] then
-            table.insert(data.toggles, self.Parser.Toggle.Save(idx, toggle))
+        if not self.Ignore[idx] and toggle.Value ~= nil then
+            table.insert(data.objects, self.Parser.Toggle.Save(idx, toggle))
         end
     end
     
-    -- Save options (sliders, dropdowns, inputs, etc.)
     for idx, option in pairs(self.Library.Options or {}) do
-        if not self.Ignore[idx] and option.Type then
-            local parser = self.Parser[option.Type]
-            if parser then
-                table.insert(data.options, parser.Save(idx, option))
-            end
+        if not self.Ignore[idx] and option.Type and self.Parser[option.Type] then
+            table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
         end
     end
     
-    local path = self:GetConfigPath() .. "/" .. name .. ".json"
-    local json = HttpService:JSONEncode(data)
+    local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
+    if not success then return false, "Encode error" end
     
-    EnsureFolder(self:GetConfigPath())
-    return WriteFile(path, json)
+    writefile(path, encoded)
+    return true
 end
 
 function SaveManager:Load(name)
-    if not self.Library then return false, "Library not set" end
+    if not name or name == "" then return false, "No config name" end
     
-    local path = self:GetConfigPath() .. "/" .. name .. ".json"
+    local path = self:GetSettingsPath() .. "/" .. name .. ".json"
+    if not isfile(path) then return false, "File not found" end
     
-    if not FileExists(path) then
-        return false, "Config not found"
-    end
+    local success, decoded = pcall(HttpService.JSONDecode, HttpService, readfile(path))
+    if not success then return false, "Decode error" end
     
-    local success, data = pcall(function()
-        return HttpService:JSONDecode(ReadFile(path))
-    end)
-    
-    if not success then
-        return false, "Failed to parse config"
-    end
-    
-    -- Load toggles
-    for _, toggleData in ipairs(data.toggles or {}) do
-        self.Parser.Toggle.Load(toggleData.idx, toggleData)
-    end
-    
-    -- Load options
-    for _, optionData in ipairs(data.options or {}) do
-        local parser = self.Parser[optionData.type]
-        if parser then
-            parser.Load(optionData.idx, optionData)
+    for _, obj in pairs(decoded.objects or {}) do
+        if obj.type and self.Parser[obj.type] and not self.Ignore[obj.idx] then
+            task.spawn(self.Parser[obj.type].Load, obj.idx, obj)
         end
     end
     
@@ -212,21 +172,22 @@ function SaveManager:Load(name)
 end
 
 function SaveManager:Delete(name)
-    local path = self:GetConfigPath() .. "/" .. name .. ".json"
-    return DeleteFile(path)
+    if not name then return false end
+    local path = self:GetSettingsPath() .. "/" .. name .. ".json"
+    if isfile(path) then delfile(path) end
+    return true
 end
 
 function SaveManager:GetConfigs()
+    self:BuildFolderTree()
     local configs = {}
-    local path = self:GetConfigPath()
+    local path = self:GetSettingsPath()
     
-    EnsureFolder(path)
-    
-    for _, file in ipairs(ListFiles(path)) do
-        if file:match("%.json$") then
-            local name = file:match("([^/\\]+)%.json$")
-            if name then
-                table.insert(configs, name)
+    if listfiles then
+        for _, file in ipairs(listfiles(path)) do
+            if file:sub(-5) == ".json" then
+                local name = file:match("([^/\\]+)%.json$")
+                if name then table.insert(configs, name) end
             end
         end
     end
@@ -234,6 +195,38 @@ function SaveManager:GetConfigs()
     return configs
 end
 
+-- Autoload
+function SaveManager:GetAutoloadConfig()
+    local path = self:GetSettingsPath() .. "/autoload.txt"
+    if isfile and isfile(path) then
+        return readfile(path)
+    end
+    return nil
+end
+
+function SaveManager:SetAutoloadConfig(name)
+    self:BuildFolderTree()
+    local path = self:GetSettingsPath() .. "/autoload.txt"
+    if name then
+        writefile(path, name)
+    elseif isfile(path) then
+        delfile(path)
+    end
+end
+
+function SaveManager:LoadAutoloadConfig()
+    local name = self:GetAutoloadConfig()
+    if name and name ~= "" then
+        local success, err = self:Load(name)
+        if success then
+            print("[SaveManager] Auto-loaded config:", name)
+        end
+        return success
+    end
+    return false
+end
+
+-- Build UI
 function SaveManager:BuildConfigSection(tab)
     if not tab then return end
     
@@ -242,33 +235,38 @@ function SaveManager:BuildConfigSection(tab)
         Side = "Right"
     })
     
-    local configList = self:GetConfigs()
-    local selectedConfig = configList[1] or ""
+    local configs = self:GetConfigs()
+    local selectedConfig = configs[1] or ""
+    local autoloadConfig = self:GetAutoloadConfig() or ""
     
     section:AddDropdown({
         Name = "Config",
-        Options = configList,
-        Default = selectedConfig,
-        Callback = function(value)
-            selectedConfig = value
+        Options = #configs > 0 and configs or {"none"},
+        Default = selectedConfig ~= "" and selectedConfig or "none",
+        Flag = "SaveManager_ConfigList",
+        Callback = function(val)
+            selectedConfig = val
         end
     })
     
     section:AddTextbox({
         Name = "Config Name",
         Default = "",
-        Placeholder = "Enter name...",
-        Callback = function(value)
-            selectedConfig = value
+        Placeholder = "Enter config name...",
+        Flag = "SaveManager_ConfigName",
+        Callback = function(val)
+            selectedConfig = val
         end
     })
     
     section:AddButton({
-        Name = "Save Config",
+        Name = "Create Config",
         Callback = function()
-            if selectedConfig and selectedConfig ~= "" then
-                self:Save(selectedConfig)
-                print("[SaveManager] Saved config:", selectedConfig)
+            if selectedConfig and selectedConfig ~= "" and selectedConfig ~= "none" then
+                local success = self:Save(selectedConfig)
+                if success then
+                    print("[SaveManager] Created config:", selectedConfig)
+                end
             end
         end
     })
@@ -276,7 +274,7 @@ function SaveManager:BuildConfigSection(tab)
     section:AddButton({
         Name = "Load Config",
         Callback = function()
-            if selectedConfig and selectedConfig ~= "" then
+            if selectedConfig and selectedConfig ~= "" and selectedConfig ~= "none" then
                 self:Load(selectedConfig)
                 print("[SaveManager] Loaded config:", selectedConfig)
             end
@@ -284,20 +282,42 @@ function SaveManager:BuildConfigSection(tab)
     })
     
     section:AddButton({
-        Name = "Delete Config",
+        Name = "Overwrite Config",
         Callback = function()
-            if selectedConfig and selectedConfig ~= "" then
-                self:Delete(selectedConfig)
-                print("[SaveManager] Deleted config:", selectedConfig)
+            if selectedConfig and selectedConfig ~= "" and selectedConfig ~= "none" then
+                self:Save(selectedConfig)
+                print("[SaveManager] Saved config:", selectedConfig)
+            end
+        end
+    })
+    
+    section:AddDivider()
+    
+    section:AddButton({
+        Name = "Set as Autoload",
+        Callback = function()
+            if selectedConfig and selectedConfig ~= "" and selectedConfig ~= "none" then
+                self:SetAutoloadConfig(selectedConfig)
+                print("[SaveManager] Set autoload:", selectedConfig)
             end
         end
     })
     
     section:AddButton({
+        Name = "Clear Autoload",
+        Callback = function()
+            self:SetAutoloadConfig(nil)
+            print("[SaveManager] Cleared autoload")
+        end
+    })
+    
+    section:AddDivider()
+    
+    section:AddButton({
         Name = "Refresh List",
         Callback = function()
-            -- Refresh would need dropdown update API
-            print("[SaveManager] Configs:", table.concat(self:GetConfigs(), ", "))
+            local newConfigs = self:GetConfigs()
+            print("[SaveManager] Configs:", table.concat(newConfigs, ", "))
         end
     })
 end

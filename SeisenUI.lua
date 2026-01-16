@@ -81,7 +81,7 @@ function Library:CreateWindow(options)
     local gui = Create("ScreenGui", {
         Name = "SeisenUI",
         Parent = RunService:IsStudio() and LocalPlayer.PlayerGui or game.CoreGui,
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ZIndexBehavior = Enum.ZIndexBehavior.Global,
         ResetOnSpawn = false
     })
     
@@ -625,17 +625,19 @@ function Library:CreateWindow(options)
                     Parent = selectBtn
                 })
                 
+                -- Create dropdown list at GUI level for proper z-ordering
                 local list = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 1, 2),
+                    Name = "DropdownList",
+                    Size = UDim2.new(0, 0, 0, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
                     BackgroundColor3 = theme.Element,
                     Visible = false,
-                    ZIndex = 100,
+                    ZIndex = 1000,
                     ClipsDescendants = true,
-                    Parent = selectBtn
+                    Parent = gui
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1, ZIndex = 100}),
+                    Create("UIStroke", {Color = theme.Border, Thickness = 1, ZIndex = 1000}),
                     Create("UIListLayout", {Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder})
                 })
                 
@@ -650,13 +652,24 @@ function Library:CreateWindow(options)
                 }
                 
                 local open = false
+                
+                local function updateListPosition()
+                    local absPos = selectBtn.AbsolutePosition
+                    local absSize = selectBtn.AbsoluteSize
+                    list.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                    list.Size = UDim2.new(0, absSize.X, 0, math.min(#options * 22, 110))
+                end
+                
                 selectBtn.MouseButton1Click:Connect(function()
                     open = not open
-                    list.Visible = open
                     if open then
-                        Tween(list, {Size = UDim2.new(1, 0, 0, math.min(#options * 22, 110))})
+                        updateListPosition()
+                        list.Visible = true
+                        list.Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)
+                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, math.min(#options * 22, 110))})
                     else
-                        Tween(list, {Size = UDim2.new(1, 0, 0, 0)})
+                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
+                        task.delay(0.15, function() if not open then list.Visible = false end end)
                     end
                 end)
                 
@@ -664,23 +677,28 @@ function Library:CreateWindow(options)
                     local optBtn = Create("TextButton", {
                         Size = UDim2.new(1, 0, 0, 21),
                         BackgroundColor3 = theme.Element,
-                        BackgroundTransparency = 1,
+                        BackgroundTransparency = 0,
                         Text = opt,
                         TextColor3 = theme.TextDim,
                         Font = Enum.Font.Gotham,
                         TextSize = 11,
-                        ZIndex = 101,
+                        ZIndex = 1001,
                         Parent = list
                     })
                     
-                    optBtn.MouseEnter:Connect(function() optBtn.TextColor3 = theme.Accent end)
-                    optBtn.MouseLeave:Connect(function() optBtn.TextColor3 = theme.TextDim end)
+                    optBtn.MouseEnter:Connect(function() 
+                        optBtn.TextColor3 = theme.Accent 
+                        optBtn.BackgroundColor3 = theme.ElementHover
+                    end)
+                    optBtn.MouseLeave:Connect(function() 
+                        optBtn.TextColor3 = theme.TextDim 
+                        optBtn.BackgroundColor3 = theme.Element
+                    end)
                     optBtn.MouseButton1Click:Connect(function()
                         dropObj:SetValue(opt)
                         open = false
-                        Tween(list, {Size = UDim2.new(1, 0, 0, 0)})
-                        task.wait(0.15)
-                        list.Visible = false
+                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
+                        task.delay(0.15, function() list.Visible = false end)
                     end)
                 end
                 
@@ -1031,6 +1049,229 @@ function Library:CreateWindow(options)
                         Parent = divider
                     })
                 end
+            end
+            
+            -- Tabbox (sub-tabs within a section)
+            function SectionFuncs:AddTabbox(tabboxOptions)
+                local tabboxName = tabboxOptions.Name or "Tabbox"
+                
+                local tabbox = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 120),
+                    BackgroundColor3 = theme.Element,
+                    BorderSizePixel = 0,
+                    Parent = container
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 6)})
+                })
+                
+                local tabHeader = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 26),
+                    BackgroundTransparency = 1,
+                    Parent = tabbox
+                }, {
+                    Create("UIListLayout", {
+                        FillDirection = Enum.FillDirection.Horizontal,
+                        Padding = UDim.new(0, 2),
+                        SortOrder = Enum.SortOrder.LayoutOrder
+                    })
+                })
+                
+                local tabContent = Create("Frame", {
+                    Size = UDim2.new(1, -10, 1, -32),
+                    Position = UDim2.new(0, 5, 0, 28),
+                    BackgroundTransparency = 1,
+                    Parent = tabbox
+                })
+                
+                local TabboxFuncs = {}
+                local tabs = {}
+                local activeTab = nil
+                
+                function TabboxFuncs:AddTab(name)
+                    local tabBtn = Create("TextButton", {
+                        Size = UDim2.new(0, 60, 1, -4),
+                        BackgroundColor3 = theme.ToggleOff,
+                        BackgroundTransparency = 0.5,
+                        Text = name,
+                        TextColor3 = theme.TextDim,
+                        Font = Enum.Font.Gotham,
+                        TextSize = 11,
+                        AutoButtonColor = false,
+                        Parent = tabHeader
+                    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+                    
+                    local tabPage = Create("ScrollingFrame", {
+                        Size = UDim2.new(1, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        ScrollBarThickness = 2,
+                        Visible = false,
+                        Parent = tabContent
+                    }, {
+                        Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder})
+                    })
+                    
+                    table.insert(tabs, {btn = tabBtn, page = tabPage})
+                    
+                    tabBtn.MouseButton1Click:Connect(function()
+                        for _, t in ipairs(tabs) do
+                            t.page.Visible = false
+                            t.btn.BackgroundTransparency = 0.5
+                            t.btn.TextColor3 = theme.TextDim
+                        end
+                        tabPage.Visible = true
+                        tabBtn.BackgroundTransparency = 0
+                        tabBtn.TextColor3 = theme.Text
+                        tabBtn.BackgroundColor3 = theme.Accent
+                        activeTab = tabPage
+                    end)
+                    
+                    if #tabs == 1 then
+                        tabBtn.BackgroundTransparency = 0
+                        tabBtn.TextColor3 = theme.Text
+                        tabBtn.BackgroundColor3 = theme.Accent
+                        tabPage.Visible = true
+                        activeTab = tabPage
+                    end
+                    
+                    -- Return tab-specific section funcs
+                    local TabPageFuncs = {}
+                    setmetatable(TabPageFuncs, {__index = function(_, key)
+                        if SectionFuncs[key] then
+                            return function(self, opts)
+                                local originalParent = container
+                                container = tabPage
+                                local result = SectionFuncs[key](self, opts)
+                                container = originalParent
+                                return result
+                            end
+                        end
+                    end})
+                    
+                    return TabPageFuncs
+                end
+                
+                return TabboxFuncs
+            end
+            
+            -- Dependency (show/hide based on toggle)
+            function SectionFuncs:AddDependencyBox(dependencyOptions)
+                local dependsOn = dependencyOptions.DependsOn -- Flag name
+                
+                local depBox = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                    ClipsDescendants = true,
+                    Parent = container
+                }, {
+                    Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder})
+                })
+                
+                local innerContainer = container
+                container = depBox
+                
+                local DepFuncs = {}
+                setmetatable(DepFuncs, {__index = SectionFuncs})
+                
+                -- Update visibility based on toggle
+                local function updateVisibility()
+                    local toggle = Library.Toggles[dependsOn]
+                    if toggle then
+                        local visible = toggle.Value
+                        local layout = depBox:FindFirstChildOfClass("UIListLayout")
+                        local height = visible and layout.AbsoluteContentSize.Y or 0
+                        Tween(depBox, {Size = UDim2.new(1, 0, 0, height)})
+                    end
+                end
+                
+                -- Connect to toggle changes (delayed to allow toggle to be created)
+                task.defer(function()
+                    if Library.Toggles[dependsOn] then
+                        local originalSet = Library.Toggles[dependsOn].SetValue
+                        Library.Toggles[dependsOn].SetValue = function(self, val)
+                            originalSet(self, val)
+                            updateVisibility()
+                        end
+                        updateVisibility()
+                    end
+                end)
+                
+                container = innerContainer
+                return DepFuncs
+            end
+            
+            -- Image
+            function SectionFuncs:AddImage(imageOptions)
+                local imagePath = imageOptions.Image or ""
+                local height = imageOptions.Height or 100
+                
+                local imgFrame = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, height),
+                    BackgroundTransparency = 1,
+                    Parent = container
+                })
+                
+                Create("ImageLabel", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    Image = imagePath,
+                    ScaleType = Enum.ScaleType.Fit,
+                    Parent = imgFrame
+                })
+                
+                return {
+                    SetImage = function(self, newImage)
+                        imgFrame:FindFirstChildOfClass("ImageLabel").Image = newImage
+                    end
+                }
+            end
+            
+            -- Video (simple implementation using viewport)
+            function SectionFuncs:AddViewport(viewportOptions)
+                local height = viewportOptions.Height or 100
+                
+                local vpFrame = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, height),
+                    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+                    Parent = container
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 6)})
+                })
+                
+                local viewport = Create("ViewportFrame", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    Parent = vpFrame
+                })
+                
+                return {
+                    Viewport = viewport,
+                    SetModel = function(self, model)
+                        for _, c in pairs(viewport:GetChildren()) do c:Destroy() end
+                        if model then
+                            local clone = model:Clone()
+                            clone.Parent = viewport
+                        end
+                    end
+                }
+            end
+            
+            -- UI Passthrough (embed custom UI)
+            function SectionFuncs:AddPassthrough(passthroughOptions)
+                local element = passthroughOptions.Element
+                local height = passthroughOptions.Height or 50
+                
+                local passFrame = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, height),
+                    BackgroundTransparency = 1,
+                    Parent = container
+                })
+                
+                if element then
+                    element.Parent = passFrame
+                    element.Size = UDim2.new(1, 0, 1, 0)
+                end
+                
+                return passFrame
             end
             
             return SectionFuncs
