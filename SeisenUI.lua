@@ -723,6 +723,9 @@ function Library:CreateWindow(options)
                 selectBtn.MouseButton1Click:Connect(function()
                     open = not open
                     if open then
+                        -- Close other dropdowns first
+                        Library:CloseAllDropdowns()
+                        open = true -- Reset since CloseAllDropdowns closes this too
                         updateListPosition()
                         list.Visible = true
                         list.Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)
@@ -733,29 +736,53 @@ function Library:CreateWindow(options)
                     end
                 end)
                 
+                local optionButtons = {}
+                
+                local function updateOptionHighlights()
+                    for _, data in ipairs(optionButtons) do
+                        if data.value == dropObj.Value then
+                            -- Selected option
+                            data.btn.BackgroundColor3 = theme.Accent
+                            data.btn.TextColor3 = theme.Text
+                        else
+                            -- Not selected
+                            data.btn.BackgroundColor3 = theme.Element
+                            data.btn.TextColor3 = theme.TextDim
+                        end
+                    end
+                end
+                
                 for _, opt in ipairs(options) do
+                    local isSelected = (opt == default)
                     local optBtn = Create("TextButton", {
                         Size = UDim2.new(1, 0, 0, 21),
-                        BackgroundColor3 = theme.Element,
+                        BackgroundColor3 = isSelected and theme.Accent or theme.Element,
                         BackgroundTransparency = 0,
                         Text = opt,
-                        TextColor3 = theme.TextDim,
+                        TextColor3 = isSelected and theme.Text or theme.TextDim,
                         Font = Enum.Font.Gotham,
                         TextSize = 11,
                         ZIndex = 1001,
                         Parent = list
                     })
                     
-                    optBtn.MouseEnter:Connect(function() 
-                        optBtn.TextColor3 = theme.Accent 
-                        optBtn.BackgroundColor3 = theme.ElementHover
+                    table.insert(optionButtons, {btn = optBtn, value = opt})
+                    
+                    optBtn.MouseEnter:Connect(function()
+                        if opt ~= dropObj.Value then
+                            optBtn.BackgroundColor3 = theme.ElementHover
+                        end
                     end)
-                    optBtn.MouseLeave:Connect(function() 
-                        optBtn.TextColor3 = theme.TextDim 
-                        optBtn.BackgroundColor3 = theme.Element
+                    optBtn.MouseLeave:Connect(function()
+                        if opt == dropObj.Value then
+                            optBtn.BackgroundColor3 = theme.Accent
+                        else
+                            optBtn.BackgroundColor3 = theme.Element
+                        end
                     end)
                     optBtn.MouseButton1Click:Connect(function()
                         dropObj:SetValue(opt)
+                        updateOptionHighlights()
                         open = false
                         Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
                         task.delay(0.15, function() list.Visible = false end)
