@@ -312,8 +312,19 @@ function Library:CreateWindow(options)
         rightCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         
         -- Close dropdowns when scrolling
-        page:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-            Library:CloseAllDropdowns()
+        page.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseWheel then
+                Library:CloseAllDropdowns()
+            end
+        end)
+        
+        -- Also close on scroll position change
+        local lastScrollPos = 0
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if page.CanvasPosition.Y ~= lastScrollPos then
+                lastScrollPos = page.CanvasPosition.Y
+                Library:CloseAllDropdowns()
+            end
         end)
         
         -- Activation
