@@ -1,11 +1,11 @@
 --[[
-    ThemeManager - Adapted from Obsidian
-    https://github.com/deividcomsono/Obsidian/blob/main/addons/ThemeManager.lua
+    ThemeManager - Seisen UI
+    All built-in themes only, no custom themes
 ]]
 
 local cloneref = (cloneref or clonereference or function(instance) return instance end)
 local HttpService = cloneref(game:GetService("HttpService"))
-local isfolder, isfile, listfiles = isfolder, isfile, listfiles
+local isfolder, isfile = isfolder, isfile
 
 local ThemeManager = {} do
     ThemeManager.Folder = "SeisenSettings"
@@ -13,55 +13,55 @@ local ThemeManager = {} do
     ThemeManager.BuiltInThemes = {
         ["Default"] = {
             1,
-            { FontColor = "ffffff", MainColor = "191919", AccentColor = "5a5aa0", BackgroundColor = "0f0f0f", OutlineColor = "282828" },
+            { FontColor = "ffffff", MainColor = "232328", AccentColor = "5a5aa0", BackgroundColor = "1e1e23", OutlineColor = "373745" },
+        },
+        ["Mint"] = {
+            2,
+            { FontColor = "ffffff", MainColor = "242424", AccentColor = "3db488", BackgroundColor = "1c1c1c", OutlineColor = "373737" },
+        },
+        ["Rose"] = {
+            3,
+            { FontColor = "ffffff", MainColor = "242424", AccentColor = "db4467", BackgroundColor = "1c1c1c", OutlineColor = "373737" },
+        },
+        ["Ocean"] = {
+            4,
+            { FontColor = "ffffff", MainColor = "1b2b34", AccentColor = "6699cc", BackgroundColor = "16232a", OutlineColor = "343d46" },
+        },
+        ["Sunset"] = {
+            5,
+            { FontColor = "ffffff", MainColor = "2d1f3d", AccentColor = "ff6b6b", BackgroundColor = "1a1225", OutlineColor = "4a3560" },
+        },
+        ["Forest"] = {
+            6,
+            { FontColor = "e0e0e0", MainColor = "1e2a1e", AccentColor = "4caf50", BackgroundColor = "141a14", OutlineColor = "2d3e2d" },
         },
         ["BBot"] = {
-            2,
+            7,
             { FontColor = "ffffff", MainColor = "1e1e1e", AccentColor = "7e48a3", BackgroundColor = "232323", OutlineColor = "141414" },
         },
         ["Fatality"] = {
-            3,
+            8,
             { FontColor = "ffffff", MainColor = "1e1842", AccentColor = "c50754", BackgroundColor = "191335", OutlineColor = "3c355d" },
         },
-        ["Jester"] = {
-            4,
-            { FontColor = "ffffff", MainColor = "242424", AccentColor = "db4467", BackgroundColor = "1c1c1c", OutlineColor = "373737" },
-        },
-        ["Mint"] = {
-            5,
-            { FontColor = "ffffff", MainColor = "242424", AccentColor = "3db488", BackgroundColor = "1c1c1c", OutlineColor = "373737" },
-        },
         ["Tokyo Night"] = {
-            6,
+            9,
             { FontColor = "ffffff", MainColor = "191925", AccentColor = "6759b3", BackgroundColor = "16161f", OutlineColor = "323232" },
         },
-        ["Ubuntu"] = {
-            7,
-            { FontColor = "ffffff", MainColor = "3e3e3e", AccentColor = "e2581e", BackgroundColor = "323232", OutlineColor = "191919" },
-        },
-        ["Quartz"] = {
-            8,
-            { FontColor = "ffffff", MainColor = "232330", AccentColor = "426e87", BackgroundColor = "1d1b26", OutlineColor = "27232f" },
-        },
         ["Nord"] = {
-            9,
+            10,
             { FontColor = "eceff4", MainColor = "3b4252", AccentColor = "88c0d0", BackgroundColor = "2e3440", OutlineColor = "4c566a" },
         },
         ["Dracula"] = {
-            10,
+            11,
             { FontColor = "f8f8f2", MainColor = "44475a", AccentColor = "ff79c6", BackgroundColor = "282a36", OutlineColor = "6272a4" },
         },
         ["Monokai"] = {
-            11,
+            12,
             { FontColor = "f8f8f2", MainColor = "272822", AccentColor = "f92672", BackgroundColor = "1e1f1c", OutlineColor = "49483e" },
         },
         ["Gruvbox"] = {
-            12,
-            { FontColor = "ebdbb2", MainColor = "3c3836", AccentColor = "fb4934", BackgroundColor = "282828", OutlineColor = "504945" },
-        },
-        ["Solarized"] = {
             13,
-            { FontColor = "839496", MainColor = "073642", AccentColor = "cb4b16", BackgroundColor = "002b36", OutlineColor = "586e75" },
+            { FontColor = "ebdbb2", MainColor = "3c3836", AccentColor = "fb4934", BackgroundColor = "282828", OutlineColor = "504945" },
         },
         ["Catppuccin"] = {
             14,
@@ -75,14 +75,38 @@ local ThemeManager = {} do
             16,
             { FontColor = "f9f9f9", MainColor = "262335", AccentColor = "00ff9f", BackgroundColor = "1a1a2e", OutlineColor = "413c5e" },
         },
-        ["Oceanic Next"] = {
-            17,
-            { FontColor = "d8dee9", MainColor = "1b2b34", AccentColor = "6699cc", BackgroundColor = "16232a", OutlineColor = "343d46" },
-        },
         ["Material"] = {
-            18,
+            17,
             { FontColor = "eeffff", MainColor = "212121", AccentColor = "82aaff", BackgroundColor = "151515", OutlineColor = "424242" },
-        }
+        },
+        ["Solarized"] = {
+            18,
+            { FontColor = "839496", MainColor = "073642", AccentColor = "cb4b16", BackgroundColor = "002b36", OutlineColor = "586e75" },
+        },
+        ["Ubuntu"] = {
+            19,
+            { FontColor = "ffffff", MainColor = "3e3e3e", AccentColor = "e2581e", BackgroundColor = "323232", OutlineColor = "191919" },
+        },
+        ["Midnight"] = {
+            20,
+            { FontColor = "ffffff", MainColor = "0d1117", AccentColor = "58a6ff", BackgroundColor = "010409", OutlineColor = "21262d" },
+        },
+        ["Blood"] = {
+            21,
+            { FontColor = "ffffff", MainColor = "1a0a0a", AccentColor = "8b0000", BackgroundColor = "0d0505", OutlineColor = "2d1515" },
+        },
+        ["Lavender"] = {
+            22,
+            { FontColor = "ffffff", MainColor = "2a2640", AccentColor = "b19cd9", BackgroundColor = "1e1a30", OutlineColor = "3d3660" },
+        },
+        ["Aqua"] = {
+            23,
+            { FontColor = "ffffff", MainColor = "1a2d3d", AccentColor = "00bcd4", BackgroundColor = "0f1a24", OutlineColor = "264050" },
+        },
+        ["Golden"] = {
+            24,
+            { FontColor = "ffffff", MainColor = "1f1a0f", AccentColor = "ffc107", BackgroundColor = "141008", OutlineColor = "3d3520" },
+        },
     }
 
     function ThemeManager:SetLibrary(library)
@@ -140,55 +164,13 @@ local ThemeManager = {} do
 
     function ThemeManager:LoadDefault()
         local path = self.Folder .. "/themes/default.txt"
-        if isfile(path) then
+        if isfile and isfile(path) then
             local success, content = pcall(readfile, path)
             if success and self.BuiltInThemes[content] then
                 return content
             end
         end
         return "Default"
-    end
-
-    function ThemeManager:GetCustomTheme(name)
-        local path = self.Folder .. "/themes/" .. name .. ".json"
-        if not isfile(path) then return nil end
-        local success, decoded = pcall(function()
-            return HttpService:JSONDecode(readfile(path))
-        end)
-        return success and decoded or nil
-    end
-
-    function ThemeManager:SaveCustomTheme(name)
-        if not name or name:gsub(" ", "") == "" then return end
-        local theme = {}
-        theme.FontColor = self.Library.Theme.Text:ToHex()
-        theme.MainColor = self.Library.Theme.Content:ToHex()
-        theme.AccentColor = self.Library.Theme.Accent:ToHex()
-        theme.BackgroundColor = self.Library.Theme.Background:ToHex()
-        theme.OutlineColor = self.Library.Theme.Border:ToHex()
-        self:BuildFolderTree()
-        writefile(self.Folder .. "/themes/" .. name .. ".json", HttpService:JSONEncode(theme))
-    end
-
-    function ThemeManager:ReloadCustomThemes()
-        local list = {}
-        local success, files = pcall(listfiles, self.Folder .. "/themes")
-        if not success then return {} end
-        for _, file in ipairs(files) do
-            if file:sub(-5) == ".json" then
-                local name = file:match("([^/\\]+)%.json$")
-                if name then table.insert(list, name) end
-            end
-        end
-        return list
-    end
-
-    function ThemeManager:Delete(name)
-        if not name then return false, "no file" end
-        local path = self.Folder .. "/themes/" .. name .. ".json"
-        if not isfile(path) then return false, "invalid file" end
-        pcall(delfile, path)
-        return true
     end
 
     function ThemeManager:BuildThemeSection(tab)
@@ -227,67 +209,6 @@ local ThemeManager = {} do
                 if current then
                     self:SaveDefault(current.Value)
                     print("[ThemeManager] Set default theme:", current.Value)
-                end
-            end
-        })
-
-        section:AddDivider()
-
-        section:AddTextbox({
-            Name = "Custom Theme Name",
-            Flag = "ThemeManager_CustomThemeName",
-            Placeholder = "Enter theme name...",
-            Callback = function() end
-        })
-
-        section:AddButton({
-            Name = "Save Custom Theme",
-            Callback = function()
-                local name = self.Library.Options.ThemeManager_CustomThemeName
-                if name and name.Value ~= "" then
-                    self:SaveCustomTheme(name.Value)
-                    print("[ThemeManager] Saved custom theme:", name.Value)
-                end
-            end
-        })
-
-        section:AddDivider()
-
-        section:AddDropdown({
-            Name = "Custom Themes",
-            Options = self:ReloadCustomThemes(),
-            Flag = "ThemeManager_CustomThemeList",
-            Callback = function() end
-        })
-
-        section:AddButton({
-            Name = "Load Custom Theme",
-            Callback = function()
-                local name = self.Library.Options.ThemeManager_CustomThemeList
-                if name and name.Value then
-                    local theme = self:GetCustomTheme(name.Value)
-                    if theme then
-                        self.Library.Theme.Background = Color3.fromHex(theme.BackgroundColor)
-                        self.Library.Theme.Content = Color3.fromHex(theme.MainColor)
-                        self.Library.Theme.Accent = Color3.fromHex(theme.AccentColor)
-                        self.Library.Theme.Border = Color3.fromHex(theme.OutlineColor)
-                        self.Library.Theme.Text = Color3.fromHex(theme.FontColor)
-                        if self.Library.UpdateColorsUsingRegistry then
-                            self.Library:UpdateColorsUsingRegistry()
-                        end
-                        print("[ThemeManager] Loaded custom theme:", name.Value)
-                    end
-                end
-            end
-        })
-
-        section:AddButton({
-            Name = "Delete Custom Theme",
-            Callback = function()
-                local name = self.Library.Options.ThemeManager_CustomThemeList
-                if name and name.Value then
-                    self:Delete(name.Value)
-                    print("[ThemeManager] Deleted theme:", name.Value)
                 end
             end
         })
