@@ -9,6 +9,9 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 
 local Library = {
+    Toggles = {},
+    Options = {},
+    Flags = {},
     Theme = {
         Background = Color3.fromRGB(15, 15, 15),
         Topbar = Color3.fromRGB(20, 20, 20),
