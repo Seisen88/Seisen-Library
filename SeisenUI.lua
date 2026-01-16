@@ -10,6 +10,11 @@ local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
 
+-- Load Lucide icons
+local IconsLoaded, Icons = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/lucide-roblox-direct/refs/heads/main/source.lua"))()
+end)
+
 local Library = {
     Toggles = {},
     Options = {},
@@ -18,6 +23,7 @@ local Library = {
     Registry = {}, -- For live theme updates
     OpenDropdowns = {}, -- Track open dropdowns for click-away
     ScreenGui = nil, -- Reference to main GUI
+    Icons = IconsLoaded and Icons or nil, -- Lucide icons module
     Theme = {
         Background = Color3.fromRGB(30, 30, 35),
         Sidebar = Color3.fromRGB(25, 25, 30),
@@ -67,6 +73,38 @@ function Library:CloseAllDropdowns()
             dropdown.Close()
         end
     end
+end
+
+-- Get Lucide icon by name
+-- Returns: { Url, ImageRectOffset, ImageRectSize } or nil
+function Library:GetIcon(iconName)
+    if not iconName or iconName == "" then
+        return nil
+    end
+    
+    -- Check if it's a custom Roblox asset
+    if type(iconName) == "string" then
+        if iconName:match("rbxasset") or iconName:match("rbxassetid://") or iconName:match("roblox%.com/asset") then
+            return {
+                Url = iconName,
+                ImageRectOffset = Vector2.zero,
+                ImageRectSize = Vector2.zero,
+                Custom = true
+            }
+        end
+    end
+    
+    -- Try to get from Lucide icons
+    if self.Icons then
+        local success, icon = pcall(function()
+            return self.Icons.GetAsset(iconName)
+        end)
+        if success and icon then
+            return icon
+        end
+    end
+    
+    return nil
 end
 
 -- Utilities
@@ -233,7 +271,10 @@ function Library:CreateWindow(options)
     
     function WindowFuncs:CreateTab(tabOptions)
         local tabName = tabOptions.Name or "Tab"
-        local tabIcon = tabOptions.Icon or "rbxassetid://7733960981"
+        local tabIconName = tabOptions.Icon or "home"
+        
+        -- Get icon data (supports Lucide names or Roblox asset IDs)
+        local iconData = Library:GetIcon(tabIconName)
         
         -- Tab Button
         local tabBtn = Create("TextButton", {
@@ -247,14 +288,23 @@ function Library:CreateWindow(options)
         })
         
         -- Icon
-        Create("ImageLabel", {
+        local iconProps = {
             Size = UDim2.new(0, 16, 0, 16),
             Position = UDim2.new(0, 12, 0.5, -8),
             BackgroundTransparency = 1,
-            Image = tabIcon,
             ImageColor3 = theme.TextDim,
             Parent = tabBtn
-        })
+        }
+        
+        if iconData then
+            iconProps.Image = iconData.Url
+            iconProps.ImageRectOffset = iconData.ImageRectOffset or Vector2.zero
+            iconProps.ImageRectSize = iconData.ImageRectSize or Vector2.zero
+        else
+            iconProps.Image = "rbxassetid://7733960981" -- Default fallback
+        end
+        
+        Create("ImageLabel", iconProps)
         
         -- Tab Name
         local tabLabel = Create("TextLabel", {

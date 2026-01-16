@@ -18,28 +18,28 @@ local Window = Library:CreateWindow({
     Name = "SEISEN PRIME"
 })
 
--- Combat Tab
+-- Combat Tab (using Lucide icon name)
 local CombatTab = Window:CreateTab({
     Name = "Combat",
-    Icon = "rbxassetid://7733960981"
+    Icon = "sword"  -- Lucide icon name
 })
 
 -- Visuals Tab
 local VisualsTab = Window:CreateTab({
     Name = "Visuals",
-    Icon = "rbxassetid://7734053495"
+    Icon = "eye"  -- Lucide icon name
 })
 
 -- Players Tab
 local PlayersTab = Window:CreateTab({
     Name = "Players",
-    Icon = "rbxassetid://7743878857"
+    Icon = "users"  -- Lucide icon name
 })
 
 -- Settings Tab
 local SettingsTab = Window:CreateTab({
     Name = "Settings",
-    Icon = "rbxassetid://7734068836"
+    Icon = "settings"  -- Lucide icon name
 })
 
 -- Combat Sections
