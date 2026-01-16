@@ -1,4 +1,4 @@
-local Library = loadstring(readfile("seisenhubscript/SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/SeisenUI.lua"))()
 
 local Window = Library:CreateWindow({
     Name = "Seisen Hub Demo",
