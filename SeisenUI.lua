@@ -311,6 +311,11 @@ function Library:CreateWindow(options)
         leftCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         rightCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         
+        -- Close dropdowns when scrolling
+        page:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+            Library:CloseAllDropdowns()
+        end)
+        
         -- Activation
         local function activate()
             if activeTab == tabBtn then return end
@@ -406,22 +411,23 @@ function Library:CreateWindow(options)
                 })
                 
                 -- Label
-                Create("TextLabel", {
+                local toggleLabel = Create("TextLabel", {
                     Size = UDim2.new(0, 100, 1, 0),
                     BackgroundTransparency = 1,
                     Text = toggleName,
-                    TextColor3 = theme.Text,
+                    TextColor3 = Library.Theme.Text,
                     Font = Enum.Font.Gotham,
                     TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = toggle
                 })
+                Library:RegisterElement(toggleLabel, "Text", "TextColor3")
                 
                 -- Switch
                 local switchBg = Create("Frame", {
                     Size = UDim2.new(0, 36, 0, 18),
                     Position = UDim2.new(0, 110, 0.5, -9),
-                    BackgroundColor3 = state and theme.Toggle or theme.ToggleOff,
+                    BackgroundColor3 = state and Library.Theme.Toggle or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
@@ -438,20 +444,21 @@ function Library:CreateWindow(options)
                 local keybindBtn = Create("TextButton", {
                     Size = UDim2.new(0, 50, 0, 18),
                     Position = UDim2.new(0, 155, 0.5, -9),
-                    BackgroundColor3 = theme.Element,
+                    BackgroundColor3 = Library.Theme.Element,
                     Text = "NONE",
-                    TextColor3 = theme.TextDim,
+                    TextColor3 = Library.Theme.TextDim,
                     Font = Enum.Font.Gotham,
                     TextSize = 10,
                     AutoButtonColor = false,
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+                Library:RegisterElement(keybindBtn, "Element")
                 
                 -- Toggle indicator
                 local indicator = Create("Frame", {
                     Size = UDim2.new(0, 8, 0, 8),
                     Position = UDim2.new(1, -12, 0.5, -4),
-                    BackgroundColor3 = state and theme.Accent or theme.ToggleOff,
+                    BackgroundColor3 = state and Library.Theme.Accent or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
@@ -462,9 +469,9 @@ function Library:CreateWindow(options)
                     SetValue = function(self, val)
                         state = val
                         self.Value = val
-                        Tween(switchBg, {BackgroundColor3 = val and theme.Toggle or theme.ToggleOff})
+                        Tween(switchBg, {BackgroundColor3 = val and Library.Theme.Toggle or Library.Theme.ToggleOff})
                         Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
-                        Tween(indicator, {BackgroundColor3 = val and theme.Accent or theme.ToggleOff})
+                        Tween(indicator, {BackgroundColor3 = val and Library.Theme.Accent or Library.Theme.ToggleOff})
                         callback(val)
                     end
                 }
@@ -512,23 +519,27 @@ function Library:CreateWindow(options)
                 
                 local btn = Create("TextButton", {
                     Size = UDim2.new(1, 0, 0, 26),
-                    BackgroundColor3 = theme.Element,
+                    BackgroundColor3 = Library.Theme.Element,
                     Text = btnName,
-                    TextColor3 = theme.Text,
+                    TextColor3 = Library.Theme.Text,
                     Font = Enum.Font.Gotham,
                     TextSize = 12,
                     AutoButtonColor = false,
                     Parent = container
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                    Create("UIStroke", {Color = Library.Theme.Border, Thickness = 1})
                 })
                 
+                -- Register for theme updates
+                Library:RegisterElement(btn, "Element")
+                Library:RegisterElement(btn, "Text", "TextColor3")
+                
                 btn.MouseEnter:Connect(function()
-                    Tween(btn, {BackgroundColor3 = theme.ElementHover})
+                    Tween(btn, {BackgroundColor3 = Library.Theme.ElementHover})
                 end)
                 btn.MouseLeave:Connect(function()
-                    Tween(btn, {BackgroundColor3 = theme.Element})
+                    Tween(btn, {BackgroundColor3 = Library.Theme.Element})
                 end)
                 btn.MouseButton1Click:Connect(callback)
             end
