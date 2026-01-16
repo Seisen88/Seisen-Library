@@ -748,6 +748,291 @@ function Library:CreateWindow(options)
                 if flag then Library.Options[flag] = inputObj end
             end
             
+            -- Label
+            function SectionFuncs:AddLabel(labelOptions)
+                local text = labelOptions.Text or labelOptions.Name or "Label"
+                local flag = labelOptions.Flag
+                
+                local label = Create("TextLabel", {
+                    Size = UDim2.new(1, 0, 0, 18),
+                    BackgroundTransparency = 1,
+                    Text = text,
+                    TextColor3 = theme.TextDim,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextWrapped = true,
+                    Parent = container
+                })
+                
+                local labelObj = {
+                    SetText = function(self, newText)
+                        label.Text = newText
+                    end
+                }
+                
+                if flag then Library.Labels = Library.Labels or {}; Library.Labels[flag] = labelObj end
+                return labelObj
+            end
+            
+            -- Checkbox (different from toggle - just a checkmark box)
+            function SectionFuncs:AddCheckbox(checkOptions)
+                local checkName = checkOptions.Name or "Checkbox"
+                local default = checkOptions.Default or false
+                local callback = checkOptions.Callback or function() end
+                local flag = checkOptions.Flag
+                local state = default
+                
+                local check = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 22),
+                    BackgroundTransparency = 1,
+                    Parent = container
+                })
+                
+                local box = Create("TextButton", {
+                    Size = UDim2.new(0, 18, 0, 18),
+                    Position = UDim2.new(0, 0, 0.5, -9),
+                    BackgroundColor3 = state and theme.Accent or theme.Element,
+                    Text = state and "✓" or "",
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 12,
+                    AutoButtonColor = false,
+                    Parent = check
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                })
+                
+                Create("TextLabel", {
+                    Size = UDim2.new(1, -30, 1, 0),
+                    Position = UDim2.new(0, 26, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = checkName,
+                    TextColor3 = theme.Text,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = check
+                })
+                
+                local checkObj = {
+                    Value = state,
+                    SetValue = function(self, val)
+                        state = val
+                        self.Value = val
+                        box.Text = val and "✓" or ""
+                        Tween(box, {BackgroundColor3 = val and theme.Accent or theme.Element})
+                        callback(val)
+                    end
+                }
+                
+                box.MouseButton1Click:Connect(function()
+                    checkObj:SetValue(not state)
+                end)
+                
+                if flag then Library.Toggles[flag] = checkObj end
+                if default then callback(true) end
+            end
+            
+            -- Standalone Keybind
+            function SectionFuncs:AddKeybind(keybindOptions)
+                local keybindName = keybindOptions.Name or "Keybind"
+                local default = keybindOptions.Default or "NONE"
+                local callback = keybindOptions.Callback or function() end
+                local flag = keybindOptions.Flag
+                local mode = keybindOptions.Mode or "Toggle" -- Toggle, Hold, Always
+                local currentKey = default ~= "NONE" and Enum.KeyCode[default] or Enum.KeyCode.Unknown
+                
+                local keybind = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 24),
+                    BackgroundTransparency = 1,
+                    Parent = container
+                })
+                
+                Create("TextLabel", {
+                    Size = UDim2.new(0, 100, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = keybindName,
+                    TextColor3 = theme.Text,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = keybind
+                })
+                
+                local keyBtn = Create("TextButton", {
+                    Size = UDim2.new(0, 60, 0, 20),
+                    Position = UDim2.new(0, 110, 0.5, -10),
+                    BackgroundColor3 = theme.Element,
+                    Text = default,
+                    TextColor3 = theme.TextDim,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 10,
+                    AutoButtonColor = false,
+                    Parent = keybind
+                }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+                
+                local keybindObj = {
+                    Value = currentKey,
+                    Mode = mode,
+                    SetValue = function(self, key)
+                        currentKey = key
+                        self.Value = key
+                        keyBtn.Text = key.Name:upper()
+                    end
+                }
+                
+                local listening = false
+                keyBtn.MouseButton1Click:Connect(function()
+                    listening = true
+                    keyBtn.Text = "..."
+                end)
+                
+                UserInputService.InputBegan:Connect(function(input, processed)
+                    if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                        currentKey = input.KeyCode
+                        keyBtn.Text = input.KeyCode.Name:upper()
+                        keybindObj.Value = input.KeyCode
+                        listening = false
+                    elseif currentKey ~= Enum.KeyCode.Unknown and input.KeyCode == currentKey and not processed then
+                        callback()
+                    end
+                end)
+                
+                if flag then Library.Options[flag] = keybindObj end
+            end
+            
+            -- Color Picker
+            function SectionFuncs:AddColorPicker(colorOptions)
+                local colorName = colorOptions.Name or "Color"
+                local default = colorOptions.Default or Color3.fromRGB(255, 255, 255)
+                local callback = colorOptions.Callback or function() end
+                local flag = colorOptions.Flag
+                local currentColor = default
+                
+                local picker = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 24),
+                    BackgroundTransparency = 1,
+                    Parent = container
+                })
+                
+                Create("TextLabel", {
+                    Size = UDim2.new(0, 100, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = colorName,
+                    TextColor3 = theme.Text,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = picker
+                })
+                
+                local colorBox = Create("TextButton", {
+                    Size = UDim2.new(0, 40, 0, 18),
+                    Position = UDim2.new(0, 110, 0.5, -9),
+                    BackgroundColor3 = currentColor,
+                    Text = "",
+                    AutoButtonColor = false,
+                    Parent = picker
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                })
+                
+                -- Simple color popup
+                local popup = Create("Frame", {
+                    Size = UDim2.new(0, 150, 0, 100),
+                    Position = UDim2.new(1, 5, 0, 0),
+                    BackgroundColor3 = theme.Element,
+                    Visible = false,
+                    ZIndex = 200,
+                    Parent = colorBox
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+                    Create("UIStroke", {Color = theme.Border, Thickness = 1, ZIndex = 200})
+                })
+                
+                -- Preset colors
+                local presets = {
+                    Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 127, 0),
+                    Color3.fromRGB(255, 255, 0), Color3.fromRGB(0, 255, 0),
+                    Color3.fromRGB(0, 255, 255), Color3.fromRGB(0, 0, 255),
+                    Color3.fromRGB(127, 0, 255), Color3.fromRGB(255, 0, 255),
+                    Color3.fromRGB(255, 255, 255), Color3.fromRGB(128, 128, 128),
+                    Color3.fromRGB(64, 64, 64), Color3.fromRGB(0, 0, 0)
+                }
+                
+                local presetContainer = Create("Frame", {
+                    Size = UDim2.new(1, -10, 0, 50),
+                    Position = UDim2.new(0, 5, 0, 5),
+                    BackgroundTransparency = 1,
+                    Parent = popup
+                }, {
+                    Create("UIGridLayout", {CellSize = UDim2.new(0, 22, 0, 22), CellPadding = UDim2.new(0, 4, 0, 4)})
+                })
+                
+                local colorObj = {
+                    Value = currentColor,
+                    Type = "ColorPicker",
+                    SetValue = function(self, color)
+                        currentColor = color
+                        self.Value = color
+                        colorBox.BackgroundColor3 = color
+                        callback(color)
+                    end
+                }
+                
+                for _, preset in ipairs(presets) do
+                    local presetBtn = Create("TextButton", {
+                        BackgroundColor3 = preset,
+                        Text = "",
+                        ZIndex = 201,
+                        Parent = presetContainer
+                    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+                    
+                    presetBtn.MouseButton1Click:Connect(function()
+                        colorObj:SetValue(preset)
+                        popup.Visible = false
+                    end)
+                end
+                
+                colorBox.MouseButton1Click:Connect(function()
+                    popup.Visible = not popup.Visible
+                end)
+                
+                if flag then Library.Options[flag] = colorObj end
+            end
+            
+            -- Divider
+            function SectionFuncs:AddDivider(text)
+                local divider = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 16),
+                    BackgroundTransparency = 1,
+                    Parent = container
+                })
+                
+                if text and text ~= "" then
+                    Create("TextLabel", {
+                        Size = UDim2.new(1, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        Text = "— " .. text .. " —",
+                        TextColor3 = theme.TextMuted,
+                        Font = Enum.Font.Gotham,
+                        TextSize = 10,
+                        Parent = divider
+                    })
+                else
+                    Create("Frame", {
+                        Size = UDim2.new(1, 0, 0, 1),
+                        Position = UDim2.new(0, 0, 0.5, 0),
+                        BackgroundColor3 = theme.Border,
+                        BorderSizePixel = 0,
+                        Parent = divider
+                    })
+                end
+            end
+            
             return SectionFuncs
         end
         
