@@ -124,16 +124,6 @@ function Library:CreateWindow(options)
     
     self.ScreenGui = gui
     
-    -- Click handler to close dropdowns when clicking outside
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            -- Small delay to allow dropdown button clicks to register first
-            task.defer(function()
-                Library:CloseAllDropdowns()
-            end)
-        end
-    end)
-    
     -- Main Frame
     local main = Create("Frame", {
         Name = "Main",
@@ -712,6 +702,7 @@ function Library:CreateWindow(options)
                 }
                 
                 local open = false
+                local thisDropdown = {} -- Reference to this dropdown
                 
                 local function updateListPosition()
                     local absPos = selectBtn.AbsolutePosition
@@ -720,19 +711,33 @@ function Library:CreateWindow(options)
                     list.Size = UDim2.new(0, absSize.X, 0, math.min(#options * 22, 110))
                 end
                 
-                selectBtn.MouseButton1Click:Connect(function()
-                    open = not open
+                local function closeThisDropdown()
                     if open then
-                        -- Close other dropdowns first
-                        Library:CloseAllDropdowns()
-                        open = true -- Reset since CloseAllDropdowns closes this too
+                        open = false
+                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
+                        task.delay(0.15, function() if not open then list.Visible = false end end)
+                    end
+                end
+                
+                thisDropdown.Close = closeThisDropdown
+                table.insert(Library.OpenDropdowns, thisDropdown)
+                
+                selectBtn.MouseButton1Click:Connect(function()
+                    if open then
+                        closeThisDropdown()
+                    else
+                        -- Close all OTHER dropdowns first
+                        for _, dd in ipairs(Library.OpenDropdowns) do
+                            if dd ~= thisDropdown and dd.Close then 
+                                dd.Close() 
+                            end
+                        end
+                        -- Then open this one
+                        open = true
                         updateListPosition()
                         list.Visible = true
                         list.Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)
                         Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, math.min(#options * 22, 110))})
-                    else
-                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
-                        task.delay(0.15, function() if not open then list.Visible = false end end)
                     end
                 end)
                 
@@ -788,18 +793,6 @@ function Library:CreateWindow(options)
                         task.delay(0.15, function() list.Visible = false end)
                     end)
                 end
-                
-                -- Close function for click-away
-                local function closeDropdown()
-                    if open then
-                        open = false
-                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
-                        task.delay(0.15, function() list.Visible = false end)
-                    end
-                end
-                
-                -- Register with Library for click-away closing
-                table.insert(Library.OpenDropdowns, {Close = closeDropdown})
                 
                 if flag then Library.Options[flag] = dropObj end
             end
