@@ -13,7 +13,11 @@ local LocalPlayer = Players.LocalPlayer
 local Library = {
     Toggles = {},
     Options = {},
+    Labels = {},
     Flags = {},
+    Registry = {}, -- For live theme updates
+    OpenDropdowns = {}, -- Track open dropdowns for click-away
+    ScreenGui = nil, -- Reference to main GUI
     Theme = {
         Background = Color3.fromRGB(30, 30, 35),
         Sidebar = Color3.fromRGB(25, 25, 30),
@@ -31,6 +35,39 @@ local Library = {
         ToggleOff = Color3.fromRGB(60, 60, 70)
     }
 }
+
+-- Registry functions for live theme updates
+function Library:RegisterElement(element, themeProperty, targetProperty)
+    table.insert(self.Registry, {
+        Element = element,
+        ThemeProperty = themeProperty,
+        TargetProperty = targetProperty or "BackgroundColor3"
+    })
+end
+
+function Library:UpdateColorsUsingRegistry()
+    for _, entry in ipairs(self.Registry) do
+        if entry.Element and entry.Element.Parent then
+            local color = self.Theme[entry.ThemeProperty]
+            if color then
+                pcall(function()
+                    TweenService:Create(entry.Element, TweenInfo.new(0.2), {
+                        [entry.TargetProperty] = color
+                    }):Play()
+                end)
+            end
+        end
+    end
+end
+
+-- Close all open dropdowns
+function Library:CloseAllDropdowns()
+    for _, dropdown in ipairs(self.OpenDropdowns) do
+        if dropdown.Close then
+            dropdown.Close()
+        end
+    end
+end
 
 -- Utilities
 local function Create(class, props, children)
@@ -85,6 +122,18 @@ function Library:CreateWindow(options)
         ResetOnSpawn = false
     })
     
+    self.ScreenGui = gui
+    
+    -- Click handler to close dropdowns when clicking outside
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            -- Small delay to allow dropdown button clicks to register first
+            task.defer(function()
+                Library:CloseAllDropdowns()
+            end)
+        end
+    end)
+    
     -- Main Frame
     local main = Create("Frame", {
         Name = "Main",
@@ -97,6 +146,9 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
     
+    -- Register main frame for theme updates
+    self:RegisterElement(main, "Background")
+    
     -- Sidebar
     local sidebar = Create("Frame", {
         Name = "Sidebar",
@@ -108,14 +160,18 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
     
+    self:RegisterElement(sidebar, "Sidebar")
+    
     -- Cover right corners of sidebar
-    Create("Frame", {
+    local sidebarCover = Create("Frame", {
         Size = UDim2.new(0, 10, 1, 0),
         Position = UDim2.new(1, -10, 0, 0),
         BackgroundColor3 = theme.Sidebar,
         BorderSizePixel = 0,
         Parent = sidebar
     })
+    
+    self:RegisterElement(sidebarCover, "Sidebar")
     
     -- Tab List
     local tabList = Create("ScrollingFrame", {
@@ -144,13 +200,17 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
     
+    self:RegisterElement(content, "Content")
+    
     -- Cover left corners of content
-    Create("Frame", {
+    local contentCover = Create("Frame", {
         Size = UDim2.new(0, 10, 1, 0),
         BackgroundColor3 = theme.Content,
         BorderSizePixel = 0,
         Parent = content
     })
+    
+    self:RegisterElement(contentCover, "Content")
     
     -- Title
     local titleLabel = Create("TextLabel", {
@@ -701,6 +761,18 @@ function Library:CreateWindow(options)
                         task.delay(0.15, function() list.Visible = false end)
                     end)
                 end
+                
+                -- Close function for click-away
+                local function closeDropdown()
+                    if open then
+                        open = false
+                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
+                        task.delay(0.15, function() list.Visible = false end)
+                    end
+                end
+                
+                -- Register with Library for click-away closing
+                table.insert(Library.OpenDropdowns, {Close = closeDropdown})
                 
                 if flag then Library.Options[flag] = dropObj end
             end
