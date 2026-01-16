@@ -1,6 +1,6 @@
 --[[
     Seisen UI Demo Script
-    Demonstrates all UI components and addon features
+    XEZIOS-style modern minimalist design
 ]]
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/SeisenUI.lua"))()
@@ -15,110 +15,171 @@ ThemeManager:SetFolder("SeisenDemo")
 
 -- Create Window
 local Window = Library:CreateWindow({
-    Name = "Seisen Hub Demo"
+    Name = "SEISEN PRIME"
 })
 
 -- Combat Tab
-local MainTab = Window:CreateTab({
-    Name = "Combat"
+local CombatTab = Window:CreateTab({
+    Name = "Combat",
+    Icon = "rbxassetid://7733960981"
+})
+
+-- Visuals Tab
+local VisualsTab = Window:CreateTab({
+    Name = "Visuals",
+    Icon = "rbxassetid://7734053495"
+})
+
+-- Players Tab
+local PlayersTab = Window:CreateTab({
+    Name = "Players",
+    Icon = "rbxassetid://7743878857"
 })
 
 -- Settings Tab
 local SettingsTab = Window:CreateTab({
-    Name = "Settings"
+    Name = "Settings",
+    Icon = "rbxassetid://7734068836"
 })
 
--- Combat Section (Left)
-local AimbotSection = MainTab:CreateSection({
-    Name = "Aimbot",
+-- Combat Sections
+local AimbotSection = CombatTab:CreateSection({
+    Name = "Section",
     Side = "Left"
 })
 
 AimbotSection:AddToggle({
-    Name = "Enabled",
+    Name = "Toggle",
     Default = false,
+    Flag = "AimbotEnabled",
     Callback = function(Value)
-        print("Aimbot Enabled:", Value)
-    end
-})
-
-AimbotSection:AddSlider({
-    Name = "FOV Radius",
-    Min = 0,
-    Max = 500,
-    Default = 100,
-    Callback = function(Value)
-        print("FOV Radius:", Value)
+        print("Toggle:", Value)
     end
 })
 
 AimbotSection:AddButton({
-    Name = "Lock Target",
+    Name = "Button",
     Callback = function()
-        print("Target Locked!")
+        print("Button clicked!")
     end
 })
 
--- Visuals Section (Right)
-local VisualsSection = MainTab:CreateSection({
-    Name = "Visuals",
+local Section2 = CombatTab:CreateSection({
+    Name = "Section",
+    Side = "Left"
+})
+
+Section2:AddToggle({
+    Name = "Toggle",
+    Default = false,
+    Callback = function(Value)
+        print("Toggle 2:", Value)
+    end
+})
+
+Section2:AddButton({
+    Name = "Button",
+    Callback = function()
+        print("Button 2 clicked!")
+    end
+})
+
+-- Right side sections
+local RightSection1 = CombatTab:CreateSection({
+    Name = "Section",
     Side = "Right"
 })
 
-VisualsSection:AddToggle({
-    Name = "ESP",
-    Default = true,
+RightSection1:AddToggle({
+    Name = "Toggle",
+    Default = false,
     Callback = function(Value)
-        print("ESP Enabled:", Value)
+        print("Right Toggle:", Value)
     end
 })
 
-VisualsSection:AddDropdown({
-    Name = "ESP Mode",
-    Options = {"Box", "Tracers", "Chams", "Highlight"},
-    Default = "Box",
-    Callback = function(Option)
-        print("ESP Mode:", Option)
+RightSection1:AddButton({
+    Name = "Button",
+    Callback = function()
+        print("Right Button!")
     end
 })
 
-VisualsSection:AddSlider({
-    Name = "ESP Distance",
-    Min = 100,
-    Max = 2000,
-    Default = 500,
+RightSection1:AddToggle({
+    Name = "Toggle",
+    Default = false,
     Callback = function(Value)
-        print("ESP Distance:", Value)
+        print("Toggle:", Value)
     end
 })
 
--- Settings Tab - Themes
+RightSection1:AddButton({
+    Name = "Button",
+    Callback = function()
+        print("Button!")
+    end
+})
+
+RightSection1:AddToggle({
+    Name = "Toggle",
+    Default = false,
+    Callback = function(Value)
+        print("Toggle:", Value)
+    end
+})
+
+RightSection1:AddButton({
+    Name = "Button",
+    Callback = function()
+        print("Button!")
+    end
+})
+
+RightSection1:AddSlider({
+    Name = "Slider",
+    Min = 0,
+    Max = 100,
+    Default = 10,
+    Flag = "SliderValue",
+    Callback = function(Value)
+        print("Slider:", Value)
+    end
+})
+
+RightSection1:AddDropdown({
+    Name = "Hello!",
+    Options = {"Option 1", "Option 2", "Option 3"},
+    Default = "Option 1",
+    Flag = "DropdownValue",
+    Callback = function(Value)
+        print("Dropdown:", Value)
+    end
+})
+
+RightSection1:AddTextbox({
+    Name = "Hi",
+    Default = "hello theree!!",
+    Placeholder = "Enter text...",
+    Flag = "TextboxValue",
+    Callback = function(Value)
+        print("Textbox:", Value)
+    end
+})
+
+-- Settings Tab
 ThemeManager:BuildThemeSection(SettingsTab)
-
--- Settings Tab - Config
 SaveManager:BuildConfigSection(SettingsTab)
 
--- Settings Tab - Misc
 local MiscSection = SettingsTab:CreateSection({
     Name = "Misc",
     Side = "Right"
 })
 
-MiscSection:AddTextbox({
-    Name = "Execute Script",
-    Default = "",
-    Placeholder = "print('Hello')",
-    Callback = function(Text)
-        print("Executing:", Text)
-    end
-})
-
 MiscSection:AddButton({
     Name = "Unload UI",
     Callback = function()
-        print("Unloaded")
         game.CoreGui.SeisenUI:Destroy()
     end
 })
 
-print("[Seisen Demo] UI Loaded Successfully!")
+print("[Seisen Demo] UI Loaded!")
