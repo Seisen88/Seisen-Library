@@ -311,22 +311,6 @@ function Library:CreateWindow(options)
         leftCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         rightCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         
-        -- Close dropdowns when scrolling
-        page.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseWheel then
-                Library:CloseAllDropdowns()
-            end
-        end)
-        
-        -- Also close on scroll position change
-        local lastScrollPos = 0
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if page.CanvasPosition.Y ~= lastScrollPos then
-                lastScrollPos = page.CanvasPosition.Y
-                Library:CloseAllDropdowns()
-            end
-        end)
-        
         -- Activation
         local function activate()
             if activeTab == tabBtn then return end
@@ -725,6 +709,7 @@ function Library:CreateWindow(options)
                 
                 local open = false
                 local thisDropdown = {} -- Reference to this dropdown
+                local positionConnection = nil
                 
                 local function updateListPosition()
                     local absPos = selectBtn.AbsolutePosition
@@ -736,6 +721,10 @@ function Library:CreateWindow(options)
                 local function closeThisDropdown()
                     if open then
                         open = false
+                        if positionConnection then
+                            positionConnection:Disconnect()
+                            positionConnection = nil
+                        end
                         Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)})
                         task.delay(0.15, function() if not open then list.Visible = false end end)
                     end
@@ -760,6 +749,15 @@ function Library:CreateWindow(options)
                         list.Visible = true
                         list.Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)
                         Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, math.min(#options * 22, 110))})
+                        
+                        -- Continuously update position while open
+                        positionConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                            if open then
+                                local absPos = selectBtn.AbsolutePosition
+                                local absSize = selectBtn.AbsoluteSize
+                                list.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                            end
+                        end)
                     end
                 end)
                 
