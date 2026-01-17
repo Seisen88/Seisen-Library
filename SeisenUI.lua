@@ -1469,10 +1469,10 @@ function Library:CreateWindow(options)
     
     -- Connect Traffic Light Buttons
     -- Red: Close window
-    -- Yellow: Minimize to widget
-    minBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
-    -- Green: Toggle Maximize/Restore
-    maxBtn.MouseButton1Click:Connect(function() toggleMaximize() end)
+    -- Yellow: Toggle Maximize/Restore
+    minBtn.MouseButton1Click:Connect(function() toggleMaximize() end)
+    -- Green: Minimize to widget
+    maxBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
 
     -- Make Widget Draggable with Click to Restore
     MakeDraggable(widget, widget, function() toggleWindow(true) end)
