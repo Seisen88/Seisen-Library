@@ -695,6 +695,12 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         
         table.insert(tabs, {btn = tabBtn, page = tabPage})
         
+        -- Connect to size changes (Once per tab)
+        local layout = tabPage:FindFirstChildOfClass("UIListLayout")
+        if layout then
+            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabboxSize)
+        end
+        
         local function activateTab()
             for _, t in ipairs(tabs) do
                 t.page.Visible = false
@@ -738,17 +744,20 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     end
     
     -- Auto-resize tabbox based on content
+    -- Auto-resize tabbox based on content
+    local updateThread
     local function updateTabboxSize()
-        local maxHeight = 0
-        for _, t in ipairs(tabs) do
-            local layout = t.page:FindFirstChildOfClass("UIListLayout")
-            if layout then
-                -- Connect to size changes
-                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabboxSize)
-                maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
+        if updateThread then task.cancel(updateThread) end
+        updateThread = task.defer(function()
+            local maxHeight = 0
+            for _, t in ipairs(tabs) do
+                local layout = t.page:FindFirstChildOfClass("UIListLayout")
+                if layout then
+                    maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
+                end
             end
-        end
-        tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 60)) -- Increased buffer for padding
+            tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 60))
+        end)
     end
     
     task.defer(updateTabboxSize)
