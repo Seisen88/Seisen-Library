@@ -1698,7 +1698,8 @@ function Library:CreateWindow(options)
                 
                 local keyBtn = Create("TextButton", {
                     Size = UDim2.new(0, 60, 0, 20),
-                    Position = UDim2.new(0, 110, 0.5, -10),
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    Position = UDim2.new(1, 0, 0.5, 0),
                     BackgroundColor3 = theme.Element,
                     Text = default,
                     TextColor3 = theme.TextDim,
