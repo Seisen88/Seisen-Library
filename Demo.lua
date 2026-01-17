@@ -4,7 +4,7 @@
     test
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/b596ab9/SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/665d30c/SeisenUI.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
 local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
 
@@ -172,6 +172,7 @@ local LeftTabBox = TabBoxTab:AddLeftTabbox("Left Options")
 local GeneralTab = LeftTabBox:AddTab("General")
 GeneralTab:AddToggle({Name = "Option 1", Flag = "TB_Opt1"})
 GeneralTab:AddToggle({Name = "Option 2", Flag = "TB_Opt2"})
+GeneralTab:AddDropdown({Name = "Option 3", Flag = "TB_Opt3"})
 GeneralTab:AddSlider({Name = "Value", Min = 0, Max = 50, Default = 25, Flag = "TB_Val1"})
 
 local AdvancedTab = LeftTabBox:AddTab("Advanced")

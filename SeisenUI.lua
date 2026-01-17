@@ -320,15 +320,15 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Library:RegisterElement(tLabel, "Text", "TextColor3")
             
             local switchBg = Create("Frame", {
-                Size = UDim2.new(0, 30, 0, 16),
-                Position = UDim2.new(1, -30, 0.5, -8),
+                Size = UDim2.new(0, 36, 0, 18),
+                Position = UDim2.new(1, -36, 0.5, -9),
                 BackgroundColor3 = state and theme.Toggle or theme.ToggleOff,
                 Parent = toggle
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
             
             local knob = Create("Frame", {
                 Size = UDim2.new(0, 14, 0, 14),
-                Position = state and UDim2.new(1, -15, 0.5, -7) or UDim2.new(0, 1, 0.5, -7),
+                Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Parent = switchBg
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
@@ -361,7 +361,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             local callback = opts.Callback or function() end
             
             local btn = Create("TextButton", {
-                Size = UDim2.new(1, 0, 0, 26),
+                Size = UDim2.new(1, 0, 0, 24),
                 BackgroundColor3 = theme.Element,
                 Text = buttonName,
                 TextColor3 = theme.Text,
@@ -410,7 +410,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Library:RegisterElement(nameLabel, "Text", "TextColor3")
             
             local track = Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 4), Position = UDim2.new(0, 0, 0, 20),
+                Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 20),
                 BackgroundColor3 = theme.ToggleOff, Parent = slider
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
             local fill = Create("Frame", {
@@ -420,7 +420,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             
             -- Draggable Knob
             local sliderKnob = Create("Frame", {
-                Size = UDim2.new(0, 10, 0, 10),
+                Size = UDim2.new(0, 12, 0, 12),
                 Position = UDim2.new((value - min) / (max - min), 0, 0.5, 0),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1312,8 +1312,8 @@ function Library:CreateWindow(options)
                 
                 -- Switch (Left of Indicator) - WindUI Pill Style
                 local switchBg = Create("Frame", {
-                    Size = UDim2.new(0, 30, 0, 16),
-                    Position = UDim2.new(1, -30, 0.5, -8), 
+                    Size = UDim2.new(0, 36, 0, 18),
+                    Position = UDim2.new(1, -36, 0.5, -9), 
                     BackgroundColor3 = state and Library.Theme.Toggle or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
@@ -1321,7 +1321,7 @@ function Library:CreateWindow(options)
                 
                 local knob = Create("Frame", {
                     Size = UDim2.new(0, 14, 0, 14),
-                    Position = state and UDim2.new(1, -15, 0.5, -7) or UDim2.new(0, 1, 0.5, -7),
+                    Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                     BorderSizePixel = 0,
                     Parent = switchBg
@@ -1332,8 +1332,8 @@ function Library:CreateWindow(options)
                 
                 -- Keybind Button (Left of Switch)
                 local keybindBtn = Create("TextButton", {
-                    Size = UDim2.new(0, 50, 0, 18),
-                    Position = UDim2.new(1, -112, 0.5, -9), 
+                    Size = UDim2.new(0, 40, 0, 16), -- Smaller keybind button
+                    Position = UDim2.new(1, -85, 0.5, -8), 
                     BackgroundColor3 = Library.Theme.Element,
                     Text = "NONE",
                     TextColor3 = Library.Theme.TextDim,
@@ -1479,7 +1479,7 @@ function Library:CreateWindow(options)
                 })
                 
                 local bar = Create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 4), -- Thinner track
+                    Size = UDim2.new(1, 0, 0, 6), -- Medium track
                     Position = UDim2.new(0, 0, 0, 20),
                     BackgroundColor3 = theme.ToggleOff,
                     Text = "",
@@ -1496,7 +1496,7 @@ function Library:CreateWindow(options)
 
                 -- Draggable Knob for Slider
                 local sliderKnob = Create("Frame", {
-                    Size = UDim2.new(0, 10, 0, 10),
+                    Size = UDim2.new(0, 12, 0, 12),
                     Position = UDim2.new((default - min) / (max - min), 0, 0.5, 0),
                     AnchorPoint = Vector2.new(0.5, 0.5),
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
