@@ -216,7 +216,11 @@ function Library:ShowTooltip(text)
     if not TooltipFrame or not text or text == "" then return end
     
     TooltipLabel.Text = text
-    TooltipFrame.Size = UDim2.new(0, math.min(TooltipLabel.TextBounds.X + 20, 300), 0, TooltipLabel.TextBounds.Y + 14)
+    
+    local TextService = game:GetService("TextService")
+    local size = TextService:GetTextSize(text, 11, Enum.Font.Gotham, Vector2.new(300, 1000))
+    
+    TooltipFrame.Size = UDim2.new(0, math.min(size.X + 20, 300), 0, size.Y + 14)
     TooltipFrame.Visible = true
     
     local mousePos = UserInputService:GetMouseLocation()
@@ -1075,7 +1079,7 @@ function Library:CreateWindow(options)
     local gui = Create("ScreenGui", {
         Name = "SeisenUI",
         Parent = RunService:IsStudio() and LocalPlayer.PlayerGui or game.CoreGui,
-        ZIndexBehavior = Enum.ZIndexBehavior.Global,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false
     })
     
