@@ -445,7 +445,6 @@ function Library:CreateSlider(parent, options)
             sliding = true
             local startPos = i.Position.X
             local startValue = value
-            local barWidth = bar.AbsoluteSize.X
             
             local connection
             connection = game:GetService("RunService").RenderStepped:Connect(function()
@@ -456,7 +455,9 @@ function Library:CreateSlider(parent, options)
                 
                 local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
                 local delta = mouseProxy.X - startPos
-                local valueDelta = (delta / barWidth) * (max - min)
+                -- Recalculate barWidth each frame to account for scaling
+                local currentBarWidth = bar.AbsoluteSize.X
+                local valueDelta = (delta / currentBarWidth) * (max - min)
                 local newVal = math.floor(math.clamp(startValue + valueDelta, min, max))
                 
                 if newVal ~= value then
