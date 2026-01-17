@@ -44,43 +44,24 @@ local Library = {
 }
 
 function Library:SetCustomCursor(enabled, imageId)
-    -- Clean up existing cursor
+    -- Clean up existing connection if legacy method was used
     if self.CustomCursor then
         self.CustomCursor:Destroy()
         self.CustomCursor = nil
     end
+    -- self.CursorConnection is not stored in previous version but good to clear if existed
+    
+    local mouse = LocalPlayer:GetMouse()
     
     if not enabled then
+        mouse.Icon = ""
         UserInputService.MouseIconEnabled = true
         return
     end
     
-    -- Create new cursor
-    local cursor = Instance.new("ImageLabel")
-    cursor.Name = "CustomCursor"
-    cursor.Size = UDim2.new(0, 24, 0, 24)
-    cursor.BackgroundTransparency = 1
-    cursor.Image = imageId or "rbxassetid://6065775281" -- Reliable white cursor
-    cursor.ZIndex = 10000
-    
-    -- Parent to ScreenGui if exists, otherwise wait? 
-    -- Assuming SetCustomCursor is called after CreateWindow, or ScreenGui is set
-    if self.ScreenGui then
-        cursor.Parent = self.ScreenGui
-    else
-        warn("Library:SetCustomCursor called before CreateWindow or ScreenGui not found.")
-        return
-    end
-    
-    self.CustomCursor = cursor
-    UserInputService.MouseIconEnabled = false
-    
-    RunService.RenderStepped:Connect(function()
-        if not cursor.Parent then UserInputService.MouseIconEnabled = true return end
-        UserInputService.MouseIconEnabled = false -- Enforce hidden system cursor
-        local mouse = UserInputService:GetMouseLocation()
-        cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y)
-    end)
+    -- Use native mouse icon for best reliability and performance
+    mouse.Icon = imageId or "rbxassetid://6065775281"
+    UserInputService.MouseIconEnabled = true
 end
 
 -- Registry functions for live theme updates
