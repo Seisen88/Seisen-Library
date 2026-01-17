@@ -15,7 +15,8 @@ ThemeManager:SetFolder("SeisenDemo")
 
 -- Create Window
 local Window = Library:CreateWindow({
-    Name = "SEISEN PRIME"
+    Name = "SEISEN PRIME",
+    Icon = "rbxassetid://16053733390" -- Dragon Logo
 })
 
 --============================================================--

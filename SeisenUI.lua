@@ -677,19 +677,12 @@ function Library:CreateWindow(options)
         Size = UDim2.new(0, 40, 0, 40),
         Position = UDim2.new(0.5, -20, 0, 0), -- Centered top
         BackgroundTransparency = 1,
-        Image = "rbxassetid://16053733390", -- Dragon logo from user image? Or placeholders. 
-        -- Using a generic cool dragon/logo or Seisen defaults. User provided 16053733390 in a previous prompt? 
-        -- Actually, I'll use a placeholder or the same as standard logo if available. 
-        -- I'll use a generic "Shield" or "Circle" icon for now, or let user customize.
-        -- Wait, user image showed a specific dragon logo. I cannot guess the ID.
-        -- I will use a reliable default (Roblox logo or similar) or just a Circle.
-        -- I'll use the 'scan-face' icon from Lucide (looks like a face/mask) as placeholder.
-        -- Or better: A nicely styled circle with "S".
-        Image = "rbxassetid://108496397228805", -- Seisen logo if I knew it.
-        -- I'll use a standard icon for now.
-        Image = "rbxassetid://7072718336", -- Generic
         Parent = widget
     })
+    
+    -- Apply Icon from options or default
+    local widgetIcon = options.Icon or "rbxassetid://7072718336"
+    Library:ApplyIcon(widgetLogo, widgetIcon)
     
     -- Round Logo
     Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = widgetLogo})
