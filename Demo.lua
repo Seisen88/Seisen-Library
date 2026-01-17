@@ -3,7 +3,9 @@
     Comprehensive showcase of all UI elements
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/SeisenUI.lua?v="..os.time()))()
+-- local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/SeisenUI.lua?v="..os.time()))()
+-- FOR DEV: Load local file (Must be in workspace)
+local Library = loadstring(readfile("SeisenUI.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/addons/SaveManager.lua?v="..os.time()))()
 local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/addons/ThemeManager.lua?v="..os.time()))()
 
@@ -15,14 +17,21 @@ ThemeManager:SetFolder("SeisenDemo")
 
 -- Create Window
 local Window = Library:CreateWindow({
-    Name = "SEISEN PRIME",
-    Icon = "rbxassetid://16053733390" -- Dragon Logo
+    Name = "SEISEN LIBRARY",
+    Icon = "rbxassetid://125926861378074", -- Dragon Logo
+    ToggleKeybind = Enum.KeyCode.LeftAlt,
 })
 
 --============================================================--
 -- MAIN TAB - All Basic Elements
 --============================================================--
-local MainTab = Window:AddTab("Main", "home")
+Window:AddSidebarSection("General")
+local MainTab = Window:AddTab("Home", "home")
+
+Window:AddSidebarDivider()
+Window:AddSidebarSection("Elements")
+local ElementsTab = Window:AddTab("UI Showcase", "monitor")
+local ConfigTab = Window:AddTab("Settings", "settings")
 
 -- Left Section: Toggles & Buttons
 local ToggleSection = MainTab:AddSection("Toggles & Buttons", "Left")
@@ -59,8 +68,8 @@ ToggleSection:AddButton({
     end
 })
 
--- Left Section: Sliders
-local SliderSection = MainTab:AddSection("Sliders", "Left")
+-- Right Section: Sliders & Dropdowns
+local SliderSection = MainTab:AddRightSection("Sliders & Dropdowns")
 
 SliderSection:AddSlider({
     Name = "Speed",
@@ -247,7 +256,7 @@ ThemeManager:BuildThemeSection(SettingsTab)
 SaveManager:BuildConfigSection(SettingsTab)
 
 -- Custom settings on Right
-local UtilSection = SettingsTab:AddSection("Utilities", "Right")
+local UtilSection = SettingsTab:AddLeftSection("Utilities", "Right")
 
 UtilSection:AddButton({
     Name = "Copy Discord",

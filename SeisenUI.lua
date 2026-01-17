@@ -1,5 +1,5 @@
 --[[
-    Seisen UI Library - XEZIOS Style
+    Seisen UI Library
     Modern minimalist design with responsive layout
     Version: 1.1.0
 ]]
@@ -544,14 +544,114 @@ function Library:CreateWindow(options)
     
     self:RegisterElement(sidebarCover, "Sidebar")
     
-    -- Tab List (leave room for profile at bottom)
+    -- Window Controls (Traffic Lights) - Top Left of Sidebar
+    local controls = Create("Frame", {
+        Name = "WindowControls",
+        Size = UDim2.new(1, 0, 0, 30),
+        BackgroundTransparency = 1,
+        Parent = sidebar,
+        LayoutOrder = 1
+    }, {
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 14), PaddingTop = UDim.new(0, 10)})
+    })
+    
+    local controlList = Create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 8),
+        Parent = controls
+    })
+
+    local function createTrafficLight(color, callback, hoverIcon)
+        local btn = Create("TextButton", {
+            Size = UDim2.new(0, 12, 0, 12),
+            BackgroundColor3 = color,
+            Text = "",
+            AutoButtonColor = false,
+            Parent = controls
+        }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+        
+        local icon = Create("ImageLabel", {
+            Size = UDim2.new(0, 8, 0, 8),
+            Position = UDim2.new(0.5, -4, 0.5, -4),
+            BackgroundTransparency = 1,
+            Image = hoverIcon,
+            ImageTransparency = 1, -- Initial hidden
+            ImageColor3 = Color3.new(0,0,0),
+            Parent = btn
+        })
+        
+        btn.MouseEnter:Connect(function() 
+            icon.ImageTransparency = 0.5 
+        end)
+        btn.MouseLeave:Connect(function() 
+            icon.ImageTransparency = 1 
+        end)
+        
+        if callback then
+            btn.MouseButton1Click:Connect(callback)
+        end
+        
+        return btn
+    end
+
+    -- Close (Red), Minimize (Yellow), Maximize/Expand (Green - Logic can be added later)
+    -- Icons: "x", "minus", "scan-line" (or generic maximize)
+    local closeBtn = createTrafficLight(Color3.fromRGB(255, 95, 87), function() gui:Destroy() end, "rbxassetid://10747384351") -- lucide 'x'
+    local minBtn = createTrafficLight(Color3.fromRGB(255, 189, 46), function() end, "rbxassetid://10747384534") -- lucide 'minus'
+    createTrafficLight(Color3.fromRGB(39, 201, 63), nil, "rbxassetid://10747384661") -- lucide 'maximize' - visual only for now
+
+    -- Search Bar
+    local searchContainer = Create("Frame", {
+        Name = "SidebarSearch",
+        Size = UDim2.new(1, -20, 0, 32),
+        Position = UDim2.new(0, 10, 0, 40),
+        BackgroundColor3 = theme.Background, -- Slightly darker/lighter than sidebar
+        Parent = sidebar,
+        LayoutOrder = 2
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+        Create("UIStroke", {Color = theme.Border, Thickness = 1})
+    })
+    
+    local searchIcon = Create("ImageLabel", {
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(0, 10, 0.5, -7),
+        BackgroundTransparency = 1,
+        ImageColor3 = theme.TextDim,
+        Parent = searchContainer
+    })
+    Library:ApplyIcon(searchIcon, "search")
+
+    local searchInput = Create("TextBox", {
+        Size = UDim2.new(1, -34, 1, 0),
+        Position = UDim2.new(0, 34, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        PlaceholderText = "Search",
+        PlaceholderColor3 = theme.TextMuted,
+        TextColor3 = theme.Text,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = searchContainer
+    })
+    
+    self:RegisterElement(searchContainer, "Background")
+    self:RegisterElement(searchContainer:FindFirstChild("UIStroke"), "Border", "Color")
+    self:RegisterElement(searchIcon, "TextDim", "ImageColor3")
+    self:RegisterElement(searchInput, "Text", "TextColor3")
+    self:RegisterElement(searchInput, "TextMuted", "PlaceholderColor3")
+
+    -- Tab List
     local tabList = Create("ScrollingFrame", {
         Name = "TabList",
-        Size = UDim2.new(1, 0, 1, -70),
-        Position = UDim2.new(0, 0, 0, 10),
+        Size = UDim2.new(1, 0, 1, -130), -- Adjusted for header/search + profile
+        Position = UDim2.new(0, 0, 0, 80), -- Pushed down by controls + search
         BackgroundTransparency = 1,
         ScrollBarThickness = 0,
-        Parent = sidebar
+        Parent = sidebar,
+        LayoutOrder = 3
     }, {
         Create("UIListLayout", {
             Padding = UDim.new(0, 2),
@@ -668,48 +768,8 @@ function Library:CreateWindow(options)
         ZIndex = 100
     })
 
-    local controls = Create("Frame", {
-        Size = UDim2.new(0, 60, 0, 30),
-        Position = UDim2.new(1, -70, 0, 10), -- Top Right relative to header
-        BackgroundTransparency = 1,
-        Parent = header,
-        ZIndex = 110 -- Above content
-    }, {
-        Create("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 4)
-        })
-    })
-
-    -- Min/Close Button Creator
-    local function createControl(icon, callback)
-        local btn = Create("TextButton", {
-            Size = UDim2.new(0, 24, 0, 24),
-            BackgroundColor3 = theme.Sidebar, -- Distinct from content
-            Text = "",
-            AutoButtonColor = false,
-            Parent = controls
-        }, {Create("UICorner", {CornerRadius = UDim.new(0, 6)})})
-        
-        local ico = Create("ImageLabel", {
-            Size = UDim2.new(0, 14, 0, 14),
-            Position = UDim2.new(0.5, -7, 0.5, -7),
-            BackgroundTransparency = 1,
-            ImageColor3 = theme.Text,
-            Parent = btn
-        })
-        
-        Library:ApplyIcon(ico, icon)
-        
-        btn.MouseEnter:Connect(function() Tween(btn, {BackgroundColor3 = theme.Accent}) end)
-        btn.MouseLeave:Connect(function() Tween(btn, {BackgroundColor3 = theme.Sidebar}) end)
-        btn.MouseButton1Click:Connect(callback)
-        
-        Library:RegisterElement(btn, "Sidebar")
-        Library:RegisterElement(ico, "Text", "ImageColor3")
-        return btn
-    end
+    -- Minimize logic for traffic light
+    minBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
 
     -- Stats Widget (Minimized State)
     local widget = Create("Frame", {
@@ -773,8 +833,7 @@ function Library:CreateWindow(options)
     })
 
     -- Buttons
-    createControl("minus", function() toggleWindow(false) end) -- Minimize
-    createControl("x", function() gui:Destroy() end) -- Close
+
 
     -- Stats Updater
     local RunService = game:GetService("RunService")
@@ -873,6 +932,41 @@ function Library:CreateWindow(options)
         mainScale.Scale = scale
     end
     
+    function WindowFuncs:AddSidebarSection(sectionName)
+        local section = Create("TextLabel", {
+            Name = "Section_" .. sectionName,
+            Size = UDim2.new(1, -24, 0, 20),
+            BackgroundTransparency = 1,
+            Text = sectionName:upper(),
+            TextColor3 = theme.TextMuted,
+            Font = Enum.Font.GothamBold,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = tabList
+        }, {
+             Create("UIPadding", {PaddingLeft = UDim.new(0, 12), PaddingTop = UDim.new(0, 6)})
+        })
+        Library:RegisterElement(section, "TextMuted", "TextColor3")
+    end
+
+    function WindowFuncs:AddSidebarDivider()
+        local divContainer = Create("Frame", {
+            Name = "Divider",
+            Size = UDim2.new(1, 0, 0, 14),
+            BackgroundTransparency = 1,
+            Parent = tabList
+        })
+        
+        local line = Create("Frame", {
+            Size = UDim2.new(1, -24, 0, 1),
+            Position = UDim2.new(0, 12, 0.5, 0),
+            BackgroundColor3 = theme.Border,
+            BorderSizePixel = 0,
+            Parent = divContainer
+        })
+        Library:RegisterElement(line, "Border")
+    end
+
     function WindowFuncs:CreateTab(tabOptions, iconArg)
         -- Support both: CreateTab({Name = "x", Icon = "y"}) and AddTab("x", "y")
         local tabName, tabIconName
@@ -888,14 +982,17 @@ function Library:CreateWindow(options)
 
         
         -- Tab Button
+        -- Tab Button (Rounded styling)
         local tabBtn = Create("TextButton", {
             Name = tabName,
-            Size = UDim2.new(1, 0, 0, 32),
+            Size = UDim2.new(1, -16, 0, 34), -- Width -16 for side padding
             BackgroundColor3 = theme.Sidebar,
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false,
             Parent = tabList
+        }, {
+             Create("UICorner", {CornerRadius = UDim.new(0, 6)}) -- Rounded corners
         })
         
         -- Icon
@@ -972,12 +1069,12 @@ function Library:CreateWindow(options)
             
             -- Deactivate all
             for _, t in pairs(tabList:GetChildren()) do
-                if t:IsA("TextButton") then
-                    t.BackgroundTransparency = 1
+                if t:IsA("TextButton") and t ~= tabBtn then
+                    Tween(t, {BackgroundTransparency = 1, BackgroundColor3 = theme.Sidebar})
                     local lbl = t:FindFirstChild("TextLabel")
                     local icon = t:FindFirstChildOfClass("ImageLabel")
-                    if lbl then lbl.TextColor3 = theme.TextDim end
-                    if icon then icon.ImageColor3 = theme.TextDim end
+                    if lbl then Tween(lbl, {TextColor3 = theme.TextDim}) end
+                    if icon then Tween(icon, {ImageColor3 = theme.TextDim}) end
                 end
             end
             for _, p in pairs(pages:GetChildren()) do p.Visible = false end
@@ -985,11 +1082,29 @@ function Library:CreateWindow(options)
             -- Activate this
             activeTab = tabBtn
             page.Visible = true
-            Tween(tabBtn, {BackgroundTransparency = 0, BackgroundColor3 = theme.SidebarActive})
+            Tween(tabBtn, {BackgroundTransparency = 0, BackgroundColor3 = theme.Element}) -- Active pill
             Tween(tabLabel, {TextColor3 = theme.Text})
             local icon = tabBtn:FindFirstChildOfClass("ImageLabel")
             if icon then Tween(icon, {ImageColor3 = theme.Text}) end
         end
+        
+        tabBtn.MouseEnter:Connect(function()
+            if activeTab ~= tabBtn then
+                Tween(tabBtn, {BackgroundTransparency = 0.8, BackgroundColor3 = theme.ElementHover})
+                Tween(tabLabel, {TextColor3 = theme.Text})
+                local icon = tabBtn:FindFirstChildOfClass("ImageLabel")
+                if icon then Tween(icon, {ImageColor3 = theme.Text}) end
+            end
+        end)
+        
+        tabBtn.MouseLeave:Connect(function()
+            if activeTab ~= tabBtn then
+                Tween(tabBtn, {BackgroundTransparency = 1, BackgroundColor3 = theme.Sidebar})
+                Tween(tabLabel, {TextColor3 = theme.TextDim})
+                local icon = tabBtn:FindFirstChildOfClass("ImageLabel")
+                if icon then Tween(icon, {ImageColor3 = theme.TextDim}) end
+            end
+        end)
         
         tabBtn.MouseButton1Click:Connect(activate)
         
@@ -1048,16 +1163,21 @@ function Library:CreateWindow(options)
             })
             
             -- Container for elements
+            -- Container for elements (Grouped Box Style)
             local container = Create("Frame", {
                 Name = "Container",
                 Size = UDim2.new(1, 0, 0, 0), -- Auto height
                 AutomaticSize = Enum.AutomaticSize.Y,
                 Position = UDim2.new(0, 0, 0, 22), -- Below title
-                BackgroundTransparency = 1,
+                BackgroundColor3 = theme.Sidebar, -- Box background
+                BackgroundTransparency = 0.5, -- Subtle separation
                 Parent = section
             }, {
-                Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder})
+                Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}),
+                Create("UIPadding", {PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10)}),
+                Create("UICorner", {CornerRadius = UDim.new(0, 8)})
             })
+            Library:RegisterElement(container, "Sidebar")
             
             -- Manual resize listener removed (AutomaticSize handles it)
             
@@ -1101,22 +1221,25 @@ function Library:CreateWindow(options)
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
                 
-                -- Switch (Left of Indicator)
+                -- Switch (Left of Indicator) - WindUI Pill Style
                 local switchBg = Create("Frame", {
-                    Size = UDim2.new(0, 36, 0, 18),
-                    Position = UDim2.new(1, -56, 0.5, -9), 
+                    Size = UDim2.new(0, 40, 0, 22),
+                    Position = UDim2.new(1, -60, 0.5, -11), 
                     BackgroundColor3 = state and Library.Theme.Toggle or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
                 
                 local knob = Create("Frame", {
-                    Size = UDim2.new(0, 14, 0, 14),
-                    Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
+                    Size = UDim2.new(0, 18, 0, 18),
+                    Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9),
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                     BorderSizePixel = 0,
                     Parent = switchBg
-                }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+                    Create("UIStroke", {Color = Color3.new(0,0,0), Transparency = 0.9, Thickness = 1}) -- Subtle shadow logic
+                })
                 
                 -- Keybind Button (Left of Switch)
                 local keybindBtn = Create("TextButton", {
@@ -1148,7 +1271,7 @@ function Library:CreateWindow(options)
                         state = val
                         self.Value = val
                         Tween(switchBg, {BackgroundColor3 = val and Library.Theme.Toggle or Library.Theme.ToggleOff})
-                        Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
+                        Tween(knob, {Position = val and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)})
                         Tween(indicator, {BackgroundColor3 = val and Library.Theme.Accent or Library.Theme.ToggleOff})
                         callback(val)
                     end
@@ -1267,7 +1390,7 @@ function Library:CreateWindow(options)
                 })
                 
                 local bar = Create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 6),
+                    Size = UDim2.new(1, 0, 0, 8), -- Thicker track
                     Position = UDim2.new(0, 0, 0, 22),
                     BackgroundColor3 = theme.ToggleOff,
                     Text = "",
@@ -1281,6 +1404,19 @@ function Library:CreateWindow(options)
                     BorderSizePixel = 0,
                     Parent = bar
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+
+                -- Draggable Knob for Slider (New)
+                local sliderKnob = Create("Frame", {
+                    Size = UDim2.new(0, 14, 0, 14),
+                    Position = UDim2.new(1, -7, 0.5, -7),
+                    AnchorPoint = Vector2.new(0.5, 0.5), -- Center anchor
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Parent = fill -- Parented to fill ensures it moves with it
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+                    Create("UIStroke", {Color = Color3.new(0,0,0), Transparency = 0.8, Thickness = 1})
+                })
                 
                 Library:RegisterElement(bar, "ToggleOff")
                 Library:RegisterElement(fill, "Accent")
@@ -2000,15 +2136,15 @@ function Library:CreateWindow(options)
                         tabBtn.BackgroundTransparency = 0
                         tabBtn.TextColor3 = theme.Text
                         tabBtn.BackgroundColor3 = theme.Accent
-                        activeTab = tabPage
-                    end)
-                    
-                    if #tabs == 1 then
-                        tabBtn.BackgroundTransparency = 0
-                        tabBtn.TextColor3 = theme.Text
-                        tabBtn.BackgroundColor3 = theme.Accent
-                        tabPage.Visible = true
-                        activeTab = tabPage
+                     if t.page == activeTab then
+                    Tween(t.btn, {BackgroundTransparency = 0, BackgroundColor3 = theme.Element}) -- Active tab bg
+                    Tween(t.text, {TextColor3 = theme.Text})
+                    Tween(t.icon, {ImageColor3 = theme.Text})
+                else
+                    Tween(t.btn, {BackgroundTransparency = 1, BackgroundColor3 = theme.Sidebar})
+                    Tween(t.text, {TextColor3 = theme.TextDim})
+                    Tween(t.icon, {ImageColor3 = theme.TextDim})
+                end        activeTab = tabPage
                     end
                     
                     -- Return tab-specific section funcs
@@ -2166,6 +2302,15 @@ function Library:CreateWindow(options)
         -- AddRightTabbox - Creates a tabbox on the right column
         function TabFuncs:AddRightTabbox(name)
             return createTabbox(name, rightCol, theme, gui, Create, Tween, Library)
+        end
+        
+        -- Explicit Section Methods (User Request)
+        function TabFuncs:AddLeftSection(name)
+            return TabFuncs:CreateSection(name, "Left")
+        end
+        
+        function TabFuncs:AddRightSection(name)
+            return TabFuncs:CreateSection(name, "Right")
         end
         
         return TabFuncs
