@@ -2494,7 +2494,8 @@ function Library:CreateWindow(options)
                 local tabboxName = tabboxOptions.Name or "Tabbox"
                 
                 local tabbox = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 120),
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundColor3 = theme.Element,
                     BorderSizePixel = 0,
                     Parent = container
@@ -2515,7 +2516,8 @@ function Library:CreateWindow(options)
                 })
                 
                 local tabContent = Create("Frame", {
-                    Size = UDim2.new(1, -10, 1, -32),
+                    Size = UDim2.new(1, -10, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
                     Position = UDim2.new(0, 5, 0, 28),
                     BackgroundTransparency = 1,
                     Parent = tabbox
@@ -2538,14 +2540,15 @@ function Library:CreateWindow(options)
                         Parent = tabHeader
                     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
                     
-                    local tabPage = Create("ScrollingFrame", {
-                        Size = UDim2.new(1, 0, 1, 0),
+                    local tabPage = Create("Frame", {
+                        Size = UDim2.new(1, 0, 0, 0),
+                        AutomaticSize = Enum.AutomaticSize.Y,
                         BackgroundTransparency = 1,
-                        ScrollBarThickness = 2,
                         Visible = false,
                         Parent = tabContent
                     }, {
-                        Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder})
+                        Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}),
+                        Create("UIPadding", {PaddingBottom = UDim.new(0, 8)})
                     })
                     
                     table.insert(tabs, {btn = tabBtn, page = tabPage})
