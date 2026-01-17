@@ -1614,15 +1614,12 @@ function Library:CreateWindow(options)
                 local box = Create("TextButton", {
                     Size = UDim2.new(0, 18, 0, 18),
                     Position = UDim2.new(0, 0, 0.5, -9),
-                    BackgroundColor3 = state and theme.Accent or theme.Element,
-                    Text = state and "✓" or "",
-                    TextColor3 = Color3.fromRGB(255, 255, 255),
-                    Font = Enum.Font.GothamBold,
-                    TextSize = 12,
+                    BackgroundColor3 = theme.Element,
+                    Text = "",
                     AutoButtonColor = false,
                     Parent = check
                 }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 4)})
+                    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
                 })
                 
                 local boxStroke = Instance.new("UIStroke")
@@ -1630,12 +1627,24 @@ function Library:CreateWindow(options)
                 boxStroke.Thickness = 1
                 boxStroke.Parent = box
                 
+                -- Inner Circle (Fill)
+                local inner = Create("Frame", {
+                    Size = state and UDim2.new(0, 10, 0, 10) or UDim2.new(0, 0, 0, 0),
+                    Position = UDim2.new(0.5, 0, 0.5, 0),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    BackgroundColor3 = theme.Accent,
+                    BorderSizePixel = 0,
+                    Parent = box
+                }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+                
                 Library:RegisterElement(boxStroke, "Border", "Color")
+                Library:RegisterElement(inner, "Accent")
                 
                 table.insert(Library.Registry, {
                     Callback = function(theme)
                         local tTheme = theme or Library.Theme
-                        Tween(box, {BackgroundColor3 = state and tTheme.Accent or tTheme.Element})
+                        -- Box stays Element color
+                        box.BackgroundColor3 = tTheme.Element
                     end
                 })
                 
@@ -1656,8 +1665,8 @@ function Library:CreateWindow(options)
                     SetValue = function(self, val)
                         state = val
                         self.Value = val
-                        box.Text = val and "✓" or ""
-                        Tween(box, {BackgroundColor3 = val and theme.Accent or theme.Element})
+                        -- Animate inner circle instead of text/bg
+                        Tween(inner, {Size = val and UDim2.new(0, 10, 0, 10) or UDim2.new(0, 0, 0, 0)})
                         callback(val)
                     end
                 }
