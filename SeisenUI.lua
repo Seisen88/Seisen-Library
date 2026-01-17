@@ -1961,7 +1961,7 @@ function Library:CreateWindow(options)
                 local currentKey = default ~= "NONE" and Enum.KeyCode[default] or Enum.KeyCode.Unknown
                 
                 local keybind = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 24),
+                    Size = UDim2.new(1, 0, 0, 20),
                     BackgroundTransparency = 1,
                     Parent = container
                 })
@@ -1978,7 +1978,7 @@ function Library:CreateWindow(options)
                 })
                 
                 local keyBtn = Create("TextButton", {
-                    Size = UDim2.new(0, 60, 0, 20),
+                    Size = UDim2.new(0, 40, 0, 16),
                     AnchorPoint = Vector2.new(1, 0.5),
                     Position = UDim2.new(1, 0, 0.5, 0),
                     BackgroundColor3 = theme.Element,
