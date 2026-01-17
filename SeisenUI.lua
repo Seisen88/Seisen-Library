@@ -766,6 +766,10 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             return Library:CreateSlider(tabPage, opts)
         end
         
+        function TabPageFuncs:AddDropdown(opts)
+            return Library:CreateDropdown(tabPage, opts)
+        end
+        
         return TabPageFuncs
     end
     
