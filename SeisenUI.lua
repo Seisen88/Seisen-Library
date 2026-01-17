@@ -439,40 +439,46 @@ function Library:CreateSlider(parent, options)
     }
     
     local sliding = false
-    local lastUpdate = 0
-    local updateThread
-    
-    local function update(input)
-        -- Account for UIScale when calculating percentage
-        local scale = self.MainScale and self.MainScale.Scale or 1
-        local pct = math.clamp((input.Position.X - bar.AbsolutePosition.X) / (bar.AbsoluteSize.X * scale), 0, 1)
-        local newVal = math.floor(min + (max - min) * pct)
-        
-        -- Throttle visual updates to ~60 FPS, but callback might needed significantly less often for heavy ops
-        -- For now, we trust the debounce in SetScale, but we should also limit how often we set value visually if needed.
-        -- Actually, visual update is cheap, callback is expensive.
-        
-        if newVal ~= value then
-            sliderObj:SetValue(newVal)
-        end
-    end
     
     bar.InputBegan:Connect(function(i) 
         if i.UserInputType == Enum.UserInputType.MouseButton1 then 
-            sliding = true; 
-            update(i) 
-        end 
-    end)
-    
-    UserInputService.InputChanged:Connect(function(i) 
-        if sliding and i.UserInputType == Enum.UserInputType.MouseMovement then 
-            update(i) 
-        end 
-    end)
-    
-    UserInputService.InputEnded:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
-            sliding = false 
+            sliding = true
+            local startPos = i.Position.X
+            local startValue = value
+            local barStart = bar.AbsolutePosition.X
+            local barWidth = bar.AbsoluteSize.X
+            
+            local connection
+            connection = game:GetService("RunService").RenderStepped:Connect(function()
+                if not sliding then
+                    connection:Disconnect()
+                    return
+                end
+                
+                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
+                local delta = mouseProxy.X - startPos
+                local pct = math.clamp((barStart - bar.AbsolutePosition.X + delta) / barWidth, 0, 1)
+                local newVal = math.floor(min + (max - min) * pct)
+                
+                if newVal ~= value then
+                    value = newVal
+                    sliderObj.Value = newVal
+                    valLabel.Text = tostring(newVal)
+                    fill.Size = UDim2.new((newVal - min) / (max - min), 0, 1, 0)
+                    sliderKnob.Position = UDim2.new((newVal - min) / (max - min), 0, 0.5, 0)
+                    callback(newVal)
+                end
+            end)
+            
+            -- Disconnect on release
+            local releaseConnection
+            releaseConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    sliding = false
+                    connection:Disconnect()
+                    releaseConnection:Disconnect()
+                end
+            end)
         end 
     end)
     
