@@ -443,7 +443,9 @@ function Library:CreateSlider(parent, options)
     local updateThread
     
     local function update(input)
-        local pct = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        -- Account for UIScale when calculating percentage
+        local scale = self.MainScale and self.MainScale.Scale or 1
+        local pct = math.clamp((input.Position.X - bar.AbsolutePosition.X) / (bar.AbsoluteSize.X * scale), 0, 1)
         local newVal = math.floor(min + (max - min) * pct)
         
         -- Throttle visual updates to ~60 FPS, but callback might needed significantly less often for heavy ops
