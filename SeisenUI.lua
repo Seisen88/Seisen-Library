@@ -39,7 +39,8 @@ local Library = {
         TextMuted = Color3.fromRGB(80, 80, 90),
         Toggle = Color3.fromRGB(0, 200, 100), -- Green
         ToggleOff = Color3.fromRGB(40, 40, 45)
-    }
+    },
+    ToggleKeybind = nil -- Global toggle keybind
 }
 
 
@@ -167,6 +168,13 @@ local function MakeDraggable(handle, frame, onClick)
             end)
         end
     end)
+end
+
+-- Toggle UI visibility
+function Library:Toggle()
+    if self.ScreenGui then
+        self.ScreenGui.Enabled = not self.ScreenGui.Enabled
+    end
 end
 
 -- Helper function to create a tabbox (used by AddLeftTabbox/AddRightTabbox)
@@ -842,17 +850,18 @@ function Library:CreateWindow(options)
              newY = math.max(newY, minSize.Y)
              main.Size = UDim2.new(0, newX, 0, newY)
         end
-        end
     end)
 
     -- Toggle Keybind Feature
     if options.ToggleKeybind then
-        UserInputService.InputBegan:Connect(function(input, processed)
-            if not processed and input.KeyCode == options.ToggleKeybind then
-                gui.Enabled = not gui.Enabled
-            end
-        end)
+        Library.ToggleKeybind = options.ToggleKeybind
     end
+    
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
+            Library:Toggle()
+        end
+    end)
     
     -- Window Functions
     local WindowFuncs = {}
