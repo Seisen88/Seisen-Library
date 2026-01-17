@@ -4,7 +4,7 @@
     test
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/3ad7f0d/SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/56b3f87/SeisenUI.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
 local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
 

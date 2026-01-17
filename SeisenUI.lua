@@ -504,8 +504,8 @@ function Library:CreateWindow(options)
     -- Main Frame
     local main = Create("Frame", {
         Name = "Main",
-        Size = UDim2.new(0, 500, 0, 600), -- Taller default size (Length focus)
-        Position = UDim2.new(0.5, -250, 0.5, -300),
+        Size = UDim2.new(0, 600, 0, 600), -- Wider default size
+        Position = UDim2.new(0.5, -300, 0.5, -300),
         BackgroundColor3 = theme.Background,
         BorderSizePixel = 0,
         Parent = gui
@@ -523,7 +523,7 @@ function Library:CreateWindow(options)
     -- Sidebar
     local sidebar = Create("Frame", {
         Name = "Sidebar",
-        Size = UDim2.new(0, 130, 1, 0),
+        Size = UDim2.new(0, 150, 1, 0), -- Wider sidebar for full tab names
         BackgroundColor3 = theme.Sidebar,
         BorderSizePixel = 0,
         Parent = main
@@ -789,8 +789,8 @@ function Library:CreateWindow(options)
     -- Content Area
     local content = Create("Frame", {
         Name = "Content",
-        Size = UDim2.new(1, -130, 1, 0),
-        Position = UDim2.new(0, 130, 0, 0),
+        Size = UDim2.new(1, -150, 1, 0),
+        Position = UDim2.new(0, 150, 0, 0),
         BackgroundColor3 = theme.Content,
         BorderSizePixel = 0,
         Parent = main
