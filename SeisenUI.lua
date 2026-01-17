@@ -1309,22 +1309,35 @@ function Library:CreateWindow(options)
     resizeHandle.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             resizing = true
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            resizing = false
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(i)
-        if resizing and i.UserInputType == Enum.UserInputType.MouseMovement then
-             local newX = i.Position.X - main.AbsolutePosition.X + 5
-             local newY = i.Position.Y - main.AbsolutePosition.Y + 5
-             newX = math.max(newX, minSize.X)
-             newY = math.max(newY, minSize.Y)
-             main.Size = UDim2.new(0, newX, 0, newY)
+            local startSize = main.AbsoluteSize
+            local startPos = i.Position
+            
+            local connection
+            connection = game:GetService("RunService").RenderStepped:Connect(function()
+                if not resizing then
+                    connection:Disconnect()
+                    return
+                end
+                
+                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
+                local newX = startSize.X + (mouseProxy.X - startPos.X)
+                local newY = startSize.Y + (mouseProxy.Y - startPos.Y)
+                
+                newX = math.max(newX, minSize.X)
+                newY = math.max(newY, minSize.Y)
+                
+                main.Size = UDim2.fromOffset(newX, newY)
+            end)
+            
+            -- Disconnect on release
+            local releaseConnection
+            releaseConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    resizing = false
+                    connection:Disconnect()
+                    releaseConnection:Disconnect()
+                end
+            end)
         end
     end)
 
