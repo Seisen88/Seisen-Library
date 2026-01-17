@@ -1320,8 +1320,13 @@ function Library:CreateWindow(options)
     local firstTab = true
     local activeTab = nil
     
+    local scaleDebounce
     function WindowFuncs:SetScale(scale)
-        mainScale.Scale = scale
+        -- Debounce scale updates to prevent freezing
+        if scaleDebounce then task.cancel(scaleDebounce) end
+        scaleDebounce = task.delay(0.05, function()
+            mainScale.Scale = scale
+        end)
     end
     
     function WindowFuncs:AddSidebarSection(sectionName)
