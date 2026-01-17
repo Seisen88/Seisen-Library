@@ -1,7 +1,7 @@
 --[[
     Seisen UI Library
     Modern minimalist design with responsive layout
-    Version: 1.1.0
+    Version: 1.2.0 -- WindUI Revamp
 ]]
 
 local UserInputService = game:GetService("UserInputService")
