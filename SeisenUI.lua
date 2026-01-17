@@ -1579,7 +1579,6 @@ function Library:CreateWindow(options)
         if options.SubTitle then
              createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2) -- Safe Soft Blue
         end
-    end
     
     -- Notification Container (Top Center)
     local notificationContainer = Create("Frame", {
@@ -1598,6 +1597,64 @@ function Library:CreateWindow(options)
         }),
         Create("UIPadding", {PaddingTop = UDim.new(0, 10)})
     })
+
+    -- Restore Missing Pages and Logic
+    pages = Create("Folder", {Name = "Pages", Parent = content})
+    
+    MakeDraggable(sidebar, main)
+    MakeDraggable(header, main) -- Restrict dragging to Header (Top 50px) only
+    
+    local resizeHandle = Create("ImageLabel", {
+        Size = UDim2.new(0, 16, 0, 16),
+        Position = UDim2.new(1, -16, 1, -16),
+        BackgroundTransparency = 1,
+        ImageColor3 = theme.TextDim,
+        Parent = main,
+        ZIndex = 200
+    })
+    
+    Library:ApplyIcon(resizeHandle, "move-diagonal-2") -- Resize icon
+    Library:RegisterElement(resizeHandle, "TextDim", "ImageColor3")
+    
+    local resizing = false
+    local minSize = Vector2.new(400, 300)
+    
+    local ghostFrame = nil
+    
+    resizeHandle.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            resizing = true
+            local startSize = main.AbsoluteSize
+            local startPos = i.Position
+            
+            local connection
+            connection = game:GetService("RunService").RenderStepped:Connect(function()
+                if not resizing then
+                    connection:Disconnect()
+                    return
+                end
+                
+                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
+                local newX = startSize.X + (mouseProxy.X - startPos.X)
+                local newY = startSize.Y + (mouseProxy.Y - startPos.Y)
+                
+                newX = math.max(newX, minSize.X)
+                newY = math.max(newY, minSize.Y)
+                
+                main.Size = UDim2.fromOffset(newX, newY)
+            end)
+            
+            -- Disconnect on release
+            local releaseConnection
+            releaseConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    resizing = false
+                    connection:Disconnect()
+                    releaseConnection:Disconnect()
+                end
+            end)
+        end
+    end)
     
     function Library:Notify(notifyOpts)
         local nTitle = notifyOpts.Title or "Notification"
