@@ -26,13 +26,6 @@ HomeSection:AddLabel({ Text = "Welcome to the Seisen UI Template!" })
 HomeSection:AddLabel({ Text = "This script demonstrates every feature." })
 HomeSection:AddDivider("Controls")
 HomeSection:AddLabel({ Text = "Left Alt to toggle UI" })
-HomeSection:AddButton({
-    Name = "Unload UI",
-    Callback = function()
-        Library:Unload()
-        print("UI has been unloaded!")
-    end
-})
 
 Window:AddSidebarDivider()
 Window:AddSidebarSection("Components")
