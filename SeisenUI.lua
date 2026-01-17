@@ -595,11 +595,10 @@ function Library:CreateWindow(options)
         return btn
     end
 
-    -- Close (Red), Minimize (Yellow), Maximize/Expand (Green - Logic can be added later)
-    -- Icons: "x", "minus", "scan-line" (or generic maximize)
+    -- Close (Red), Minimize (Yellow), Maximize/Expand (Green)
     local closeBtn = createTrafficLight(Color3.fromRGB(255, 95, 87), function() gui:Destroy() end, "rbxassetid://10747384351") -- lucide 'x'
-    local minBtn = createTrafficLight(Color3.fromRGB(255, 189, 46), function() end, "rbxassetid://10747384534") -- lucide 'minus'
-    createTrafficLight(Color3.fromRGB(39, 201, 63), nil, "rbxassetid://10747384661") -- lucide 'maximize' - visual only for now
+    local minBtn = createTrafficLight(Color3.fromRGB(255, 189, 46), nil, "rbxassetid://10747384534") -- Connected later
+    local maxBtn = createTrafficLight(Color3.fromRGB(39, 201, 63), nil, "rbxassetid://10747384661") -- Connected later
 
     -- Search Bar
     local searchContainer = Create("Frame", {
@@ -765,11 +764,7 @@ function Library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
         Parent = content,
-        ZIndex = 100
     })
-
-    -- Minimize logic for traffic light
-    minBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
 
     -- Stats Widget (Minimized State)
     local widget = Create("Frame", {
@@ -781,13 +776,17 @@ function Library:CreateWindow(options)
         ZIndex = 200
     })
     
-    -- Restore Function
+    -- Toggle Window Function
     local function toggleWindow(visible)
         main.Visible = visible
         widget.Visible = not visible
     end
+    
+    -- Connect Traffic Light Buttons
+    minBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
+    maxBtn.MouseButton1Click:Connect(function() toggleWindow(true) end)
 
-    -- Make Draggable with Click to Restore
+    -- Make Widget Draggable with Click to Restore
     MakeDraggable(widget, widget, function() toggleWindow(true) end)
     
     -- Widget Logo
