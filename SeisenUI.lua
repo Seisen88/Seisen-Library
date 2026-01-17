@@ -663,7 +663,7 @@ function Library:CreateWindow(options)
     -- Forward declare pages (defined later)
     local pages
     
-    -- Content Search (filters elements inside pages, not tabs)
+    -- Content Search (filters sections inside pages - shows ENTIRE section if any content matches)
     local function contentSearch(query)
         query = query:lower()
         
@@ -672,24 +672,33 @@ function Library:CreateWindow(options)
         -- Search through all page content
         for _, pageFrame in ipairs(pages:GetChildren()) do
             if pageFrame:IsA("ScrollingFrame") then
-                -- Go through sections and elements
-                for _, section in ipairs(pageFrame:GetDescendants()) do
-                    -- Only filter section frames (which contain elements)
-                    if section:IsA("Frame") and section.Name ~= "Left" and section.Name ~= "Right" then
-                        if query == "" then
-                            section.Visible = true
-                        else
-                            -- Check if any child text contains the query
-                            local matches = false
-                            for _, child in ipairs(section:GetDescendants()) do
-                                if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
-                                    if child.Text:lower():find(query, 1, true) then
-                                        matches = true
-                                        break
+                -- Find Left and Right columns
+                local leftCol = pageFrame:FindFirstChild("Left")
+                local rightCol = pageFrame:FindFirstChild("Right")
+                
+                -- Filter sections in both columns
+                for _, col in ipairs({leftCol, rightCol}) do
+                    if col then
+                        for _, section in ipairs(col:GetChildren()) do
+                            -- Only filter actual section frames (not layout constraints)
+                            if section:IsA("Frame") then
+                                if query == "" then
+                                    section.Visible = true
+                                else
+                                    -- Check if ANY text in this section matches
+                                    local matches = false
+                                    for _, child in ipairs(section:GetDescendants()) do
+                                        if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
+                                            if child.Text:lower():find(query, 1, true) then
+                                                matches = true
+                                                break
+                                            end
+                                        end
                                     end
+                                    -- Show or hide the ENTIRE section
+                                    section.Visible = matches
                                 end
                             end
-                            section.Visible = matches
                         end
                     end
                 end
