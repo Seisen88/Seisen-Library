@@ -111,6 +111,41 @@ function Library:GetIcon(iconName)
     return nil
 end
 
+function Library:GetIcon(iconName)
+    if not iconName then return nil end
+    
+    -- Try Lucide
+    if self.Icons then
+        local success, icon = pcall(function()
+            return self.Icons.GetAsset(iconName)
+        end)
+        if success and icon then
+            return icon
+        end
+    end
+    
+    -- Fallback: Return original string if it looks like an asset ID
+    if type(iconName) == "string" or type(iconName) == "number" then
+        return iconName
+    end
+    
+    return nil
+end
+
+function Library:ApplyIcon(element, iconName)
+    local iconData = self:GetIcon(iconName)
+    
+    if type(iconData) == "table" then
+        element.Image = iconData.Url
+        element.ImageRectOffset = iconData.ImageRectOffset or Vector2.zero
+        element.ImageRectSize = iconData.ImageRectSize or Vector2.zero
+    else
+        element.Image = iconData or "rbxassetid://7733960981"
+        element.ImageRectOffset = Vector2.zero
+        element.ImageRectSize = Vector2.zero
+    end
+end
+
 -- Utilities
 local function Create(class, props, children)
     local obj = Instance.new(class)
@@ -638,10 +673,11 @@ function Library:CreateWindow(options)
             Size = UDim2.new(0, 14, 0, 14),
             Position = UDim2.new(0.5, -7, 0.5, -7),
             BackgroundTransparency = 1,
-            Image = Library:GetIcon(icon) or "",
             ImageColor3 = theme.Text,
             Parent = btn
         })
+        
+        Library:ApplyIcon(ico, icon)
         
         btn.MouseEnter:Connect(function() Tween(btn, {BackgroundColor3 = theme.Accent}) end)
         btn.MouseLeave:Connect(function() Tween(btn, {BackgroundColor3 = theme.Sidebar}) end)
@@ -825,7 +861,7 @@ function Library:CreateWindow(options)
         end
         
         -- Get icon data (supports Lucide names or Roblox asset IDs)
-        local iconData = Library:GetIcon(tabIconName)
+
         
         -- Tab Button
         local tabBtn = Create("TextButton", {
@@ -847,15 +883,9 @@ function Library:CreateWindow(options)
             Parent = tabBtn
         }
         
-        if iconData then
-            iconProps.Image = iconData.Url
-            iconProps.ImageRectOffset = iconData.ImageRectOffset or Vector2.zero
-            iconProps.ImageRectSize = iconData.ImageRectSize or Vector2.zero
-        else
-            iconProps.Image = "rbxassetid://7733960981" -- Default fallback
-        end
+        Library:ApplyIcon(Create("ImageLabel", iconProps), tabIconName)
         
-        Create("ImageLabel", iconProps)
+
         
         -- Tab Name
         local tabLabel = Create("TextLabel", {
