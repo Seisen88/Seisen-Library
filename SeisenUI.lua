@@ -190,10 +190,11 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         Create("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)})
     })
     
-    local tabboxStroke = Instance.new("UIStroke")
-    tabboxStroke.Color = theme.Border
-    tabboxStroke.Thickness = 1
-    tabboxStroke.Parent = tabbox
+    -- Removed outer stroke as inner container has styling
+    -- local tabboxStroke = Instance.new("UIStroke")
+    -- tabboxStroke.Color = theme.Border
+    -- tabboxStroke.Thickness = 1
+    -- tabboxStroke.Parent = tabbox
     
     Library:RegisterElement(tabbox, "Element")
     Library:RegisterElement(tabboxStroke, "Border", "Color")
@@ -473,7 +474,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
             end
         end
-        tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 50))
+        tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 60)) -- Increased buffer for padding
     end
     
     task.defer(updateTabboxSize)
