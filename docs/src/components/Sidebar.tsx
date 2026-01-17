@@ -65,6 +65,23 @@ const navigation: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Load theme on mount
+  useState(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("theme") as "dark" | "light" || "dark";
+      setTheme(savedTheme);
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    }
+  });
+
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+  };
 
   const filteredNavigation = navigation.map((section) => ({
     ...section,
@@ -74,14 +91,11 @@ export function Sidebar() {
   })).filter((section) => section.items.length > 0);
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#111111] border-r border-[#2d2d32] flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-[var(--bg-secondary)] border-r border-[var(--border)] flex flex-col z-50 transition-colors duration-200">
       {/* Logo */}
-      <div className="p-4 border-b border-[#2d2d32]">
+      <div className="p-4 pl-6 border-b border-[var(--border)]">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#00c864] flex items-center justify-center">
-            <span className="text-black font-bold text-lg">S</span>
-          </div>
-          <span className="font-semibold text-lg text-white">Seisen UI</span>
+          <span className="font-bold text-xl text-[var(--text-primary)]">SeisenUI</span>
         </Link>
       </div>
 
@@ -93,10 +107,10 @@ export function Sidebar() {
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 pl-9 bg-[#1a1a1e] border border-[#2d2d32] rounded-lg text-sm text-white placeholder-[#666666] focus:outline-none focus:border-[#00c864] transition-colors"
+            className="w-full px-3 py-2 pl-9 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
           />
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -112,10 +126,10 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2">
+      <nav className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin">
         {filteredNavigation.map((section) => (
-          <div key={section.title} className="mb-4">
-            <h3 className="px-3 mb-1 text-xs font-semibold text-[#666666] uppercase tracking-wider">
+          <div key={section.title} className="mb-6">
+            <h3 className="px-3 mb-2 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               {section.title}
             </h3>
             <ul className="space-y-0.5">
@@ -125,10 +139,10 @@ export function Sidebar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      className={`block px-3 py-1.5 rounded-md text-sm transition-all duration-200 ${
                         isActive
-                          ? "bg-[#00c864]/10 text-[#00c864] border-l-2 border-[#00c864]"
-                          : "text-[#a0a0a0] hover:text-white hover:bg-[#1a1a1e]"
+                          ? "bg-[var(--accent)]/10 text-[var(--accent)] font-medium"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
                       }`}
                     >
                       {item.title}
@@ -142,12 +156,13 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-[#2d2d32]">
+      <div className="p-4 border-t border-[var(--border)] flex items-center justify-between">
         <a
           href="https://github.com/Ken-884/Seisen-Library"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm text-[#666666] hover:text-white transition-colors"
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-2 rounded-md hover:bg-[var(--bg-tertiary)]"
+          title="GitHub"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path
@@ -156,8 +171,35 @@ export function Sidebar() {
               clipRule="evenodd"
             />
           </svg>
-          GitHub
         </a>
+
+        <button
+          onClick={toggleTheme}
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-2 rounded-md hover:bg-[var(--bg-tertiary)]"
+          title="Toggle Theme"
+        >
+          {theme === "dark" ? (
+             /* Sun Icon for Dark Mode */
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+          ) : (
+            /* Moon Icon for Light Mode */
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+            </svg>
+          )}
+        </button>
       </div>
     </aside>
   );

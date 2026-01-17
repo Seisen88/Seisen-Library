@@ -13,6 +13,19 @@
   --code-bg: #161618;
 }
 
+[data-theme='light'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f4f5;
+  --bg-tertiary: #e4e4e7;
+  --accent: #00a050; 
+  --accent-hover: #008040;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --border: #e4e4e7;
+  --code-bg: #f4f4f5;
+}
+
 * {
   box-sizing: border-box;
 }
