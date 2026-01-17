@@ -199,7 +199,6 @@ function Library:CreateTooltipFrame()
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextWrapped = true,
-        AutomaticSize = Enum.AutomaticSize.XY,
         Parent = TooltipFrame
     })
     
