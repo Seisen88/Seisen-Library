@@ -2136,16 +2136,8 @@ function Library:CreateWindow(options)
                         tabBtn.BackgroundTransparency = 0
                         tabBtn.TextColor3 = theme.Text
                         tabBtn.BackgroundColor3 = theme.Accent
-                     if t.page == activeTab then
-                    Tween(t.btn, {BackgroundTransparency = 0, BackgroundColor3 = theme.Element}) -- Active tab bg
-                    Tween(t.text, {TextColor3 = theme.Text})
-                    Tween(t.icon, {ImageColor3 = theme.Text})
-                else
-                    Tween(t.btn, {BackgroundTransparency = 1, BackgroundColor3 = theme.Sidebar})
-                    Tween(t.text, {TextColor3 = theme.TextDim})
-                    Tween(t.icon, {ImageColor3 = theme.TextDim})
-                end        activeTab = tabPage
-                    end
+                        activeTab = tabPage
+                    end)
                     
                     -- Return tab-specific section funcs
                     local TabPageFuncs = {}
