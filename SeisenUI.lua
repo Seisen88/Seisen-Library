@@ -783,6 +783,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     updateTabboxSize = function()
         if updateThread then task.cancel(updateThread) end
         updateThread = task.defer(function()
+            task.wait() -- Wait one frame for layout to update
             local height = 0
             if activeTab then
                 local layout = activeTab:FindFirstChildOfClass("UIListLayout")
