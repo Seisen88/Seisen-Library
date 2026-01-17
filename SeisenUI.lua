@@ -215,9 +215,13 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     local tabContent = Create("Frame", {
         Size = UDim2.new(1, 0, 1, -30),
         Position = UDim2.new(0, 0, 0, 28),
-        BackgroundTransparency = 1,
+        BackgroundColor3 = theme.Sidebar,
+        BackgroundTransparency = 0.5,
         ClipsDescendants = true,
         Parent = tabbox
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)})
     })
     
     local TabboxFuncs = {}
