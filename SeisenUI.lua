@@ -73,6 +73,7 @@ function Library:CloseAllDropdowns()
             dropdown.Close()
         end
     end
+    self.OpenDropdowns = {}
 end
 
 -- Get Lucide icon by name
@@ -844,12 +845,15 @@ function Library:CreateDropdown(parent, options)
     populate()
     
     selectBtn.MouseButton1Click:Connect(function()
+        if not isOpen then
+            self:CloseAllDropdowns()
+        end
+        
         isOpen = not isOpen
         list.Visible = isOpen
         Tween(arrow, {Rotation = isOpen and 180 or 0})
         
         if isOpen then
-            self:CloseAllDropdowns()
             table.insert(self.OpenDropdowns, {Close = function() 
                 isOpen = false
                 list.Visible = false
