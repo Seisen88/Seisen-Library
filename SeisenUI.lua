@@ -187,7 +187,7 @@ function Library:CreateTooltipFrame()
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
         Create("UIStroke", {Color = Color3.fromRGB(60, 60, 65), Thickness = 1}),
-        Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)})
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)})
     })
     
     TooltipLabel = Create("TextLabel", {
@@ -198,6 +198,7 @@ function Library:CreateTooltipFrame()
         Font = Enum.Font.Gotham,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
         TextWrapped = true,
         Parent = TooltipFrame
     })
@@ -218,9 +219,10 @@ function Library:ShowTooltip(text)
     TooltipLabel.Text = text
     
     local TextService = game:GetService("TextService")
-    local size = TextService:GetTextSize(text, 11, Enum.Font.Gotham, Vector2.new(300, 1000))
+    -- Constrain to 280px (300 max - 20 padding) to account for wrapping
+    local size = TextService:GetTextSize(text, 11, Enum.Font.Gotham, Vector2.new(280, 1000))
     
-    TooltipFrame.Size = UDim2.new(0, math.min(size.X + 20, 300), 0, size.Y + 14)
+    TooltipFrame.Size = UDim2.new(0, math.min(size.X + 20, 300), 0, size.Y + 16)
     TooltipFrame.Visible = true
     
     local mousePos = UserInputService:GetMouseLocation()
