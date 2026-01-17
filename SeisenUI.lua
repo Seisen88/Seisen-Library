@@ -157,12 +157,16 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         BackgroundTransparency = 0.5,
         Parent = parent
     }, {
-        Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-        Create("UIStroke", {Color = theme.Border, Thickness = 1}),
         Create("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)})
     })
     
+    local tabboxStroke = Instance.new("UIStroke")
+    tabboxStroke.Color = theme.Border
+    tabboxStroke.Thickness = 1
+    tabboxStroke.Parent = tabbox
+    
     Library:RegisterElement(tabbox, "Element")
+    Library:RegisterElement(tabboxStroke, "Border", "Color")
     
     -- Tab Header (buttons)
     local tabHeader = Create("Frame", {
@@ -476,11 +480,16 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 0.5,
         Parent = sidebar
     }, {
-        Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-        Create("UIStroke", {Color = theme.Border, Thickness = 1})
+        Create("UICorner", {CornerRadius = UDim.new(0, 6)})
     })
     
+    local profileStroke = Instance.new("UIStroke")
+    profileStroke.Color = theme.Border
+    profileStroke.Thickness = 1
+    profileStroke.Parent = profileSection
+    
     self:RegisterElement(profileSection, "Element")
+    self:RegisterElement(profileStroke, "Border", "Color")
     
     -- Player Avatar
     local avatarImage = Create("ImageLabel", {
@@ -739,12 +748,18 @@ function Library:CreateWindow(options)
                 BackgroundTransparency = 0.5,
                 Parent = parent
             }, {
-                Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-                Create("UIStroke", {Color = theme.Border, Thickness = 1}),
-                Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8)})
+                Create("UICorner", {CornerRadius = UDim.new(0, 6)})
             })
             
+            local sectionStroke = Instance.new("UIStroke")
+            sectionStroke.Color = theme.Border
+            sectionStroke.Thickness = 1
+            sectionStroke.Parent = section
+            
+            Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), Parent = section})
+            
             Library:RegisterElement(section, "Element")
+            Library:RegisterElement(sectionStroke, "Border", "Color")
             
             -- Section Title
             Create("TextLabel", {
@@ -910,12 +925,17 @@ function Library:CreateWindow(options)
                     AutoButtonColor = false,
                     Parent = container
                 }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = Library.Theme.Border, Thickness = 1})
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)})
                 })
+                
+                local btnStroke = Instance.new("UIStroke")
+                btnStroke.Color = Library.Theme.Border
+                btnStroke.Thickness = 1
+                btnStroke.Parent = btn
                 
                 -- Register for theme updates
                 Library:RegisterElement(btn, "Element")
+                Library:RegisterElement(btnStroke, "Border", "Color")
                 Library:RegisterElement(btn, "Text", "TextColor3")
                 
                 btn.MouseEnter:Connect(function()
@@ -1042,9 +1062,16 @@ function Library:CreateWindow(options)
                     AutoButtonColor = false,
                     Parent = drop
                 }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)})
                 })
+                
+                local dropStroke = Instance.new("UIStroke")
+                dropStroke.Color = theme.Border
+                dropStroke.Thickness = 1
+                dropStroke.Parent = selectBtn
+                
+                Library:RegisterElement(selectBtn, "Element")
+                Library:RegisterElement(dropStroke, "Border", "Color")
                 
                 local selectedLabel = Create("TextLabel", {
                     Size = UDim2.new(1, -25, 1, 0),
@@ -1252,9 +1279,16 @@ function Library:CreateWindow(options)
                     Parent = box
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1}),
                     Create("UIPadding", {PaddingLeft = UDim.new(0, 8)})
                 })
+                
+                local inputStroke = Instance.new("UIStroke")
+                inputStroke.Color = theme.Border
+                inputStroke.Thickness = 1
+                inputStroke.Parent = input
+                
+                Library:RegisterElement(input, "Element")
+                Library:RegisterElement(inputStroke, "Border", "Color")
                 
                 local inputObj = {
                     Value = default,
@@ -1325,9 +1359,15 @@ function Library:CreateWindow(options)
                     AutoButtonColor = false,
                     Parent = check
                 }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)})
                 })
+                
+                local boxStroke = Instance.new("UIStroke")
+                boxStroke.Color = theme.Border
+                boxStroke.Thickness = 1
+                boxStroke.Parent = box
+                
+                Library:RegisterElement(boxStroke, "Border", "Color")
                 
                 Create("TextLabel", {
                     Size = UDim2.new(1, -30, 1, 0),
@@ -1461,9 +1501,15 @@ function Library:CreateWindow(options)
                     AutoButtonColor = false,
                     Parent = picker
                 }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)})
                 })
+                
+                local colorBoxStroke = Instance.new("UIStroke")
+                colorBoxStroke.Color = theme.Border
+                colorBoxStroke.Thickness = 1
+                colorBoxStroke.Parent = colorBox
+                
+                Library:RegisterElement(colorBoxStroke, "Border", "Color")
                 
                 -- Simple color popup
                 local popup = Create("Frame", {
