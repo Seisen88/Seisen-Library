@@ -443,8 +443,19 @@ function Library:CreateSlider(parent, options)
     bar.InputBegan:Connect(function(i) 
         if i.UserInputType == Enum.UserInputType.MouseButton1 then 
             sliding = true
+            
+            -- Immediately set value based on click position
+            local clickPct = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+            local clickVal = math.floor(min + (max - min) * clickPct)
+            value = clickVal
+            sliderObj.Value = clickVal
+            valLabel.Text = tostring(clickVal)
+            fill.Size = UDim2.new((clickVal - min) / (max - min), 0, 1, 0)
+            sliderKnob.Position = UDim2.new((clickVal - min) / (max - min), 0, 0.5, 0)
+            callback(clickVal)
+            
             local startPos = i.Position.X
-            local startValue = value
+            local startValue = clickVal
             
             local connection
             connection = game:GetService("RunService").RenderStepped:Connect(function()

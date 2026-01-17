@@ -241,7 +241,7 @@ SaveManager:BuildConfigSection(SettingsTab)
 local UISettings = SettingsTab:AddRightSection("UI Settings")
 UISettings:AddSlider({
     Name = "UI Scale",
-    Min = 50,
+    Min = 90,
     Max = 200,
     Default = 100,
     Callback = function(Value)
