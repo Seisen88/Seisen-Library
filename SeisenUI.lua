@@ -170,6 +170,7 @@ end
 local TooltipFrame = nil
 local TooltipLabel = nil
 local TooltipConnection = nil
+Library.TooltipThread = nil
 
 function Library:CreateTooltipFrame()
     if not self.ScreenGui then return end
@@ -228,6 +229,11 @@ function Library:ShowTooltip(text)
 end
 
 function Library:HideTooltip()
+    if self.TooltipThread then
+        task.cancel(self.TooltipThread)
+        self.TooltipThread = nil
+    end
+    
     if TooltipFrame then
         TooltipFrame.Visible = false
     end
@@ -280,9 +286,15 @@ function Library:ApplyCommonProperties(element, options, elementObj)
     if tooltip or disabledTooltip then
         element.MouseEnter:Connect(function()
             local currentTooltip = elementObj._disabled and elementObj._disabledTooltip or elementObj._tooltip
-            if currentTooltip then
+            if not currentTooltip then return end
+            
+            -- Cancel any pending tooltip
+            if Library.TooltipThread then task.cancel(Library.TooltipThread) end
+            
+            -- Delay before showing (1.5 seconds)
+            Library.TooltipThread = task.delay(1.5, function()
                 Library:ShowTooltip(currentTooltip)
-            end
+            end)
         end)
         
         element.MouseLeave:Connect(function()
