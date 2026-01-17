@@ -658,6 +658,14 @@ function Library:Toggle()
     end
 end
 
+-- Unload/Destroy UI
+function Library:Unload()
+    if self.ScreenGui then
+        self.ScreenGui:Destroy()
+        self.ScreenGui = nil
+    end
+end
+
 -- Helper function to create a tabbox (used by AddLeftTabbox/AddRightTabbox)
 local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     local tabbox = Create("Frame", {
@@ -953,7 +961,7 @@ function Library:CreateWindow(options)
     end
 
     -- Close (Red), Minimize (Yellow), Maximize/Expand (Green)
-    local closeBtn = createTrafficLight(Color3.fromRGB(255, 95, 87), function() gui:Destroy() end, "rbxassetid://10747384351") -- lucide 'x'
+    local closeBtn = createTrafficLight(Color3.fromRGB(255, 95, 87), function() Library:Unload() end, "rbxassetid://10747384351") -- lucide 'x'
     local minBtn = createTrafficLight(Color3.fromRGB(255, 189, 46), nil, "rbxassetid://10747384534") -- Connected later
     local maxBtn = createTrafficLight(Color3.fromRGB(39, 201, 63), nil, "rbxassetid://10747384661") -- Connected later
 

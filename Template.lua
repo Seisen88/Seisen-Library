@@ -25,7 +25,14 @@ local HomeSection = HomeTab:AddSection("Information", "Left")
 HomeSection:AddLabel({ Text = "Welcome to the Seisen UI Template!" })
 HomeSection:AddLabel({ Text = "This script demonstrates every feature." })
 HomeSection:AddDivider("Controls")
-HomeSection:AddLabel({ Text = "Right Shift to toggle UI" })
+HomeSection:AddLabel({ Text = "Left Alt to toggle UI" })
+HomeSection:AddButton({
+    Name = "Unload UI",
+    Callback = function()
+        Library:Unload()
+        print("UI has been unloaded!")
+    end
+})
 
 Window:AddSidebarDivider()
 Window:AddSidebarSection("Components")
@@ -242,7 +249,7 @@ local UISettings = SettingsTab:AddRightSection("UI Settings")
 UISettings:AddSlider({
     Name = "UI Scale",
     Min = 90,
-    Max = 200,
+    Max = 120,
     Default = 100,
     Callback = function(Value)
         Window:SetScale(Value / 100)
