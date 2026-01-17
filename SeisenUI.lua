@@ -1446,6 +1446,10 @@ function Library:CreateWindow(options)
         widget.Visible = not visible
     end
     
+    -- Store references for keybind access
+    Library.MainWindow = main
+    Library.Widget = widget
+    
     -- Maximize/Restore Toggle
     local isMaximized = false
     local normalSize = UDim2.new(0, 600, 0, 500)
@@ -1815,10 +1819,14 @@ function Library:CreateWindow(options)
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
             -- Toggle between main window and widget (same as green button)
-            if main.Visible then
-                toggleWindow(false) -- Minimize to widget
-            else
-                toggleWindow(true) -- Restore from widget
+            if Library.MainWindow and Library.Widget then
+                if Library.MainWindow.Visible then
+                    Library.MainWindow.Visible = false
+                    Library.Widget.Visible = true
+                else
+                    Library.MainWindow.Visible = true
+                    Library.Widget.Visible = false
+                end
             end
         end
     end)
