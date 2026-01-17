@@ -1,13 +1,15 @@
 local Repo = "https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/"
-local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua?v=" .. tostring(math.random())))()
+local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua?v=" .. tostring(os.time()) .. "_" .. math.random(1000,9999)))()
 local ThemeManager = loadstring(game:HttpGet(Repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(Repo .. "addons/SaveManager.lua"))()
 
 local Window = Library:CreateWindow({
-    Name = "Seisen UI Template",
+    Name = "SeisenUI",
     Icon = "rbxassetid://125926861378074", -- Example Asset ID (or use Lucide "home")
     Theme = Library.Theme, -- Optional: Use default theme
-    ToggleKeybind = Enum.KeyCode.LeftAlt
+    ToggleKeybind = Enum.KeyCode.LeftAlt,
+    Version = "v1.6.41",      -- New Feature: Yellow Pill
+    SubTitle = "UI Library"   -- New Feature: Green Pill
 })
 
 -- Sidebar Additions
@@ -37,7 +39,13 @@ ToggleBox:AddToggle({
     Flag = "Toggle1",
     Callback = function(Value)
         print("Toggle 1:", Value)
-    end
+        Window:Notify({
+            Title = "Toggle Updated",
+            Content = "Standard Toggle is now " .. tostring(Value),
+            Duration = 2
+        })
+    end,
+    Tooltip = "This is a standard toggle with a tooltip!"
 })
 
 ToggleBox:AddToggle({
@@ -65,7 +73,8 @@ ToggleBox:AddButton({
     Name = "Simple Button",
     Callback = function()
         print("Button Clicked")
-    end
+    end,
+    Tooltip = "This button also has a tooltip"
 })
 
 ToggleBox:AddButton({
@@ -73,6 +82,17 @@ ToggleBox:AddButton({
     Callback = function()
         -- Tooltip implementation example if needed
         print("Button 2 Clicked")
+    end
+})
+
+ToggleBox:AddButton({
+    Name = "Trigger Notification",
+    Callback = function()
+        Window:Notify({
+            Title = "Test Notification",
+            Content = "This is a test notification with a longer description to see how it wraps.",
+            Duration = 5
+        })
     end
 })
 
@@ -123,6 +143,12 @@ InputBox:AddDropdown({
     Flag = "Drop1",
     Callback = function(Value)
         print("Dropdown:", Value)
+        Window:Notify({
+            Title = "Selection Changed",
+            Content = "You selected: " .. tostring(Value),
+            Duration = 3,
+            Image = "rbxassetid://10723415903" -- List icon
+        })
     end
 })
 

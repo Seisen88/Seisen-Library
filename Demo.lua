@@ -4,9 +4,9 @@
     test
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/SeisenUI.lua?v="..os.time()))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
-local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/SeisenUI.lua?v="..os.time()))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
+local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
 
 -- Initialize addons
 SaveManager:SetLibrary(Library)
