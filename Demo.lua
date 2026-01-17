@@ -265,12 +265,25 @@ UtilSection:AddButton({
 
 UtilSection:AddDivider()
 
+UtilSection:AddSlider({
+    Name = "Scale (%)",
+    Min = 50,
+    Max = 200,
+    Default = 100,
+    Callback = function(val)
+        Window:SetScale(val/100)
+    end
+})
+
 UtilSection:AddButton({
     Name = "Unload UI",
     Callback = function()
         Library:CloseAllDropdowns()
-        game.CoreGui.SeisenUI:Destroy()
+        -- Handle Custom Cursor cleanup too if needed, or SetCustomCursor(false)
+        Library:SetCustomCursor(false)
+        if Library.ScreenGui then Library.ScreenGui:Destroy() end
     end
 })
 
 print("[Seisen Demo] UI Loaded with all elements!")
+Library:SetCustomCursor(true)

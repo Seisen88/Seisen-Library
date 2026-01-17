@@ -23,6 +23,7 @@ local Library = {
     Registry = {}, -- For live theme updates
     OpenDropdowns = {}, -- Track open dropdowns for click-away
     ScreenGui = nil, -- Reference to main GUI
+    CustomCursor = nil,
     Icons = IconsLoaded and Icons or nil, -- Lucide icons module
     Theme = {
         Background = Color3.fromRGB(30, 30, 35),
@@ -41,6 +42,45 @@ local Library = {
         ToggleOff = Color3.fromRGB(65, 65, 78)
     }
 }
+
+function Library:SetCustomCursor(enabled, imageId)
+    -- Clean up existing cursor
+    if self.CustomCursor then
+        self.CustomCursor:Destroy()
+        self.CustomCursor = nil
+    end
+    
+    if not enabled then
+        UserInputService.MouseIconEnabled = true
+        return
+    end
+    
+    -- Create new cursor
+    local cursor = Instance.new("ImageLabel")
+    cursor.Name = "CustomCursor"
+    cursor.Size = UDim2.fromOffset(24, 24)
+    cursor.BackgroundTransparency = 1
+    cursor.Image = imageId or "rbxassetid://13475069273" -- Smooth white cursor
+    cursor.ZIndex = 10000
+    
+    -- Parent to ScreenGui if exists, otherwise wait? 
+    -- Assuming SetCustomCursor is called after CreateWindow, or ScreenGui is set
+    if self.ScreenGui then
+        cursor.Parent = self.ScreenGui
+    else
+        warn("Library:SetCustomCursor called before CreateWindow or ScreenGui not found.")
+        return
+    end
+    
+    self.CustomCursor = cursor
+    UserInputService.MouseIconEnabled = false
+    
+    RunService.RenderStepped:Connect(function()
+        if not cursor.Parent then UserInputService.MouseIconEnabled = true return end
+        local mouse = UserInputService:GetMouseLocation()
+        cursor.Position = UDim2.fromOffset(mouse.X, mouse.Y)
+    end)
+end
 
 -- Registry functions for live theme updates
 function Library:RegisterElement(element, themeProperty, targetProperty)
@@ -474,6 +514,10 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
     
+    local mainScale = Instance.new("UIScale")
+    mainScale.Parent = main
+    self.MainScale = mainScale
+    
     -- Register main frame for theme updates
     self:RegisterElement(main, "Background")
     
@@ -635,10 +679,47 @@ function Library:CreateWindow(options)
     
     MakeDraggable(sidebar, main)
     
+    -- Resize Handle
+    local resizeHandle = Create("Frame", {
+        Size = UDim2.new(0, 16, 0, 16),
+        Position = UDim2.new(1, -16, 1, -16),
+        BackgroundTransparency = 1,
+        Parent = main,
+        ZIndex = 200
+    })
+    
+    Create("TextLabel", {
+        Text = "◢",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = theme.TextDim,
+        TextSize = 14,
+        Parent = resizeHandle
+    })
+    
+    local resizing = false
+    local minSize = Vector2.new(550, 350)
+    
+    resizeHandle.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = true end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = false end end)
+    UserInputService.InputChanged:Connect(function(i)
+        if resizing and i.UserInputType == Enum.UserInputType.MouseMovement then
+             local newX = i.Position.X - main.AbsolutePosition.X + 5
+             local newY = i.Position.Y - main.AbsolutePosition.Y + 5
+             newX = math.max(newX, minSize.X)
+             newY = math.max(newY, minSize.Y)
+             main.Size = UDim2.new(0, newX, 0, newY)
+        end
+    end)
+    
     -- Window Functions
     local WindowFuncs = {}
     local firstTab = true
     local activeTab = nil
+    
+    function WindowFuncs:SetScale(scale)
+        mainScale.Scale = scale
+    end
     
     function WindowFuncs:CreateTab(tabOptions, iconArg)
         -- Support both: CreateTab({Name = "x", Icon = "y"}) and AddTab("x", "y")
