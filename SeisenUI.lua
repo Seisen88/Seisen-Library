@@ -184,17 +184,17 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         Name = name or "Tabbox",
         Size = UDim2.new(1, 0, 0, 150),
         BackgroundColor3 = theme.Element,
-        BackgroundTransparency = 1,
+        BackgroundTransparency = 0.5,
         Parent = parent
     }, {
-        Create("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)})
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)}),
+        Create("UICorner", {CornerRadius = UDim.new(0, 6)})
     })
     
-    -- Removed outer stroke as inner container has styling
-    -- local tabboxStroke = Instance.new("UIStroke")
-    -- tabboxStroke.Color = theme.Border
-    -- tabboxStroke.Thickness = 1
-    -- tabboxStroke.Parent = tabbox
+    local tabboxStroke = Instance.new("UIStroke")
+    tabboxStroke.Color = theme.Border
+    tabboxStroke.Thickness = 1
+    tabboxStroke.Parent = tabbox
     
     Library:RegisterElement(tabbox, "Element")
     Library:RegisterElement(tabboxStroke, "Border", "Color")
@@ -222,7 +222,6 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         Parent = tabbox
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-        Create("UIStroke", {Color = theme.Border, Thickness = 1, Transparency = 0.5}),
         Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)})
     })
     
