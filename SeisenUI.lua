@@ -1034,14 +1034,16 @@ function Library:CreateWindow(options)
         Library:RegisterElement(line, "Border")
     end
 
-    function WindowFuncs:CreateTab(tabOptions, iconArg)
-        -- Support both: CreateTab({Name = "x", Icon = "y"}) and AddTab("x", "y")
-        local tabName, tabIconName
+    function WindowFuncs:CreateTab(tabOptions, subtitleArg, iconArg)
+        -- Support: AddTab("Name", "Subtitle", "icon") or AddTab({Name="x", Subtitle="y", Icon="z"})
+        local tabName, tabSubtitle, tabIconName
         if type(tabOptions) == "string" then
             tabName = tabOptions
+            tabSubtitle = subtitleArg or tabOptions -- Default subtitle to tab name
             tabIconName = iconArg or "home"
         else
             tabName = tabOptions.Name or "Tab"
+            tabSubtitle = tabOptions.Subtitle or tabName
             tabIconName = tabOptions.Icon or "home"
         end
         
@@ -1154,7 +1156,7 @@ function Library:CreateWindow(options)
             -- Activate this
             activeTab = tabBtn
             page.Visible = true
-            breadcrumb.Text = "/ " .. tabName -- Update breadcrumb
+            breadcrumb.Text = "/ " .. tabSubtitle -- Update breadcrumb with subtitle
             Tween(tabBtn, {BackgroundTransparency = 0, BackgroundColor3 = theme.Element}) -- Active pill
             Tween(tabLabel, {TextColor3 = theme.Text})
             local icon = tabBtn:FindFirstChildOfClass("ImageLabel")

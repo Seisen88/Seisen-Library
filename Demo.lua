@@ -4,7 +4,7 @@
     test
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/a39467d/SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/e94877d/SeisenUI.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
 local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
 
@@ -25,12 +25,12 @@ local Window = Library:CreateWindow({
 -- MAIN TAB - All Basic Elements
 --============================================================--
 Window:AddSidebarSection("General")
-local MainTab = Window:AddTab("Home", "User")
+local MainTab = Window:AddTab("Home", "General Features", "home")
 
 Window:AddSidebarDivider()
 Window:AddSidebarSection("Elements")
-local ElementsTab = Window:AddTab("UI Showcase", "monitor")
-local ConfigTab = Window:AddTab("Settings", "settings")
+local ElementsTab = Window:AddTab("UI Showcase", "Element Demos", "monitor")
+local ConfigTab = Window:AddTab("Settings", "Configuration", "settings")
 
 -- Left Section: Toggles & Buttons
 local ToggleSection = MainTab:AddSection("Toggles & Buttons", "Left")
