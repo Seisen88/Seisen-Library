@@ -1530,7 +1530,7 @@ function Library:CreateWindow(options)
     -- Breadcrumb (Current Tab Subtitle)
     local breadcrumb = Create("TextLabel", {
         Size = UDim2.new(0, 300, 0, 40),
-        Position = UDim2.new(0, 175, 0, 5),
+        Position = (options.Version or options.SubTitle) and UDim2.new(0, 240, 0, 5) or UDim2.new(0, 175, 0, 5),
         BackgroundTransparency = 1,
         Text = "/ Home",
         TextColor3 = theme.TextMuted,
@@ -1542,7 +1542,51 @@ function Library:CreateWindow(options)
     
     self:RegisterElement(breadcrumb, "TextDim", "TextColor3")
     
-    -- Pages Container (assigns to forward-declared variable)
+    -- Badges (Version / SubTitle) - Replaces Title if present
+    if options.Version or options.SubTitle then
+        titleLabel.Visible = false
+        
+        local badgeContainer = Create("Frame", {
+            Name = "BadgeContainer",
+            Size = UDim2.new(0, 300, 1, 0),
+            Position = UDim2.new(0, 15, 0, 0),
+            BackgroundTransparency = 1,
+            Parent = header
+        }, {
+             Create("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal, 
+                Padding = UDim.new(0, 8), 
+                VerticalAlignment = Enum.VerticalAlignment.Center,
+                SortOrder = Enum.SortOrder.LayoutOrder
+            })
+        })
+        
+        local function createBadge(text, color, layoutOrder)
+             Create("TextLabel", {
+                 Name = "Badge",
+                 AutomaticSize = Enum.AutomaticSize.X,
+                 Size = UDim2.new(0, 0, 0, 24),
+                 BackgroundColor3 = color,
+                 Text = text,
+                 TextColor3 = Color3.new(0,0,0), -- Black text
+                 Font = Enum.Font.GothamBold,
+                 TextSize = 13,
+                 Parent = badgeContainer,
+                 LayoutOrder = layoutOrder
+             }, {
+                 Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+                 Create("UIPadding", {PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})
+             })
+        end
+        
+        if options.Version then
+             createBadge(options.Version, Color3.fromRGB(255, 206, 69), 1) -- Yellow
+        end
+        
+        if options.SubTitle then
+             createBadge(options.SubTitle, Color3.fromRGB(46, 204, 113), 2) -- Green
+        end
+    end
     pages = Create("Folder", {Name = "Pages", Parent = content})
     
     MakeDraggable(sidebar, main)
