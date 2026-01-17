@@ -13,7 +13,7 @@ local ThemeManager = {} do
     ThemeManager.BuiltInThemes = {
         ["Default"] = {
             1,
-            { FontColor = "ffffff", MainColor = "232328", AccentColor = "5a5aa0", BackgroundColor = "1e1e23", OutlineColor = "373745" },
+            { FontColor = "ffffff", MainColor = "2d2d37", AccentColor = "5a5aa0", BackgroundColor = "1e1e23", OutlineColor = "4b4b5a" },
         },
         ["Mint"] = {
             2,

@@ -31,14 +31,14 @@ local Library = {
         Content = Color3.fromRGB(35, 35, 42),
         Element = Color3.fromRGB(45, 45, 55),
         ElementHover = Color3.fromRGB(55, 55, 65),
-        Border = Color3.fromRGB(55, 55, 65),
+        Border = Color3.fromRGB(75, 75, 90),
         Accent = Color3.fromRGB(90, 90, 160),
         AccentHover = Color3.fromRGB(110, 110, 180),
         Text = Color3.fromRGB(255, 255, 255),
         TextDim = Color3.fromRGB(150, 150, 160),
         TextMuted = Color3.fromRGB(100, 100, 110),
         Toggle = Color3.fromRGB(90, 90, 160),
-        ToggleOff = Color3.fromRGB(60, 60, 70)
+        ToggleOff = Color3.fromRGB(65, 65, 78)
     }
 }
 
