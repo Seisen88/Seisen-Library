@@ -222,7 +222,7 @@ function Library:ShowTooltip(text)
     -- Constrain to 280px (300 max - 20 padding) to account for wrapping
     local size = TextService:GetTextSize(text, 11, Enum.Font.Gotham, Vector2.new(280, 1000))
     
-    TooltipFrame.Size = UDim2.new(0, math.min(size.X + 20, 300), 0, size.Y + 16)
+    TooltipFrame.Size = UDim2.new(0, math.min(size.X + 24, 300), 0, size.Y + 20)
     TooltipFrame.Visible = true
     
     local mousePos = UserInputService:GetMouseLocation()
