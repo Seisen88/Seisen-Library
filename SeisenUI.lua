@@ -663,56 +663,42 @@ function Library:CreateWindow(options)
     -- Forward declare pages (defined later)
     local pages
     
-    -- Deep Search Filtering (searches content inside pages only)
-    local function deepSearch(query)
+    -- Content Search (filters elements inside pages, not tabs)
+    local function contentSearch(query)
         query = query:lower()
         
-        if query == "" then
-            -- Show everything when search is empty
-            for _, child in ipairs(tabList:GetChildren()) do
-                if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("Frame") then
-                    child.Visible = true
-                end
-            end
-            return
-        end
+        if not pages then return end
         
-        -- Search through tabs and their page contents
-        for _, child in ipairs(tabList:GetChildren()) do
-            if child:IsA("TextButton") then
-                local tabName = child.Name:lower()
-                local tabMatches = tabName:find(query, 1, true) ~= nil
-                
-                local pageMatches = false
-                local pageName = child.Name
-                if pages then
-                    for _, pageFrame in ipairs(pages:GetChildren()) do
-                        if pageFrame.Name == pageName then
-                            -- Search all descendants for matching text
-                            for _, element in ipairs(pageFrame:GetDescendants()) do
-                                if element:IsA("TextLabel") or element:IsA("TextButton") then
-                                    local text = element.Text:lower()
-                                    if text:find(query, 1, true) then
-                                        pageMatches = true
+        -- Search through all page content
+        for _, pageFrame in ipairs(pages:GetChildren()) do
+            if pageFrame:IsA("ScrollingFrame") then
+                -- Go through sections and elements
+                for _, section in ipairs(pageFrame:GetDescendants()) do
+                    -- Only filter section frames (which contain elements)
+                    if section:IsA("Frame") and section.Name ~= "Left" and section.Name ~= "Right" then
+                        if query == "" then
+                            section.Visible = true
+                        else
+                            -- Check if any child text contains the query
+                            local matches = false
+                            for _, child in ipairs(section:GetDescendants()) do
+                                if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
+                                    if child.Text:lower():find(query, 1, true) then
+                                        matches = true
                                         break
                                     end
                                 end
                             end
+                            section.Visible = matches
                         end
                     end
                 end
-                
-                child.Visible = pageMatches -- Only show if content matches (not tab name)
-            elseif child:IsA("TextLabel") and child.Name:match("^Section_") then
-                child.Visible = false -- Hide sections when searching
-            elseif child:IsA("Frame") and child.Name == "Divider" then
-                child.Visible = false -- Hide dividers when searching
             end
         end
     end
     
     searchInput:GetPropertyChangedSignal("Text"):Connect(function()
-        deepSearch(searchInput.Text)
+        contentSearch(searchInput.Text)
     end)
     
     -- Watermark
