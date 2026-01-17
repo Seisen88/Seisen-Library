@@ -1,5 +1,5 @@
 local Repo = "https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/"
-local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua?v=" .. tostring(math.random())))()
 local ThemeManager = loadstring(game:HttpGet(Repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(Repo .. "addons/SaveManager.lua"))()
 

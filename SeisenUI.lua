@@ -1,9 +1,3 @@
---[[
-    Seisen UI Library
-    Modern minimalist design with responsive layout
-    Version: 1.2.0
-]]
-
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -13,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Load Lucide icons (from our own source)
 local IconsLoaded, Icons = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/source.lua"))()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/addons/source.lua"))()
 end)
 
 local Library = {
