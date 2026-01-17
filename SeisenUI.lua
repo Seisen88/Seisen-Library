@@ -1565,8 +1565,8 @@ function Library:CreateWindow(options)
                 })
                 
                 local selectBtn = Create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 24),
-                    Position = UDim2.new(0, 0, 0, 18),
+                    Size = UDim2.new(1, 0, 0, 18),
+                    Position = UDim2.new(0, 0, 0, 16),
                     BackgroundColor3 = theme.Element,
                     Text = "",
                     AutoButtonColor = false,
@@ -1783,7 +1783,7 @@ function Library:CreateWindow(options)
                 local flag = boxOptions.Flag
                 
                 local box = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 45),
+                    Size = UDim2.new(1, 0, 0, 38),
                     BackgroundTransparency = 1,
                     Parent = container
                 })
@@ -1800,8 +1800,8 @@ function Library:CreateWindow(options)
                 })
                 
                 local input = Create("TextBox", {
-                    Size = UDim2.new(1, 0, 0, 24),
-                    Position = UDim2.new(0, 0, 0, 18),
+                    Size = UDim2.new(1, 0, 0, 18),
+                    Position = UDim2.new(0, 0, 0, 16),
                     BackgroundColor3 = theme.Element,
                     Text = default,
                     PlaceholderText = placeholder,
