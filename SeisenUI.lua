@@ -1576,11 +1576,11 @@ function Library:CreateWindow(options)
              createBadge(options.Version, theme.Accent, 1) -- Uses Theme Accent
         end
         
-    -- Notification Container (Top Right)
+    -- Notification Container (Top Center)
     local notificationContainer = Create("Frame", {
         Name = "NotificationContainer",
         Size = UDim2.new(0, 300, 1, 0),
-        Position = UDim2.new(1, -310, 0, 10),
+        Position = UDim2.new(0.5, -150, 0, 10), -- Center Top alignment
         BackgroundTransparency = 1,
         Parent = gui,
         ZIndex = 500
@@ -1588,10 +1588,10 @@ function Library:CreateWindow(options)
         Create("UIListLayout", {
             Padding = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
-            VerticalAlignment = Enum.VerticalAlignment.Bottom, -- Stack from bottom? Or Top? Let's go Top.
-            HorizontalAlignment = Enum.HorizontalAlignment.Right
+            VerticalAlignment = Enum.VerticalAlignment.Top, -- Start from top
+            HorizontalAlignment = Enum.HorizontalAlignment.Center
         }),
-        Create("UIPadding", {PaddingTop = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})
+        Create("UIPadding", {PaddingTop = UDim.new(0, 10)})
     })
     
     function Library:Notify(notifyOpts)
@@ -1672,8 +1672,18 @@ function Library:CreateWindow(options)
         })
         
         -- Animate In (Size + Transparency)
-        -- We trick it by setting min size, animating opacity
-        notifyFrame.Size = UDim2.new(0, 280, 0, 0) -- Set fixed width, auto height will take over
+        -- Set initial width to ensure it renders, tween height/transparency
+        notifyFrame.Size = UDim2.new(0, 280, 0, 0) 
+        notifyFrame.BackgroundTransparency = 1 -- Start invisible
+        title.TextTransparency = 1
+        content.TextTransparency = 1
+        icon.ImageTransparency = 1
+        
+        -- Fade In
+        Tween(notifyFrame, {BackgroundTransparency = 0.1}, 0.3)
+        Tween(title, {TextTransparency = 0}, 0.3)
+        Tween(content, {TextTransparency = 0.2}, 0.3)
+        Tween(icon, {ImageTransparency = 0}, 0.3)
         Tween(bar, {Size = UDim2.new(1, 0, 1, 0)}, nDuration)
         
         -- Auto Dismiss
