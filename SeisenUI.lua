@@ -1581,7 +1581,8 @@ function Library:CreateWindow(options)
         Name = "NotificationContainer",
         Size = UDim2.new(0, 300, 1, 0),
         Position = UDim2.new(0.5, -150, 0, 10), -- Center Top alignment
-        BackgroundTransparency = 1,
+        BackgroundTransparency = 0.5,           -- DEBUG: Semi-transparent
+        BackgroundColor3 = Color3.new(1, 0, 0), -- DEBUG: Red box
         Parent = gui,
         ZIndex = 500
     }, {
@@ -1595,16 +1596,17 @@ function Library:CreateWindow(options)
     })
     
     function Library:Notify(notifyOpts)
+        print("DEBUG: Notify called") -- DEBUG PRINT
         local nTitle = notifyOpts.Title or "Notification"
         local nContent = notifyOpts.Content or "Content"
         local nDuration = notifyOpts.Duration or 3
         local nImage = notifyOpts.Image or "rbxassetid://10709791437" -- Info icon
         
         local notifyFrame = Create("Frame", {
-            Size = UDim2.new(0, 0, 0, 0), -- Start small for animation
-            AutomaticSize = Enum.AutomaticSize.XY, -- Auto size based on content
+            Size = UDim2.new(0, 280, 0, 60), -- DEBUG: Force fixed size
+            -- AutomaticSize = Enum.AutomaticSize.XY, -- Disable auto size
             BackgroundColor3 = theme.Background,
-            BackgroundTransparency = 0.1, -- Passive/transparent feel
+            BackgroundTransparency = 0.1, 
             Parent = notificationContainer,
             BorderSizePixel = 0,
             ClipsDescendants = true
