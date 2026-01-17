@@ -58,9 +58,9 @@ function Library:SetCustomCursor(enabled, imageId)
     -- Create new cursor
     local cursor = Instance.new("ImageLabel")
     cursor.Name = "CustomCursor"
-    cursor.Size = UDim2.fromOffset(24, 24)
+    cursor.Size = UDim2.new(0, 24, 0, 24)
     cursor.BackgroundTransparency = 1
-    cursor.Image = imageId or "rbxassetid://13475069273" -- Smooth white cursor
+    cursor.Image = imageId or "rbxassetid://6065775281" -- Reliable white cursor
     cursor.ZIndex = 10000
     
     -- Parent to ScreenGui if exists, otherwise wait? 
@@ -78,7 +78,7 @@ function Library:SetCustomCursor(enabled, imageId)
     RunService.RenderStepped:Connect(function()
         if not cursor.Parent then UserInputService.MouseIconEnabled = true return end
         local mouse = UserInputService:GetMouseLocation()
-        cursor.Position = UDim2.fromOffset(mouse.X, mouse.Y)
+        cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y)
     end)
 end
 
