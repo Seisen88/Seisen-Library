@@ -452,10 +452,10 @@ function Library:CreateWindow(options)
     
     self:RegisterElement(sidebarCover, "Sidebar")
     
-    -- Tab List
+    -- Tab List (leave room for profile at bottom)
     local tabList = Create("ScrollingFrame", {
         Name = "TabList",
-        Size = UDim2.new(1, 0, 1, -10),
+        Size = UDim2.new(1, 0, 1, -70),
         Position = UDim2.new(0, 0, 0, 10),
         BackgroundTransparency = 1,
         ScrollBarThickness = 0,
@@ -465,6 +465,72 @@ function Library:CreateWindow(options)
             Padding = UDim.new(0, 2),
             SortOrder = Enum.SortOrder.LayoutOrder
         })
+    })
+    
+    -- Player Profile Section (at bottom of sidebar)
+    local profileSection = Create("Frame", {
+        Name = "PlayerProfile",
+        Size = UDim2.new(1, -10, 0, 50),
+        Position = UDim2.new(0, 5, 1, -55),
+        BackgroundColor3 = theme.Element,
+        BackgroundTransparency = 0.5,
+        Parent = sidebar
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+        Create("UIStroke", {Color = theme.Border, Thickness = 1})
+    })
+    
+    self:RegisterElement(profileSection, "Element")
+    
+    -- Player Avatar
+    local avatarImage = Create("ImageLabel", {
+        Name = "Avatar",
+        Size = UDim2.new(0, 36, 0, 36),
+        Position = UDim2.new(0, 7, 0.5, -18),
+        BackgroundColor3 = theme.ToggleOff,
+        Image = "", -- Will be set below
+        Parent = profileSection
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+    
+    -- Get player avatar
+    pcall(function()
+        local userId = LocalPlayer.UserId
+        local thumbType = Enum.ThumbnailType.HeadShot
+        local thumbSize = Enum.ThumbnailSize.Size100x100
+        local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+        avatarImage.Image = content
+    end)
+    
+    -- Player Name
+    local playerName = Create("TextLabel", {
+        Name = "PlayerName",
+        Size = UDim2.new(1, -55, 0, 16),
+        Position = UDim2.new(0, 48, 0, 8),
+        BackgroundTransparency = 1,
+        Text = LocalPlayer.DisplayName,
+        TextColor3 = theme.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        Parent = profileSection
+    })
+    
+    -- Player Username (smaller)
+    local username = Create("TextLabel", {
+        Name = "Username",
+        Size = UDim2.new(1, -55, 0, 12),
+        Position = UDim2.new(0, 48, 0, 26),
+        BackgroundTransparency = 1,
+        Text = "@" .. LocalPlayer.Name,
+        TextColor3 = theme.TextMuted,
+        Font = Enum.Font.Gotham,
+        TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        Parent = profileSection
     })
     
     -- Content Area
