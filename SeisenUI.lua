@@ -641,6 +641,26 @@ function Library:CreateWindow(options)
     self:RegisterElement(searchIcon, "TextDim", "ImageColor3")
     self:RegisterElement(searchInput, "Text", "TextColor3")
     self:RegisterElement(searchInput, "TextMuted", "PlaceholderColor3")
+    
+    -- Search Filtering Function
+    local function filterTabs(query)
+        query = query:lower()
+        for _, child in ipairs(tabList:GetChildren()) do
+            if child:IsA("TextButton") then
+                local tabName = child.Name:lower()
+                child.Visible = query == "" or tabName:find(query, 1, true) ~= nil
+            elseif child:IsA("TextLabel") and child.Name:match("^Section_") then
+                -- Section headers - check if any tabs below it match
+                child.Visible = query == "" -- Hide sections when searching
+            elseif child:IsA("Frame") and child.Name == "Divider" then
+                child.Visible = query == "" -- Hide dividers when searching
+            end
+        end
+    end
+    
+    searchInput:GetPropertyChangedSignal("Text"):Connect(function()
+        filterTabs(searchInput.Text)
+    end)
 
     -- Tab List
     local tabList = Create("ScrollingFrame", {
@@ -984,15 +1004,18 @@ function Library:CreateWindow(options)
         -- Tab Button (Rounded styling)
         local tabBtn = Create("TextButton", {
             Name = tabName,
-            Size = UDim2.new(1, -16, 0, 34), -- Width -16 for side padding
+            Size = UDim2.new(1, -16, 0, 34),
             BackgroundColor3 = theme.Sidebar,
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false,
             Parent = tabList
         }, {
-             Create("UICorner", {CornerRadius = UDim.new(0, 6)}) -- Rounded corners
+             Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+             Create("UIStroke", {Color = theme.Border, Thickness = 1, Transparency = 0.5})
         })
+        
+        Library:RegisterElement(tabBtn:FindFirstChild("UIStroke"), "Border", "Color")
         
         -- Icon
         local iconProps = {
