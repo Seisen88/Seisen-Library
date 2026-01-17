@@ -403,9 +403,16 @@ function Library:CreateWindow(options)
         -- Tab Functions
         local TabFuncs = {}
         
-        function TabFuncs:CreateSection(sectionOptions)
-            local sectionName = sectionOptions.Name or "Section"
-            local side = sectionOptions.Side or "Left"
+        function TabFuncs:CreateSection(sectionOptions, sideArg)
+            -- Support both: CreateSection({Name = "x", Side = "y"}) and AddSection("x", "Left")
+            local sectionName, side
+            if type(sectionOptions) == "string" then
+                sectionName = sectionOptions
+                side = sideArg or "Left"
+            else
+                sectionName = sectionOptions.Name or "Section"
+                side = sectionOptions.Side or "Left"
+            end
             local parent = (side == "Right") and rightCol or leftCol
             
             local section = Create("Frame", {
@@ -1445,6 +1452,9 @@ function Library:CreateWindow(options)
             
             return SectionFuncs
         end
+        
+        -- Alias for cleaner API: Tab:AddSection("SectionName", "Left")
+        TabFuncs.AddSection = TabFuncs.CreateSection
         
         return TabFuncs
     end

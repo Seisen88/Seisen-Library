@@ -30,11 +30,8 @@ local PlayersTab = Window:AddTab("Players", "users")
 -- Settings Tab
 local SettingsTab = Window:AddTab("Settings", "settings")
 
--- Combat Sections
-local AimbotSection = CombatTab:CreateSection({
-    Name = "Section",
-    Side = "Left"
-})
+-- Combat Sections (using simpler syntax!)
+local AimbotSection = CombatTab:AddSection("Section", "Left")
 
 AimbotSection:AddToggle({
     Name = "Toggle",
@@ -52,10 +49,7 @@ AimbotSection:AddButton({
     end
 })
 
-local Section2 = CombatTab:CreateSection({
-    Name = "Section",
-    Side = "Left"
-})
+local Section2 = CombatTab:AddSection("Section", "Left")
 
 Section2:AddToggle({
     Name = "Toggle",
@@ -73,10 +67,7 @@ Section2:AddButton({
 })
 
 -- Right side sections
-local RightSection1 = CombatTab:CreateSection({
-    Name = "Section",
-    Side = "Right"
-})
+local RightSection1 = CombatTab:AddSection("Section", "Right")
 
 RightSection1:AddToggle({
     Name = "Toggle",
@@ -158,10 +149,7 @@ RightSection1:AddTextbox({
 ThemeManager:BuildThemeSection(SettingsTab)
 SaveManager:BuildConfigSection(SettingsTab)
 
-local MiscSection = SettingsTab:CreateSection({
-    Name = "Misc",
-    Side = "Right"
-})
+local MiscSection = SettingsTab:AddSection("Misc", "Right")
 
 MiscSection:AddButton({
     Name = "Unload UI",
