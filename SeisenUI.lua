@@ -42,8 +42,7 @@ local Library = {
     }
 }
 
-    }
-}
+
 
 -- Registry functions for live theme updates
 function Library:RegisterElement(element, themeProperty, targetProperty)
