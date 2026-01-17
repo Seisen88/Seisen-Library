@@ -1576,66 +1576,126 @@ function Library:CreateWindow(options)
              createBadge(options.Version, theme.Accent, 1) -- Uses Theme Accent
         end
         
-        if options.SubTitle then
-             createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2) -- Safe Soft Blue
-        end
-    end
-    pages = Create("Folder", {Name = "Pages", Parent = content})
-    
-    MakeDraggable(sidebar, main)
-    MakeDraggable(header, main) -- Restrict dragging to Header (Top 50px) only
-    
-    local resizeHandle = Create("ImageLabel", {
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(1, -16, 1, -16),
+    -- Notification Container (Top Right)
+    local notificationContainer = Create("Frame", {
+        Name = "NotificationContainer",
+        Size = UDim2.new(0, 300, 1, 0),
+        Position = UDim2.new(1, -310, 0, 10),
         BackgroundTransparency = 1,
-        ImageColor3 = theme.TextDim,
-        Parent = main,
-        ZIndex = 200
+        Parent = gui,
+        ZIndex = 500
+    }, {
+        Create("UIListLayout", {
+            Padding = UDim.new(0, 10),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            VerticalAlignment = Enum.VerticalAlignment.Bottom, -- Stack from bottom? Or Top? Let's go Top.
+            HorizontalAlignment = Enum.HorizontalAlignment.Right
+        }),
+        Create("UIPadding", {PaddingTop = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})
     })
     
-    Library:ApplyIcon(resizeHandle, "move-diagonal-2") -- Resize icon
-    Library:RegisterElement(resizeHandle, "TextDim", "ImageColor3")
+    function Library:Notify(notifyOpts)
+        local nTitle = notifyOpts.Title or "Notification"
+        local nContent = notifyOpts.Content or "Content"
+        local nDuration = notifyOpts.Duration or 3
+        local nImage = notifyOpts.Image or "rbxassetid://10709791437" -- Info icon
+        
+        local notifyFrame = Create("Frame", {
+            Size = UDim2.new(0, 0, 0, 0), -- Start small for animation
+            AutomaticSize = Enum.AutomaticSize.XY, -- Auto size based on content
+            BackgroundColor3 = theme.Background,
+            BackgroundTransparency = 0.1, -- Passive/transparent feel
+            Parent = notificationContainer,
+            BorderSizePixel = 0,
+            ClipsDescendants = true
+        }, {
+             Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+             Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+             Create("UIPadding", {PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12)})
+        })
+        
+        Library:RegisterElement(notifyFrame, "Background")
+        Library:RegisterElement(notifyFrame:FindFirstChild("UIStroke"), "Border", "Color")
+        
+        -- Icon
+        local icon = Create("ImageLabel", {
+            Size = UDim2.new(0, 20, 0, 20),
+            Position = UDim2.new(0, 0, 0, 2),
+            BackgroundTransparency = 1,
+            ImageColor3 = theme.Accent,
+            Parent = notifyFrame
+        })
+        Library:ApplyIcon(icon, nImage)
+        
+        -- Title
+        local title = Create("TextLabel", {
+            Size = UDim2.new(1, -30, 0, 14),
+            Position = UDim2.new(0, 30, 0, 0),
+            BackgroundTransparency = 1,
+            Text = nTitle,
+            TextColor3 = theme.Text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = notifyFrame
+        })
+        
+        -- Content
+        local content = Create("TextLabel", {
+            Size = UDim2.new(1, -30, 0, 0), -- Auto Y
+            AutomaticSize = Enum.AutomaticSize.Y,
+            Position = UDim2.new(0, 30, 0, 18),
+            BackgroundTransparency = 1,
+            Text = nContent,
+            TextColor3 = theme.TextMuted,
+            Font = Enum.Font.Gotham,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextWrapped = true,
+            Parent = notifyFrame
+        })
+        
+        -- Duration Bar (Generic passive logic)
+        local barBg = Create("Frame", {
+            Size = UDim2.new(1, 4, 0, 2),
+            Position = UDim2.new(0, -2, 1, 10), -- Bottom relative to padding
+            BackgroundColor3 = theme.Border,
+            BorderSizePixel = 0,
+            Parent = notifyFrame
+        })
+        
+        local bar = Create("Frame", {
+            Size = UDim2.new(0, 0, 1, 0),
+            BackgroundColor3 = theme.Accent,
+            BorderSizePixel = 0,
+            Parent = barBg
+        })
+        
+        -- Animate In (Size + Transparency)
+        -- We trick it by setting min size, animating opacity
+        notifyFrame.Size = UDim2.new(0, 280, 0, 0) -- Set fixed width, auto height will take over
+        Tween(bar, {Size = UDim2.new(1, 0, 1, 0)}, nDuration)
+        
+        -- Auto Dismiss
+        task.delay(nDuration, function()
+             -- Animate out? 
+             Tween(notifyFrame, {BackgroundTransparency = 1}, 0.5)
+             Tween(title, {TextTransparency = 1}, 0.5)
+             Tween(content, {TextTransparency = 1}, 0.5)
+             Tween(icon, {ImageTransparency = 1}, 0.5)
+             Tween(bar, {BackgroundTransparency = 1}, 0.5)
+             Tween(barBg, {BackgroundTransparency = 1}, 0.5)
+             Tween(notifyFrame:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
+             
+             task.wait(0.5)
+             notifyFrame:Destroy()
+        end)
+    end
     
-    local resizing = false
-    local minSize = Vector2.new(400, 300)
-    
-    local ghostFrame = nil
-    
-    resizeHandle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            resizing = true
-            local startSize = main.AbsoluteSize
-            local startPos = i.Position
-            
-            local connection
-            connection = game:GetService("RunService").RenderStepped:Connect(function()
-                if not resizing then
-                    connection:Disconnect()
-                    return
-                end
-                
-                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
-                local newX = startSize.X + (mouseProxy.X - startPos.X)
-                local newY = startSize.Y + (mouseProxy.Y - startPos.Y)
-                
-                newX = math.max(newX, minSize.X)
-                newY = math.max(newY, minSize.Y)
-                
-                main.Size = UDim2.fromOffset(newX, newY)
-            end)
-            
-            -- Disconnect on release
-            local releaseConnection
-            releaseConnection = UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    resizing = false
-                    connection:Disconnect()
-                    releaseConnection:Disconnect()
-                end
-            end)
-        end
-    end)
+    -- Window Proxy for Notify
+    function WindowFuncs:Notify(opts)
+        Library:Notify(opts)
+    end
 
     -- Toggle Keybind Feature
     if options.ToggleKeybind then
