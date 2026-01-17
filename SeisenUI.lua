@@ -468,7 +468,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
 end
 
 function Library:CreateWindow(options)
-    local name = options.Name or "Seisen UI"
+    local name = options.Name or options.Title or "Seisen UI"
     local theme = options.Theme or self.Theme
     
     -- Remove existing UI if present
@@ -842,7 +842,17 @@ function Library:CreateWindow(options)
              newY = math.max(newY, minSize.Y)
              main.Size = UDim2.new(0, newX, 0, newY)
         end
+        end
     end)
+
+    -- Toggle Keybind Feature
+    if options.ToggleKeybind then
+        UserInputService.InputBegan:Connect(function(input, processed)
+            if not processed and input.KeyCode == options.ToggleKeybind then
+                gui.Enabled = not gui.Enabled
+            end
+        end)
+    end
     
     -- Window Functions
     local WindowFuncs = {}
