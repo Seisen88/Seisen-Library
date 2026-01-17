@@ -107,6 +107,54 @@ local ThemeManager = {} do
             24,
             { FontColor = "ffffff", MainColor = "1f1a0f", AccentColor = "ffc107", BackgroundColor = "141008", OutlineColor = "3d3520" },
         },
+        ["Obsidian"] = {
+            25,
+            { FontColor = "dcddde", MainColor = "202225", AccentColor = "7289da", BackgroundColor = "2f3136", OutlineColor = "36393f" },
+        },
+        ["Synthwave"] = {
+            26,
+            { FontColor = "ff7edb", MainColor = "241b2f", AccentColor = "e2b714", BackgroundColor = "1a1328", OutlineColor = "362a4a" },
+        },
+        ["Everforest"] = {
+            27,
+            { FontColor = "d3c6aa", MainColor = "2d353b", AccentColor = "a7c080", BackgroundColor = "232a2e", OutlineColor = "475258" },
+        },
+        ["Rosé Pine"] = {
+            28,
+            { FontColor = "e0def4", MainColor = "1f1d2e", AccentColor = "ebbcba", BackgroundColor = "191724", OutlineColor = "26233a" },
+        },
+        ["Ayu Dark"] = {
+            29,
+            { FontColor = "bfbdb6", MainColor = "0b0e14", AccentColor = "e6b450", BackgroundColor = "0d1017", OutlineColor = "1b1f27" },
+        },
+        ["Palenight"] = {
+            30,
+            { FontColor = "a6accd", MainColor = "292d3e", AccentColor = "c792ea", BackgroundColor = "1e222d", OutlineColor = "3d4255" },
+        },
+        ["Horizon"] = {
+            31,
+            { FontColor = "e9e9f4", MainColor = "1c1e26", AccentColor = "e95678", BackgroundColor = "16161c", OutlineColor = "2e303e" },
+        },
+        ["Nightfox"] = {
+            32,
+            { FontColor = "cdcecf", MainColor = "192330", AccentColor = "719cd6", BackgroundColor = "131a24", OutlineColor = "29394f" },
+        },
+        ["Cherry"] = {
+            33,
+            { FontColor = "ffffff", MainColor = "2a1520", AccentColor = "e91e63", BackgroundColor = "1a0d14", OutlineColor = "402030" },
+        },
+        ["Neon"] = {
+            34,
+            { FontColor = "ffffff", MainColor = "0a0a0a", AccentColor = "39ff14", BackgroundColor = "050505", OutlineColor = "1a1a1a" },
+        },
+        ["Ice"] = {
+            35,
+            { FontColor = "e0e8ef", MainColor = "1c2833", AccentColor = "5dade2", BackgroundColor = "17202a", OutlineColor = "2e4053" },
+        },
+        ["Ember"] = {
+            36,
+            { FontColor = "ffffff", MainColor = "1a1210", AccentColor = "ff5722", BackgroundColor = "0f0b0a", OutlineColor = "2d1f1a" },
+        },
     }
 
     function ThemeManager:SetLibrary(library)

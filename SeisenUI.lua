@@ -148,6 +148,257 @@ local function MakeDraggable(handle, frame)
     end)
 end
 
+-- Helper function to create a tabbox (used by AddLeftTabbox/AddRightTabbox)
+local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
+    local tabbox = Create("Frame", {
+        Name = name or "Tabbox",
+        Size = UDim2.new(1, 0, 0, 150),
+        BackgroundColor3 = theme.Element,
+        BackgroundTransparency = 0.5,
+        Parent = parent
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+        Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)})
+    })
+    
+    Library:RegisterElement(tabbox, "Element")
+    
+    -- Tab Header (buttons)
+    local tabHeader = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 24),
+        BackgroundTransparency = 1,
+        Parent = tabbox
+    }, {
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            Padding = UDim.new(0, 4),
+            SortOrder = Enum.SortOrder.LayoutOrder
+        })
+    })
+    
+    -- Tab Content Container
+    local tabContent = Create("Frame", {
+        Size = UDim2.new(1, 0, 1, -30),
+        Position = UDim2.new(0, 0, 0, 28),
+        BackgroundTransparency = 1,
+        ClipsDescendants = true,
+        Parent = tabbox
+    })
+    
+    local TabboxFuncs = {}
+    local tabs = {}
+    local activeTab = nil
+    
+    function TabboxFuncs:AddTab(tabName)
+        local tabBtn = Create("TextButton", {
+            Size = UDim2.new(0, 70, 1, 0),
+            BackgroundColor3 = theme.ToggleOff,
+            BackgroundTransparency = 0.5,
+            Text = tabName,
+            TextColor3 = theme.TextDim,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 11,
+            AutoButtonColor = false,
+            Parent = tabHeader
+        }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+        
+        local tabPage = Create("ScrollingFrame", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            ScrollBarThickness = 3,
+            ScrollBarImageColor3 = theme.Accent,
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            Visible = false,
+            Parent = tabContent
+        }, {
+            Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}),
+            Create("UIPadding", {PaddingRight = UDim.new(0, 4)})
+        })
+        
+        table.insert(tabs, {btn = tabBtn, page = tabPage})
+        
+        local function activateTab()
+            for _, t in ipairs(tabs) do
+                t.page.Visible = false
+                t.btn.BackgroundTransparency = 0.5
+                t.btn.BackgroundColor3 = theme.ToggleOff
+                t.btn.TextColor3 = theme.TextDim
+            end
+            tabPage.Visible = true
+            tabBtn.BackgroundTransparency = 0
+            tabBtn.BackgroundColor3 = theme.Accent
+            tabBtn.TextColor3 = theme.Text
+            activeTab = tabPage
+        end
+        
+        tabBtn.MouseButton1Click:Connect(activateTab)
+        
+        if #tabs == 1 then
+            activateTab()
+        end
+        
+        -- Return TabPageFuncs with element creation methods
+        local TabPageFuncs = {}
+        
+        function TabPageFuncs:AddLabel(opts)
+            local text = opts.Text or opts.Name or "Label"
+            local label = Create("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 16),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = theme.TextDim,
+                Font = Enum.Font.Gotham,
+                TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = tabPage
+            })
+            return {SetText = function(self, t) label.Text = t end}
+        end
+        
+        function TabPageFuncs:AddToggle(opts)
+            local toggleName = opts.Name or "Toggle"
+            local default = opts.Default or false
+            local callback = opts.Callback or function() end
+            local flag = opts.Flag
+            local state = default
+            
+            local toggle = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 20),
+                BackgroundTransparency = 1,
+                Parent = tabPage
+            })
+            
+            Create("TextLabel", {
+                Size = UDim2.new(1, -45, 1, 0),
+                BackgroundTransparency = 1,
+                Text = toggleName,
+                TextColor3 = theme.Text,
+                Font = Enum.Font.Gotham,
+                TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = toggle
+            })
+            
+            local switchBg = Create("Frame", {
+                Size = UDim2.new(0, 32, 0, 16),
+                Position = UDim2.new(1, -32, 0.5, -8),
+                BackgroundColor3 = state and theme.Toggle or theme.ToggleOff,
+                Parent = toggle
+            }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+            
+            local knob = Create("Frame", {
+                Size = UDim2.new(0, 12, 0, 12),
+                Position = state and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Parent = switchBg
+            }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+            
+            local toggleObj = {Value = state, SetValue = function(self, val) 
+                state = val; self.Value = val
+                Tween(switchBg, {BackgroundColor3 = val and theme.Toggle or theme.ToggleOff})
+                Tween(knob, {Position = val and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)})
+                callback(val)
+            end}
+            
+            local btn = Create("TextButton", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", Parent = toggle})
+            btn.MouseButton1Click:Connect(function() toggleObj:SetValue(not state) end)
+            
+            if flag then Library.Toggles[flag] = toggleObj end
+            return toggleObj
+        end
+        
+        function TabPageFuncs:AddButton(opts)
+            local buttonName = opts.Name or "Button"
+            local callback = opts.Callback or function() end
+            
+            local btn = Create("TextButton", {
+                Size = UDim2.new(1, 0, 0, 26),
+                BackgroundColor3 = theme.Element,
+                Text = buttonName,
+                TextColor3 = theme.Text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 11,
+                AutoButtonColor = false,
+                Parent = tabPage
+            }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)}), Create("UIStroke", {Color = theme.Border, Thickness = 1})})
+            
+            btn.MouseEnter:Connect(function() Tween(btn, {BackgroundColor3 = theme.ElementHover}) end)
+            btn.MouseLeave:Connect(function() Tween(btn, {BackgroundColor3 = theme.Element}) end)
+            btn.MouseButton1Click:Connect(callback)
+        end
+        
+        function TabPageFuncs:AddSlider(opts)
+            local sliderName = opts.Name or "Slider"
+            local min, max = opts.Min or 0, opts.Max or 100
+            local default = opts.Default or min
+            local callback = opts.Callback or function() end
+            local flag = opts.Flag
+            local value = math.clamp(default, min, max)
+            
+            local slider = Create("Frame", {Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Parent = tabPage})
+            local valueLabel = Create("TextLabel", {
+                Size = UDim2.new(0, 40, 0, 14), Position = UDim2.new(1, -40, 0, 0),
+                BackgroundTransparency = 1, Text = tostring(value),
+                TextColor3 = theme.TextDim, Font = Enum.Font.Gotham, TextSize = 10,
+                TextXAlignment = Enum.TextXAlignment.Right, Parent = slider
+            })
+            Create("TextLabel", {
+                Size = UDim2.new(1, -45, 0, 14), BackgroundTransparency = 1, Text = sliderName,
+                TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Left, Parent = slider
+            })
+            local track = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 20),
+                BackgroundColor3 = theme.ToggleOff, Parent = slider
+            }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+            local fill = Create("Frame", {
+                Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
+                BackgroundColor3 = theme.Accent, Parent = track
+            }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+            
+            local sliderObj = {Value = value}
+            local dragging = false
+            local input = Create("TextButton", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", Parent = track})
+            
+            local function update(inputPos)
+                local rel = math.clamp((inputPos.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                value = math.floor(min + rel * (max - min))
+                sliderObj.Value = value
+                fill.Size = UDim2.new(rel, 0, 1, 0)
+                valueLabel.Text = tostring(value)
+                callback(value)
+            end
+            
+            input.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; update(i.Position) end end)
+            input.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+            UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then update(i.Position) end end)
+            
+            if flag then Library.Options[flag] = sliderObj end
+            return sliderObj
+        end
+        
+        return TabPageFuncs
+    end
+    
+    -- Auto-resize tabbox based on content
+    local function updateTabboxSize()
+        local maxHeight = 0
+        for _, t in ipairs(tabs) do
+            local layout = t.page:FindFirstChildOfClass("UIListLayout")
+            if layout then
+                maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
+            end
+        end
+        tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 50))
+    end
+    
+    task.defer(updateTabboxSize)
+    
+    return TabboxFuncs
+end
+
 function Library:CreateWindow(options)
     local name = options.Name or "Seisen UI"
     local theme = options.Theme or self.Theme
@@ -417,18 +668,25 @@ function Library:CreateWindow(options)
             
             local section = Create("Frame", {
                 Name = sectionName,
-                Size = UDim2.new(1, 0, 0, 25),
-                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 35),
+                BackgroundColor3 = theme.Element,
+                BackgroundTransparency = 0.5,
                 Parent = parent
+            }, {
+                Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+                Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+                Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8)})
             })
+            
+            Library:RegisterElement(section, "Element")
             
             -- Section Title
             Create("TextLabel", {
-                Size = UDim2.new(1, 0, 0, 20),
+                Size = UDim2.new(1, 0, 0, 18),
                 BackgroundTransparency = 1,
                 Text = sectionName,
-                TextColor3 = theme.TextDim,
-                Font = Enum.Font.GothamMedium,
+                TextColor3 = theme.Text,
+                Font = Enum.Font.GothamBold,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = section
@@ -449,7 +707,7 @@ function Library:CreateWindow(options)
             container:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 local h = container:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
                 container.Size = UDim2.new(1, 0, 0, h)
-                section.Size = UDim2.new(1, 0, 0, h + 25)
+                section.Size = UDim2.new(1, 0, 0, h + 35)
             end)
             
             local SectionFuncs = {}
@@ -746,14 +1004,19 @@ function Library:CreateWindow(options)
                 })
                 
                 -- Create dropdown list at GUI level for proper z-ordering
-                local list = Create("Frame", {
+                local maxVisibleItems = 8
+                local itemHeight = 22
+                local list = Create("ScrollingFrame", {
                     Name = "DropdownList",
                     Size = UDim2.new(0, 0, 0, 0),
                     Position = UDim2.new(0, 0, 0, 0),
                     BackgroundColor3 = theme.Element,
                     Visible = false,
                     ZIndex = 1000,
-                    ClipsDescendants = true,
+                    ScrollBarThickness = 4,
+                    ScrollBarImageColor3 = theme.Accent,
+                    CanvasSize = UDim2.new(0, 0, 0, #options * itemHeight),
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     Parent = gui
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
@@ -779,7 +1042,8 @@ function Library:CreateWindow(options)
                     local absPos = selectBtn.AbsolutePosition
                     local absSize = selectBtn.AbsoluteSize
                     list.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
-                    list.Size = UDim2.new(0, absSize.X, 0, math.min(#options * 22, 110))
+                    local targetHeight = math.min(#options, maxVisibleItems) * itemHeight
+                    list.Size = UDim2.new(0, absSize.X, 0, targetHeight)
                 end
                 
                 local function closeThisDropdown()
@@ -812,7 +1076,8 @@ function Library:CreateWindow(options)
                         updateListPosition()
                         list.Visible = true
                         list.Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, 0)
-                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, math.min(#options * 22, 110))})
+                        local targetHeight = math.min(#options, maxVisibleItems) * itemHeight
+                        Tween(list, {Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, targetHeight)})
                         
                         -- Continuously update position while open
                         positionConnection = game:GetService("RunService").RenderStepped:Connect(function()
@@ -1455,6 +1720,16 @@ function Library:CreateWindow(options)
         
         -- Alias for cleaner API: Tab:AddSection("SectionName", "Left")
         TabFuncs.AddSection = TabFuncs.CreateSection
+        
+        -- AddLeftTabbox - Creates a tabbox on the left column
+        function TabFuncs:AddLeftTabbox(name)
+            return createTabbox(name, leftCol, theme, gui, Create, Tween, Library)
+        end
+        
+        -- AddRightTabbox - Creates a tabbox on the right column
+        function TabFuncs:AddRightTabbox(name)
+            return createTabbox(name, rightCol, theme, gui, Create, Tween, Library)
+        end
         
         return TabFuncs
     end
