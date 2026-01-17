@@ -1,9 +1,4 @@
-local Repo = "https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/"
-
--- Note: To test your local 'SeisenUI.lua' changes, you can use:
--- local Library = loadstring(readfile("SeisenLibrary/SeisenUI.lua"))() -- Adjust path as needed for your executor
--- OR simply paste the entire content of SeisenUI.lua here instead of the loadstring.
-
+local Repo = "https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/"
 local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua"))()
 local ThemeManager = loadstring(game:HttpGet(Repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(Repo .. "addons/SaveManager.lua"))()
