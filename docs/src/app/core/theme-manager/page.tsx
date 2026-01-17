@@ -54,11 +54,47 @@ ThemeManager:ApplyToSection(ThemeSection)`}
       </section>
 
       <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-white mb-4">Custom Themes</h2>
+        <h2 className="text-2xl font-semibold text-white mb-4">Full Template</h2>
         <p className="text-[#a0a0a0] mb-4">
-          You can define custom themes by modifying the <code>Library.Theme</code> table directly or 
-          creating a JSON themes file if using the SaveManager.
+          Here is a complete example showing how to set up the library, theme manager, and save manager together.
         </p>
+        <CodeBlock
+          code={`local Repo = "https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/"
+
+local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua"))()
+local ThemeManager = loadstring(game:HttpGet(Repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(Repo .. "addons/SaveManager.lua"))()
+
+local Window = Library:CreateWindow({
+    Name = "Seisen UI Template",
+    Icon = "rbxassetid://125926861378074", 
+    Theme = Library.Theme,
+    ToggleKeybind = Enum.KeyCode.RightShift
+})
+
+-- ... Add tabs and elements here ...
+
+-- Tab 4: Settings (Theme & Config)
+local SettingsTab = Window:AddTab("Settings", "Theme & Config", "settings")
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+ThemeManager:SetFolder("SeisenTemplate")
+SaveManager:SetFolder("SeisenTemplate/Main")
+
+-- Build the UI for Theme and Save managers
+local ThemeSection = SettingsTab:AddLeftSection("Theme")
+ThemeManager:ApplyToSection(ThemeSection)
+
+local ConfigSection = SettingsTab:AddRightSection("Configuration")
+SaveManager:BuildConfigSection(ConfigSection)
+
+-- Finish
+print("Seisen UI Template Loaded")`}
+        />
       </section>
     </div>
   );
