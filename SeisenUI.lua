@@ -418,6 +418,20 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 BackgroundColor3 = theme.Accent, Parent = track
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
             
+            -- Draggable Knob
+            local sliderKnob = Create("Frame", {
+                Size = UDim2.new(0, 12, 0, 12),
+                Position = UDim2.new((value - min) / (max - min), 0, 0.5, 0),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                BorderSizePixel = 0,
+                ZIndex = 2,
+                Parent = track
+            }, {
+                Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+                Create("UIStroke", {Color = Color3.new(0,0,0), Transparency = 0.8, Thickness = 1})
+            })
+            
             Library:RegisterElement(track, "ToggleOff")
             Library:RegisterElement(fill, "Accent")
             
@@ -430,6 +444,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 value = math.floor(min + rel * (max - min))
                 sliderObj.Value = value
                 fill.Size = UDim2.new(rel, 0, 1, 0)
+                sliderKnob.Position = UDim2.new(rel, 0, 0.5, 0)
                 valueLabel.Text = tostring(value)
                 callback(value)
             end
