@@ -25,20 +25,20 @@ local Library = {
     ScreenGui = nil, -- Reference to main GUI
     Icons = IconsLoaded and Icons or nil, -- Lucide icons module
     Theme = {
-        Background = Color3.fromRGB(30, 30, 35),
-        Sidebar = Color3.fromRGB(25, 25, 30),
-        SidebarActive = Color3.fromRGB(40, 40, 48),
-        Content = Color3.fromRGB(35, 35, 42),
-        Element = Color3.fromRGB(45, 45, 55),
-        ElementHover = Color3.fromRGB(55, 55, 65),
-        Border = Color3.fromRGB(75, 75, 90),
-        Accent = Color3.fromRGB(90, 90, 160),
-        AccentHover = Color3.fromRGB(110, 110, 180),
-        Text = Color3.fromRGB(255, 255, 255),
-        TextDim = Color3.fromRGB(150, 150, 160),
-        TextMuted = Color3.fromRGB(100, 100, 110),
-        Toggle = Color3.fromRGB(90, 90, 160),
-        ToggleOff = Color3.fromRGB(65, 65, 78)
+        Background = Color3.fromRGB(15, 15, 18), -- Darker Black/Gray
+        Sidebar = Color3.fromRGB(12, 12, 14),
+        SidebarActive = Color3.fromRGB(25, 25, 28),
+        Content = Color3.fromRGB(20, 20, 24),
+        Element = Color3.fromRGB(25, 25, 30),
+        ElementHover = Color3.fromRGB(35, 35, 40),
+        Border = Color3.fromRGB(45, 45, 50),
+        Accent = Color3.fromRGB(0, 200, 100), -- Green
+        AccentHover = Color3.fromRGB(0, 220, 110),
+        Text = Color3.fromRGB(240, 240, 240),
+        TextDim = Color3.fromRGB(140, 140, 150),
+        TextMuted = Color3.fromRGB(80, 80, 90),
+        Toggle = Color3.fromRGB(0, 200, 100), -- Green
+        ToggleOff = Color3.fromRGB(40, 40, 45)
     }
 }
 
@@ -531,6 +531,20 @@ function Library:CreateWindow(options)
         })
     })
     
+    -- Watermark
+    local watermark = Create("TextLabel", {
+        Size = UDim2.new(1, -20, 0, 14),
+        Position = UDim2.new(0, 10, 1, -75), -- Above Profile
+        BackgroundTransparency = 1,
+        Text = "UI Library by Seisen",
+        TextColor3 = theme.TextMuted,
+        Font = Enum.Font.Gotham,
+        TextSize = 10,
+        Parent = sidebar
+    })
+    
+    self:RegisterElement(watermark, "TextMuted", "TextColor3")
+
     -- Player Profile Section (at bottom of sidebar)
     local profileSection = Create("Frame", {
         Name = "PlayerProfile",
