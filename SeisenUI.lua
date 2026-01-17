@@ -197,7 +197,7 @@ function Library:CreateTooltipFrame()
         TextColor3 = Color3.fromRGB(220, 220, 220),
         Font = Enum.Font.Gotham,
         TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
+        TextXAlignment = Enum.TextXAlignment.Center,
         TextWrapped = true,
         Parent = TooltipFrame
     })
