@@ -265,6 +265,14 @@ UtilSection:AddButton({
 
 UtilSection:AddDivider()
 
+UtilSection:AddToggle({
+    Name = "Custom Cursor",
+    Default = true,
+    Callback = function(v)
+        Library:SetCustomCursor(v)
+    end
+})
+
 UtilSection:AddSlider({
     Name = "Scale (%)",
     Min = 50,

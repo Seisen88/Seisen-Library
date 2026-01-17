@@ -77,6 +77,7 @@ function Library:SetCustomCursor(enabled, imageId)
     
     RunService.RenderStepped:Connect(function()
         if not cursor.Parent then UserInputService.MouseIconEnabled = true return end
+        UserInputService.MouseIconEnabled = false -- Enforce hidden system cursor
         local mouse = UserInputService:GetMouseLocation()
         cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y)
     end)
