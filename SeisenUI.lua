@@ -829,11 +829,10 @@ function Library:CreateDropdown(parent, options)
             list.Visible = false
             Tween(arrow, {Rotation = 0})
             
-            -- Update Highlight using Tween
+            -- Update Highlight
             for _, child in pairs(list:GetChildren()) do
                 if child:IsA("TextButton") then
-                    local targetColor = (child.Text == tostring(val)) and self.Theme.Accent or self.Theme.TextDim
-                    Tween(child, {TextColor3 = targetColor})
+                    child.TextColor3 = (child.Text == tostring(val)) and self.Theme.Accent or self.Theme.TextDim
                 end
             end
         end
@@ -890,12 +889,9 @@ function Library:CreateDropdown(parent, options)
     table.insert(self.Registry, {
         Callback = function(theme)
             local tTheme = theme or self.Theme
-             -- Debug print to check if callback runs and what color it sees
-            -- print("Dropdown Registry Callback:", tTheme.Accent)
             for _, child in pairs(list:GetChildren()) do
                 if child:IsA("TextButton") then
-                    local targetColor = (child.Text == tostring(currentVal)) and tTheme.Accent or tTheme.TextDim
-                    Tween(child, {TextColor3 = targetColor})
+                    child.TextColor3 = (child.Text == tostring(currentVal)) and tTheme.Accent or tTheme.TextDim
                 end
             end
         end
@@ -987,13 +983,9 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Parent = tabHeader
         }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
         
-        local tabPage = Create("ScrollingFrame", {
+        local tabPage = Create("Frame", {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
-            ScrollBarThickness = 3,
-            ScrollBarImageColor3 = theme.Accent,
-            AutomaticCanvasSize = Enum.AutomaticSize.Y,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
             Visible = false,
             Parent = tabContent
         }, {
@@ -1001,7 +993,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Create("UIPadding", {PaddingRight = UDim.new(0, 4)})
         })
         
-        Library:RegisterElement(tabPage, "Accent", "ScrollBarImageColor3")
+
         
         table.insert(tabs, {btn = tabBtn, page = tabPage})
         
