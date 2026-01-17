@@ -690,6 +690,9 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     local tabs = {}
     local activeTab = nil
     
+    -- Forward declare update function
+    local updateTabboxSize
+    
     function TabboxFuncs:AddTab(tabName)
         local tabBtn = Create("TextButton", {
             Size = UDim2.new(0, 70, 1, 0),
@@ -774,9 +777,8 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     end
     
     -- Auto-resize tabbox based on content
-    -- Auto-resize tabbox based on content
     local updateThread
-    local function updateTabboxSize()
+    updateTabboxSize = function()
         if updateThread then task.cancel(updateThread) end
         updateThread = task.defer(function()
             local maxHeight = 0
