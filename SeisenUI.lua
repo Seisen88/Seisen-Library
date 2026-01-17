@@ -1405,14 +1405,15 @@ function Library:CreateWindow(options)
                     Parent = bar
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
 
-                -- Draggable Knob for Slider (New)
+                -- Draggable Knob for Slider
                 local sliderKnob = Create("Frame", {
                     Size = UDim2.new(0, 14, 0, 14),
-                    Position = UDim2.new(1, -7, 0.5, -7),
-                    AnchorPoint = Vector2.new(0.5, 0.5), -- Center anchor
+                    Position = UDim2.new((default - min) / (max - min), 0, 0.5, 0),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                     BorderSizePixel = 0,
-                    Parent = fill -- Parented to fill ensures it moves with it
+                    ZIndex = 2,
+                    Parent = bar -- Parent to bar, not fill
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
                     Create("UIStroke", {Color = Color3.new(0,0,0), Transparency = 0.8, Thickness = 1})
@@ -1430,6 +1431,7 @@ function Library:CreateWindow(options)
                         self.Value = val
                         valLabel.Text = tostring(val)
                         fill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
+                        sliderKnob.Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0)
                         callback(val)
                     end
                 }
@@ -1897,7 +1899,12 @@ function Library:CreateWindow(options)
                     TextSize = 10,
                     AutoButtonColor = false,
                     Parent = keybind
-                }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
+                })
+                
+                Library:RegisterElement(keyBtn, "Element")
                 
                 local keybindObj = {
                     Value = currentKey,
