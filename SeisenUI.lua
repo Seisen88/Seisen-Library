@@ -182,8 +182,7 @@ end
 local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     local tabbox = Create("Frame", {
         Name = name or "Tabbox",
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
+        Size = UDim2.new(1, 0, 0, 150),
         BackgroundColor3 = theme.Element,
         BackgroundTransparency = 1,
         Parent = parent
@@ -214,9 +213,8 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     
     -- Tab Content Container
     local tabContent = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        Position = UDim2.new(0, 0, 0, 30),
+        Size = UDim2.new(1, 0, 1, -30),
+        Position = UDim2.new(0, 0, 0, 28),
         BackgroundColor3 = theme.Sidebar,
         BackgroundTransparency = 0.5,
         ClipsDescendants = true,
@@ -467,8 +465,18 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     end
     
     -- Auto-resize tabbox based on content
-    -- AutomaticSize handles sizing now
-    -- task.defer(updateTabboxSize)
+    local function updateTabboxSize()
+        local maxHeight = 0
+        for _, t in ipairs(tabs) do
+            local layout = t.page:FindFirstChildOfClass("UIListLayout")
+            if layout then
+                maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
+            end
+        end
+        tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 50))
+    end
+    
+    task.defer(updateTabboxSize)
     
     table.insert(Library.Registry, {
         Callback = function()
