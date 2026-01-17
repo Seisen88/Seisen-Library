@@ -617,11 +617,20 @@ function Library:CreateWindow(options)
     self:RegisterElement(content, "Content")
     
     -- Window Controls (Minimize/Close)
-    local controls = Create("Frame", {
-        Size = UDim2.new(0, 60, 0, 30),
-        Position = UDim2.new(1, -70, 0, 0), -- Top Right
+    -- Header Frame (Container for Title and Controls) - Draggable Area
+    local header = Create("Frame", {
+        Name = "Header",
+        Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
         Parent = content,
+        ZIndex = 100
+    })
+
+    local controls = Create("Frame", {
+        Size = UDim2.new(0, 60, 0, 30),
+        Position = UDim2.new(1, -70, 0, 10), -- Top Right relative to header
+        BackgroundTransparency = 1,
+        Parent = header,
         ZIndex = 110 -- Above content
     }, {
         Create("UIListLayout", {
@@ -774,14 +783,14 @@ function Library:CreateWindow(options)
         Font = Enum.Font.GothamBold,
         TextSize = 18,
         TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = content
+        Parent = header -- Parent to header now
     })
     
     -- Pages Container
     local pages = Create("Folder", {Name = "Pages", Parent = content})
     
     MakeDraggable(sidebar, main)
-    MakeDraggable(content, main) -- Enable dragging on top header area too
+    MakeDraggable(header, main) -- Restrict dragging to Header (Top 50px) only
     
     local resizeHandle = Create("ImageLabel", {
         Size = UDim2.new(0, 16, 0, 16),
