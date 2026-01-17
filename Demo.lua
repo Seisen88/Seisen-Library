@@ -265,18 +265,10 @@ UtilSection:AddButton({
 
 UtilSection:AddDivider()
 
-UtilSection:AddToggle({
-    Name = "Custom Cursor",
-    Default = true,
-    Callback = function(v)
-        Library:SetCustomCursor(v)
-    end
-})
-
 UtilSection:AddSlider({
     Name = "Scale (%)",
-    Min = 50,
-    Max = 200,
+    Min = 80,
+    Max = 150,
     Default = 100,
     Callback = function(val)
         Window:SetScale(val/100)
@@ -288,10 +280,8 @@ UtilSection:AddButton({
     Callback = function()
         Library:CloseAllDropdowns()
         -- Handle Custom Cursor cleanup too if needed, or SetCustomCursor(false)
-        Library:SetCustomCursor(false)
         if Library.ScreenGui then Library.ScreenGui:Destroy() end
     end
 })
 
 print("[Seisen Demo] UI Loaded with all elements!")
-Library:SetCustomCursor(true)

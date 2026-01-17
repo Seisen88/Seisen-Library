@@ -23,7 +23,6 @@ local Library = {
     Registry = {}, -- For live theme updates
     OpenDropdowns = {}, -- Track open dropdowns for click-away
     ScreenGui = nil, -- Reference to main GUI
-    CustomCursor = nil,
     Icons = IconsLoaded and Icons or nil, -- Lucide icons module
     Theme = {
         Background = Color3.fromRGB(30, 30, 35),
@@ -43,62 +42,8 @@ local Library = {
     }
 }
 
-function Library:SetCustomCursor(enabled, imageId)
-    -- Clean up existing cursor
-    if self.CustomCursor then
-        self.CustomCursor:Destroy()
-        self.CustomCursor = nil
-    end
-    
-    pcall(function() RunService:UnbindFromRenderStep("SeisenCustomCursor") end)
-    
-    if not enabled then
-        pcall(function() 
-             UserInputService.MouseIconEnabled = true 
-             LocalPlayer:GetMouse().Icon = "" 
-        end)
-        return
-    end
-    
-    -- Create new cursor (ImageLabel approach for smooth custom look)
-    local cursor = Instance.new("ImageLabel")
-    cursor.Name = "CustomCursor"
-    cursor.Size = UDim2.new(0, 24, 0, 24)
-    cursor.BackgroundTransparency = 1
-    cursor.Image = imageId or "rbxassetid://13475069273" -- Custom smooth white cursor
-    cursor.ZIndex = 10000
-    
-    if self.ScreenGui then
-        cursor.Parent = self.ScreenGui
-    else
-        warn("Library:SetCustomCursor called before CreateWindow or ScreenGui not found.")
-        return
-    end
-    
-    self.CustomCursor = cursor
-    
-    -- Dual-hiding strategy: Transparent Icon + MouseIconEnabled = false
-    -- This handles cases where one method fails.
-    local playerMouse = LocalPlayer:GetMouse()
-    local transparentIcon = "rbxassetid://2374665403" -- 1x1 Transparent PNG
-    
-    -- Use BindToRenderStep with Last priority to ensure it overrides everything
-    RunService:BindToRenderStep("SeisenCustomCursor", Enum.RenderPriority.Last.Value, function()
-        if not cursor.Parent then 
-            UserInputService.MouseIconEnabled = true
-            playerMouse.Icon = ""
-            RunService:UnbindFromRenderStep("SeisenCustomCursor")
-            return 
-        end
-        
-        -- Force hide system cursor
-        UserInputService.MouseIconEnabled = false
-        playerMouse.Icon = transparentIcon 
-        
-        -- Update position using Mouse (matches Obsidian behavior, handles offsets automatically usually)
-        cursor.Position = UDim2.new(0, playerMouse.X, 0, playerMouse.Y)
-    end)
-end
+    }
+}
 
 -- Registry functions for live theme updates
 function Library:RegisterElement(element, themeProperty, targetProperty)
@@ -697,22 +642,12 @@ function Library:CreateWindow(options)
     
     MakeDraggable(sidebar, main)
     
-    -- Resize Handle
     local resizeHandle = Create("Frame", {
         Size = UDim2.new(0, 16, 0, 16),
         Position = UDim2.new(1, -16, 1, -16),
         BackgroundTransparency = 1,
         Parent = main,
         ZIndex = 200
-    })
-    
-    Create("TextLabel", {
-        Text = "◢",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        TextColor3 = theme.TextDim,
-        TextSize = 14,
-        Parent = resizeHandle
     })
     
     local resizing = false
