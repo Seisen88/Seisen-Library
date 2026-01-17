@@ -471,6 +471,17 @@ function Library:CreateWindow(options)
     local name = options.Name or "Seisen UI"
     local theme = options.Theme or self.Theme
     
+    -- Remove existing UI if present
+    if RunService:IsStudio() then
+        if LocalPlayer.PlayerGui:FindFirstChild("SeisenUI") then
+            LocalPlayer.PlayerGui.SeisenUI:Destroy()
+        end
+    else
+        if game.CoreGui:FindFirstChild("SeisenUI") then
+            game.CoreGui.SeisenUI:Destroy()
+        end
+    end
+
     -- Screen GUI
     local gui = Create("ScreenGui", {
         Name = "SeisenUI",
