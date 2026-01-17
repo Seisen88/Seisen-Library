@@ -58,6 +58,36 @@ export default function Toggles() {
             default: "nil",
             description: "Optional keybind to toggle this setting",
           },
+          {
+            property: "Tooltip",
+            type: "string",
+            default: "nil",
+            description: "Hover description text",
+          },
+          {
+            property: "DisabledTooltip",
+            type: "string",
+            default: "nil",
+            description: "Tooltip shown when toggle is disabled",
+          },
+          {
+            property: "Disabled",
+            type: "boolean",
+            default: "false",
+            description: "Makes the toggle non-interactive",
+          },
+          {
+            property: "Visible",
+            type: "boolean",
+            default: "true",
+            description: "Controls toggle visibility",
+          },
+          {
+            property: "Risky",
+            type: "boolean",
+            default: "false",
+            description: "Applies warning styling to the toggle",
+          },
         ]}
       />
 
@@ -67,6 +97,24 @@ export default function Toggles() {
           name="Toggle:SetValue(value)"
           description="Programmatically set the toggle state."
           params="value: boolean"
+          returns="void"
+        />
+        <MethodCard
+          name="Toggle:SetVisible(visible)"
+          description="Show or hide the toggle."
+          params="visible: boolean"
+          returns="void"
+        />
+        <MethodCard
+          name="Toggle:SetDisabled(disabled)"
+          description="Enable or disable the toggle."
+          params="disabled: boolean"
+          returns="void"
+        />
+        <MethodCard
+          name="Toggle:SetTooltip(text)"
+          description="Update the tooltip text."
+          params="text: string"
           returns="void"
         />
       </section>
@@ -82,6 +130,7 @@ export default function Toggles() {
     Default = false,
     Flag = "SprintToggle",
     Keybind = Enum.KeyCode.LeftShift,
+    Tooltip = "Hold shift to sprint faster",
     Callback = function(Value)
         -- Enable/disable sprinting
         LocalPlayer.Character.Humanoid.WalkSpeed = Value and 32 or 16
@@ -91,18 +140,34 @@ export default function Toggles() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-white mb-4">Accessing Toggle State</h2>
+        <h2 className="text-2xl font-semibold text-white mb-4">Conditional Visibility</h2>
         <p className="text-[#a0a0a0] mb-4">
-          You can access the current toggle state using the Flag:
+          Use <code>SetVisible</code> and <code>SetDisabled</code> to control toggles dynamically:
         </p>
         <CodeBlock
-          code={`-- Check if toggle is enabled
-if Library.Toggles.FeatureToggle.Value then
-    -- Do something
-end
+          code={`-- Create a master toggle
+local MasterToggle = Section:AddToggle({
+    Name = "Enable ESP",
+    Flag = "ESP",
+    Callback = function(Value)
+        -- Show/hide related options
+        Library.Toggles.ESPNames:SetVisible(Value)
+        Library.Toggles.ESPBoxes:SetVisible(Value)
+    end
+})
 
--- Set toggle programmatically
-Library.Toggles.FeatureToggle:SetValue(true)`}
+-- Create dependent toggles (hidden by default)
+Section:AddToggle({
+    Name = "Show Names",
+    Flag = "ESPNames",
+    Visible = false
+})
+
+Section:AddToggle({
+    Name = "Show Boxes",
+    Flag = "ESPBoxes",
+    Visible = false
+})`}
         />
       </section>
 

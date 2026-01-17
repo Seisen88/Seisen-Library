@@ -1,6 +1,6 @@
 import { CodeBlock } from "@/components/CodeBlock";
 import { ConfigTable } from "@/components/ConfigTable";
-import { PageHeader, MethodCard } from "@/components/DocComponents";
+import { PageHeader, InfoBox } from "@/components/DocComponents";
 
 export default function Buttons() {
   return (
@@ -39,14 +39,84 @@ export default function Buttons() {
             description: "Function called when the button is clicked",
             required: true,
           },
+          {
+            property: "DoubleClick",
+            type: "boolean",
+            default: "false",
+            description: "Require double-click to activate",
+          },
+          {
+            property: "ConfirmText",
+            type: "string",
+            default: "nil",
+            description: "Text shown on first click, requires second click to confirm",
+          },
+          {
+            property: "Tooltip",
+            type: "string",
+            default: "nil",
+            description: "Hover description text",
+          },
+          {
+            property: "DisabledTooltip",
+            type: "string",
+            default: "nil",
+            description: "Tooltip shown when button is disabled",
+          },
+          {
+            property: "Disabled",
+            type: "boolean",
+            default: "false",
+            description: "Makes the button non-interactive",
+          },
+          {
+            property: "Visible",
+            type: "boolean",
+            default: "true",
+            description: "Controls button visibility",
+          },
+          {
+            property: "Risky",
+            type: "boolean",
+            default: "false",
+            description: "Applies red warning styling to the button",
+          },
+          {
+            property: "Flag",
+            type: "string",
+            default: "nil",
+            description: "Unique identifier for referencing via Library.Options",
+          },
         ]}
       />
 
       <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-white mb-4">Example: Teleport Button</h2>
+        <h2 className="text-2xl font-semibold text-white mb-4">Risky Button Example</h2>
+        <p className="text-[#a0a0a0] mb-4">
+          Use the Risky option for dangerous actions like reset or delete:
+        </p>
+        <CodeBlock
+          code={`Section:AddButton({
+    Name = "Reset All Settings",
+    Risky = true,
+    ConfirmText = "Click again to confirm",
+    Callback = function()
+        -- Reset all settings
+        for _, toggle in pairs(Library.Toggles) do
+            toggle:SetValue(false)
+        end
+    end
+})`}
+        />
+      </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-white mb-4">Double Click Example</h2>
         <CodeBlock
           code={`Section:AddButton({
     Name = "Teleport to Spawn",
+    DoubleClick = true,
+    Tooltip = "Double-click to teleport",
     Callback = function()
         local spawnPoint = workspace:FindFirstChild("SpawnLocation")
         if spawnPoint and LocalPlayer.Character then
@@ -56,6 +126,11 @@ export default function Buttons() {
 })`}
         />
       </section>
+
+      <InfoBox type="tip">
+        <strong>Confirmation:</strong> Use <code>ConfirmText</code> together with <code>Risky</code> 
+        for destructive actions that require explicit user confirmation.
+      </InfoBox>
     </div>
   );
 }

@@ -156,23 +156,159 @@ local function MakeDraggable(handle, frame, onClick)
                 end
             end)
             
-            inputEnded = UserInputService.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                    inputChanged:Disconnect()
-                    inputEnded:Disconnect()
-                    
-                    if not hasMoved and onClick then
-                        onClick()
-                    end
-                end
             end)
         end
     end)
 end
 
+-- Tooltip System
+local TooltipFrame = nil
+local TooltipLabel = nil
+local TooltipConnection = nil
 
--- Shared Element Constructors
+function Library:CreateTooltipFrame()
+    if not self.ScreenGui then return end
+    if TooltipFrame then return end
+    
+    TooltipFrame = Create("Frame", {
+        Name = "Tooltip",
+        Size = UDim2.new(0, 200, 0, 30),
+        BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+        BorderSizePixel = 0,
+        Visible = false,
+        ZIndex = 1000,
+        Parent = self.ScreenGui
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+        Create("UIStroke", {Color = Color3.fromRGB(60, 60, 65), Thickness = 1}),
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)})
+    })
+    
+    TooltipLabel = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        TextColor3 = Color3.fromRGB(220, 220, 220),
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextWrapped = true,
+        AutomaticSize = Enum.AutomaticSize.XY,
+        Parent = TooltipFrame
+    })
+    
+    -- Update tooltip position on mouse move
+    TooltipConnection = UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and TooltipFrame.Visible then
+            local mousePos = UserInputService:GetMouseLocation()
+            TooltipFrame.Position = UDim2.fromOffset(mousePos.X + 15, mousePos.Y + 10)
+        end
+    end)
+end
+
+function Library:ShowTooltip(text)
+    if not TooltipFrame then self:CreateTooltipFrame() end
+    if not TooltipFrame or not text or text == "" then return end
+    
+    TooltipLabel.Text = text
+    TooltipFrame.Size = UDim2.new(0, math.min(TooltipLabel.TextBounds.X + 20, 300), 0, TooltipLabel.TextBounds.Y + 14)
+    TooltipFrame.Visible = true
+    
+    local mousePos = UserInputService:GetMouseLocation()
+    TooltipFrame.Position = UDim2.fromOffset(mousePos.X + 15, mousePos.Y + 10)
+end
+
+function Library:HideTooltip()
+    if TooltipFrame then
+        TooltipFrame.Visible = false
+    end
+end
+
+-- Common Properties Helper
+-- Applies: Tooltip, DisabledTooltip, Disabled, Visible, Risky to any element
+function Library:ApplyCommonProperties(element, options, elementObj)
+    local theme = self.Theme
+    local tooltip = options.Tooltip
+    local disabledTooltip = options.DisabledTooltip
+    local isDisabled = options.Disabled or false
+    local isVisible = options.Visible ~= false -- Default true
+    local isRisky = options.Risky or false
+    
+    -- Store state
+    elementObj._disabled = isDisabled
+    elementObj._visible = isVisible
+    elementObj._tooltip = tooltip
+    elementObj._disabledTooltip = disabledTooltip
+    elementObj._risky = isRisky
+    
+    -- Apply initial visibility
+    element.Visible = isVisible
+    
+    -- Apply risky styling (red/orange accent)
+    if isRisky then
+        local riskyColor = Color3.fromRGB(255, 100, 80)
+        -- Find text labels and buttons to apply risky color
+        for _, child in pairs(element:GetDescendants()) do
+            if child:IsA("TextLabel") and child.Name ~= "Value" then
+                -- child.TextColor3 = riskyColor
+            end
+        end
+    end
+    
+    -- Apply disabled state
+    if isDisabled then
+        element.BackgroundTransparency = 0.6
+        for _, child in pairs(element:GetDescendants()) do
+            if child:IsA("TextLabel") then
+                child.TextTransparency = 0.5
+            elseif child:IsA("TextButton") or child:IsA("ImageButton") then
+                child.Active = false
+            end
+        end
+    end
+    
+    -- Tooltip on hover
+    if tooltip or disabledTooltip then
+        element.MouseEnter:Connect(function()
+            local currentTooltip = elementObj._disabled and elementObj._disabledTooltip or elementObj._tooltip
+            if currentTooltip then
+                Library:ShowTooltip(currentTooltip)
+            end
+        end)
+        
+        element.MouseLeave:Connect(function()
+            Library:HideTooltip()
+        end)
+    end
+    
+    -- SetVisible method
+    function elementObj:SetVisible(visible)
+        self._visible = visible
+        element.Visible = visible
+    end
+    
+    -- SetDisabled method
+    function elementObj:SetDisabled(disabled)
+        self._disabled = disabled
+        element.BackgroundTransparency = disabled and 0.6 or 0
+        for _, child in pairs(element:GetDescendants()) do
+            if child:IsA("TextLabel") then
+                child.TextTransparency = disabled and 0.5 or 0
+            elseif child:IsA("TextButton") or child:IsA("ImageButton") then
+                child.Active = not disabled
+            end
+        end
+    end
+    
+    -- SetTooltip method
+    function elementObj:SetTooltip(newTooltip)
+        self._tooltip = newTooltip
+    end
+    
+    return elementObj
+end
+
+
 function Library:CreateLabel(parent, options)
     local text = options.Text or options.Name or "Label"
     local flag = options.Flag
@@ -201,12 +337,15 @@ end
 function Library:CreateButton(parent, options)
     local btnName = options.Name or "Button"
     local callback = options.Callback or function() end
+    local doubleClick = options.DoubleClick or false
+    local confirmText = options.ConfirmText
+    local isRisky = options.Risky or false
     
     local btn = Create("TextButton", {
         Size = UDim2.new(1, 0, 0, 26),
         BackgroundColor3 = self.Theme.Element,
         Text = btnName,
-        TextColor3 = self.Theme.Text,
+        TextColor3 = isRisky and Color3.fromRGB(255, 100, 80) or self.Theme.Text,
         Font = Enum.Font.Gotham,
         TextSize = 12,
         AutoButtonColor = false,
@@ -216,24 +355,70 @@ function Library:CreateButton(parent, options)
     })
     
     local btnStroke = Instance.new("UIStroke")
-    btnStroke.Color = self.Theme.Border
+    btnStroke.Color = isRisky and Color3.fromRGB(180, 60, 60) or self.Theme.Border
     btnStroke.Thickness = 1
     btnStroke.Parent = btn
     
     self:RegisterElement(btn, "Element")
-    self:RegisterElement(btnStroke, "Border", "Color")
-    self:RegisterElement(btn, "Text", "TextColor3")
+    if not isRisky then
+        self:RegisterElement(btnStroke, "Border", "Color")
+        self:RegisterElement(btn, "Text", "TextColor3")
+    end
+    
+    -- Click handling with DoubleClick and Confirm support
+    local lastClick = 0
+    local waitingConfirm = false
     
     btn.MouseEnter:Connect(function()
         Tween(btn, {BackgroundColor3 = self.Theme.ElementHover})
     end)
     btn.MouseLeave:Connect(function()
         Tween(btn, {BackgroundColor3 = self.Theme.Element})
+        if waitingConfirm then
+            waitingConfirm = false
+            btn.Text = btnName
+        end
     end)
-    btn.MouseButton1Click:Connect(callback)
     
-    return {Instance = btn}
+    btn.MouseButton1Click:Connect(function()
+        local btnObj = self.Options[options.Flag]
+        if btnObj and btnObj._disabled then return end
+        
+        -- Confirm text functionality
+        if confirmText and not waitingConfirm then
+            waitingConfirm = true
+            btn.Text = confirmText
+            return
+        end
+        waitingConfirm = false
+        btn.Text = btnName
+        
+        -- Double click functionality
+        if doubleClick then
+            local now = tick()
+            if now - lastClick < 0.4 then
+                callback()
+                lastClick = 0
+            else
+                lastClick = now
+            end
+        else
+            callback()
+        end
+    end)
+    
+    local btnObj = {
+        Instance = btn,
+        Type = "Button"
+    }
+    
+    -- Apply common properties
+    self:ApplyCommonProperties(btn, options, btnObj)
+    
+    if options.Flag then self.Options[options.Flag] = btnObj end
+    return btnObj
 end
+
 
 function Library:CreateToggle(parent, options)
     local toggleName = options.Name or "Toggle"
@@ -344,9 +529,14 @@ function Library:CreateToggle(parent, options)
             keybindBtn.Text = input.KeyCode.Name:upper()
             listening = false
         elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then
-            toggleObj:SetValue(not state)
+            if not toggleObj._disabled then
+                toggleObj:SetValue(not state)
+            end
         end
     end)
+    
+    -- Apply common properties
+    self:ApplyCommonProperties(toggle, options, toggleObj)
     
     if flag then self.Toggles[flag] = toggleObj end
     if default then callback(true) end
@@ -361,6 +551,10 @@ function Library:CreateSlider(parent, options)
     local default = options.Default or min
     local callback = options.Callback or function() end
     local flag = options.Flag
+    local increment = options.Increment or 1
+    local suffix = options.Suffix or ""
+    local prefix = options.Prefix or ""
+    local hideMax = options.HideMax or false
     local value = default
     
     local slider = Create("Frame", {
@@ -380,11 +574,16 @@ function Library:CreateSlider(parent, options)
         Parent = slider
     })
     
+    -- Helper to format the value with prefix/suffix
+    local function formatValue(v)
+        return prefix .. tostring(v) .. suffix
+    end
+    
     local valLabel = Create("TextLabel", {
-        Size = UDim2.new(0, 35, 0, 16),
-        Position = UDim2.new(1, -35, 0, 0),
+        Size = UDim2.new(0, 60, 0, 16),
+        Position = UDim2.new(1, -60, 0, 0),
         BackgroundTransparency = 1,
-        Text = tostring(value),
+        Text = formatValue(value),
         TextColor3 = self.Theme.TextDim,
         Font = Enum.Font.Gotham,
         TextSize = 12,
@@ -429,9 +628,11 @@ function Library:CreateSlider(parent, options)
         Type = "Slider",
         SetValue = function(s, val)
             val = math.clamp(val, min, max)
+            -- Apply increment rounding
+            val = math.floor(val / increment + 0.5) * increment
             value = val
             s.Value = val
-            valLabel.Text = tostring(val)
+            valLabel.Text = formatValue(val)
             fill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
             sliderKnob.Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0)
             callback(val)
@@ -442,14 +643,16 @@ function Library:CreateSlider(parent, options)
     
     bar.InputBegan:Connect(function(i) 
         if i.UserInputType == Enum.UserInputType.MouseButton1 then 
+            if sliderObj._disabled then return end
             sliding = true
             
             -- Immediately set value based on click position
             local clickPct = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-            local clickVal = math.floor(min + (max - min) * clickPct)
+            local rawVal = min + (max - min) * clickPct
+            local clickVal = math.floor(rawVal / increment + 0.5) * increment
             value = clickVal
             sliderObj.Value = clickVal
-            valLabel.Text = tostring(clickVal)
+            valLabel.Text = formatValue(clickVal)
             fill.Size = UDim2.new((clickVal - min) / (max - min), 0, 1, 0)
             sliderKnob.Position = UDim2.new((clickVal - min) / (max - min), 0, 0.5, 0)
             callback(clickVal)
@@ -469,12 +672,13 @@ function Library:CreateSlider(parent, options)
                 -- Recalculate barWidth each frame to account for scaling
                 local currentBarWidth = bar.AbsoluteSize.X
                 local valueDelta = (delta / currentBarWidth) * (max - min)
-                local newVal = math.floor(math.clamp(startValue + valueDelta, min, max))
+                local rawVal = math.clamp(startValue + valueDelta, min, max)
+                local newVal = math.floor(rawVal / increment + 0.5) * increment
                 
                 if newVal ~= value then
                     value = newVal
                     sliderObj.Value = newVal
-                    valLabel.Text = tostring(newVal)
+                    valLabel.Text = formatValue(newVal)
                     fill.Size = UDim2.new((newVal - min) / (max - min), 0, 1, 0)
                     sliderKnob.Position = UDim2.new((newVal - min) / (max - min), 0, 0.5, 0)
                     callback(newVal)
@@ -492,6 +696,9 @@ function Library:CreateSlider(parent, options)
             end)
         end 
     end)
+    
+    -- Apply common properties
+    self:ApplyCommonProperties(slider, options, sliderObj)
     
     if flag then self.Options[flag] = sliderObj end
     return sliderObj

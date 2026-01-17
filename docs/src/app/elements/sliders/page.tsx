@@ -1,6 +1,6 @@
 import { CodeBlock } from "@/components/CodeBlock";
 import { ConfigTable } from "@/components/ConfigTable";
-import { PageHeader, MethodCard } from "@/components/DocComponents";
+import { PageHeader, MethodCard, InfoBox } from "@/components/DocComponents";
 
 export default function Sliders() {
   return (
@@ -57,6 +57,30 @@ export default function Sliders() {
             description: "Initial value of the slider",
           },
           {
+            property: "Increment",
+            type: "number",
+            default: "1",
+            description: "Step size for value changes (e.g., 0.1 for decimals, 5 for multiples of 5)",
+          },
+          {
+            property: "Suffix",
+            type: "string",
+            default: '""',
+            description: 'Text displayed after the value (e.g., "%", "px", " studs")',
+          },
+          {
+            property: "Prefix",
+            type: "string",
+            default: '""',
+            description: 'Text displayed before the value (e.g., "$", "+")',
+          },
+          {
+            property: "HideMax",
+            type: "boolean",
+            default: "false",
+            description: "Hide the maximum value label",
+          },
+          {
             property: "Flag",
             type: "string",
             default: "nil",
@@ -67,6 +91,24 @@ export default function Sliders() {
             type: "function",
             default: "nil",
             description: "Function called when value changes. Receives the new number value.",
+          },
+          {
+            property: "Tooltip",
+            type: "string",
+            default: "nil",
+            description: "Hover description text",
+          },
+          {
+            property: "Disabled",
+            type: "boolean",
+            default: "false",
+            description: "Makes the slider non-interactive",
+          },
+          {
+            property: "Visible",
+            type: "boolean",
+            default: "true",
+            description: "Controls slider visibility",
           },
         ]}
       />
@@ -79,28 +121,61 @@ export default function Sliders() {
           params="value: number"
           returns="void"
         />
-      </section>
-
-      <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-white mb-4">Features</h2>
-        <ul className="list-disc list-inside text-[#a0a0a0] space-y-2">
-          <li><strong className="text-white">Click to Jump:</strong> Click anywhere on the slider bar to jump to that value</li>
-          <li><strong className="text-white">Smooth Dragging:</strong> Drag the knob for precise value selection</li>
-          <li><strong className="text-white">Real-time Updates:</strong> Value updates in real-time as you drag</li>
-          <li><strong className="text-white">UIScale Compatible:</strong> Works correctly even when UI is scaled</li>
-        </ul>
-      </section>
-
-      <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-white mb-4">Accessing Slider Value</h2>
-        <CodeBlock
-          code={`-- Get current value
-local speed = Library.Options.WalkSpeed.Value
-
--- Set value programmatically
-Library.Options.WalkSpeed:SetValue(50)`}
+        <MethodCard
+          name="Slider:SetVisible(visible)"
+          description="Show or hide the slider."
+          params="visible: boolean"
+          returns="void"
+        />
+        <MethodCard
+          name="Slider:SetDisabled(disabled)"
+          description="Enable or disable the slider."
+          params="disabled: boolean"
+          returns="void"
         />
       </section>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-white mb-4">Suffix/Prefix Example</h2>
+        <CodeBlock
+          code={`-- Percentage slider
+Section:AddSlider({
+    Name = "Opacity",
+    Min = 0,
+    Max = 100,
+    Default = 100,
+    Suffix = "%",
+    Flag = "Opacity"
+})
+
+-- Price slider
+Section:AddSlider({
+    Name = "Price",
+    Min = 0,
+    Max = 1000,
+    Default = 100,
+    Prefix = "$",
+    Increment = 10,
+    Flag = "Price"
+})
+
+-- Decimal slider
+Section:AddSlider({
+    Name = "Scale",
+    Min = 0.5,
+    Max = 2.0,
+    Default = 1.0,
+    Increment = 0.1,
+    Suffix = "x",
+    Flag = "Scale"
+})`}
+        />
+      </section>
+
+      <InfoBox type="info">
+        <strong>Increment:</strong> Use <code>Increment</code> to control the step size. 
+        For example, <code>Increment = 0.1</code> allows decimal values like 1.1, 1.2, etc.
+      </InfoBox>
     </div>
   );
 }

@@ -27,6 +27,7 @@ const navigation: NavSection[] = [
     title: "Core",
     items: [
       { title: "Library", href: "/core/library" },
+      { title: "Common Properties", href: "/core/common-properties" },
       { title: "SaveManager", href: "/core/save-manager" },
       { title: "ThemeManager", href: "/core/theme-manager" },
     ],
