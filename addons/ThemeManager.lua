@@ -261,6 +261,18 @@ local ThemeManager = {} do
             end
         })
 
+        section:AddButton({
+            Name = "Reset to Default",
+            Callback = function()
+                pcall(delfile, self.Folder .. "/themes/default.txt")
+                self:ApplyTheme("Default")
+                if self.Library.Options.ThemeManager_ThemeList then
+                    self.Library.Options.ThemeManager_ThemeList:SetValue("Default")
+                end
+                print("[ThemeManager] Reset to default.")
+            end
+        })
+
         -- Apply default theme on load
         self:ApplyTheme(defaultTheme)
     end
