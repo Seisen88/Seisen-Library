@@ -467,8 +467,8 @@ function Library:CreateWindow(options)
     -- Main Frame
     local main = Create("Frame", {
         Name = "Main",
-        Size = UDim2.new(0, 630, 0, 450),
-        Position = UDim2.new(0.5, -315, 0.5, -225),
+        Size = UDim2.new(0, 500, 0, 600), -- Taller default size (Length focus)
+        Position = UDim2.new(0.5, -250, 0.5, -300),
         BackgroundColor3 = theme.Background,
         BorderSizePixel = 0,
         Parent = gui
@@ -650,7 +650,7 @@ function Library:CreateWindow(options)
     })
     
     local resizing = false
-    local minSize = Vector2.new(550, 350)
+    local minSize = Vector2.new(400, 300)
     
     resizeHandle.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = true end end)
     UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = false end end)
@@ -886,7 +886,7 @@ function Library:CreateWindow(options)
                 
                 -- Label (takes up remaining space)
                 local toggleLabel = Create("TextLabel", {
-                    Size = UDim2.new(1, -110, 1, 0), -- Leave room for right-side controls
+                    Size = UDim2.new(1, -130, 1, 0), -- Leave room for right-side controls
                     BackgroundTransparency = 1,
                     Text = toggleName,
                     TextColor3 = Library.Theme.Text,
@@ -898,10 +898,19 @@ function Library:CreateWindow(options)
                 })
                 Library:RegisterElement(toggleLabel, "Text", "TextColor3")
                 
-                -- Switch (Right Aligned)
+                -- Indicator (Rightmost)
+                local indicator = Create("Frame", {
+                    Size = UDim2.new(0, 8, 0, 8),
+                    Position = UDim2.new(1, -14, 0.5, -4),
+                    BackgroundColor3 = state and Library.Theme.Accent or Library.Theme.ToggleOff,
+                    BorderSizePixel = 0,
+                    Parent = toggle
+                }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+                
+                -- Switch (Left of Indicator)
                 local switchBg = Create("Frame", {
                     Size = UDim2.new(0, 36, 0, 18),
-                    Position = UDim2.new(1, -36, 0.5, -9), -- Anchored Right
+                    Position = UDim2.new(1, -56, 0.5, -9), 
                     BackgroundColor3 = state and Library.Theme.Toggle or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
@@ -918,7 +927,7 @@ function Library:CreateWindow(options)
                 -- Keybind Button (Left of Switch)
                 local keybindBtn = Create("TextButton", {
                     Size = UDim2.new(0, 50, 0, 18),
-                    Position = UDim2.new(1, -96, 0.5, -9), -- Left of switch (36 + 10 gap)
+                    Position = UDim2.new(1, -112, 0.5, -9), 
                     BackgroundColor3 = Library.Theme.Element,
                     Text = "NONE",
                     TextColor3 = Library.Theme.TextDim,
@@ -929,13 +938,11 @@ function Library:CreateWindow(options)
                 }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
                 Library:RegisterElement(keybindBtn, "Element")
                 
-                -- Toggle indicator (Removed as redundant or integrated into switch color)
-                local indicator = nil -- Previously at right edge, now redundant
-                
                 table.insert(Library.Registry, {
                     Callback = function(theme)
                         local tTheme = theme or Library.Theme
                         Tween(switchBg, {BackgroundColor3 = state and tTheme.Toggle or tTheme.ToggleOff})
+                        Tween(indicator, {BackgroundColor3 = state and tTheme.Accent or tTheme.ToggleOff})
                     end
                 })
                 
@@ -947,13 +954,14 @@ function Library:CreateWindow(options)
                         self.Value = val
                         Tween(switchBg, {BackgroundColor3 = val and Library.Theme.Toggle or Library.Theme.ToggleOff})
                         Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
+                        Tween(indicator, {BackgroundColor3 = val and Library.Theme.Accent or Library.Theme.ToggleOff})
                         callback(val)
                     end
                 }
                 
-                -- Click handlers
+                -- Click handlers (Full Size Button)
                 local switchBtn = Create("TextButton", {
-                    Size = UDim2.new(0, 150, 1, 0),
+                    Size = UDim2.new(1, 0, 1, 0), -- Full size for easy clicking
                     BackgroundTransparency = 1,
                     Text = "",
                     Parent = toggle
