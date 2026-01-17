@@ -134,19 +134,23 @@ local function Tween(obj, props, duration)
     TweenService:Create(obj, TweenInfo.new(duration or 0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
 end
 
-local function MakeDraggable(handle, frame)
+local function MakeDraggable(handle, frame, onClick)
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             local dragging = true
             local dragStart = input.Position
             local startPos = frame.Position
+            local hasMoved = false
             
             local inputChanged, inputEnded
             
             inputChanged = UserInputService.InputChanged:Connect(function(i)
                 if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
                     local delta = i.Position - dragStart
-                    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                    if delta.Magnitude > 5 then
+                        hasMoved = true
+                        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                    end
                 end
             end)
             
@@ -155,6 +159,10 @@ local function MakeDraggable(handle, frame)
                     dragging = false
                     inputChanged:Disconnect()
                     inputEnded:Disconnect()
+                    
+                    if not hasMoved and onClick then
+                        onClick()
+                    end
                 end
             end)
         end
@@ -693,14 +701,21 @@ function Library:CreateWindow(options)
         ZIndex = 200
     })
     
-    MakeDraggable(widget, widget)
+    -- Restore Function
+    local function toggleWindow(visible)
+        main.Visible = visible
+        widget.Visible = not visible
+    end
+
+    -- Make Draggable with Click to Restore
+    MakeDraggable(widget, widget, function() toggleWindow(true) end)
     
     -- Widget Logo
     local widgetLogo = Create("ImageLabel", {
         Size = UDim2.new(0, 40, 0, 40),
         Position = UDim2.new(0.5, -20, 0, 0), -- Centered top
-        BackgroundTransparency = 0.5,
-        BackgroundColor3 = Color3.new(1, 0, 0), -- Debug Red
+        BackgroundTransparency = 0,
+        BackgroundColor3 = Color3.new(0, 0, 0), -- Black
         Parent = widget
     })
     
@@ -737,24 +752,9 @@ function Library:CreateWindow(options)
         Parent = widget
     })
 
-    -- Restore Function
-    local function toggleWindow(visible)
-        main.Visible = visible
-        widget.Visible = not visible
-    end
-    
     -- Buttons
     createControl("minus", function() toggleWindow(false) end) -- Minimize
     createControl("x", function() gui:Destroy() end) -- Close
-    
-    -- Widget Click to Restore
-    local restoreBtn = Create("TextButton", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        Parent = widget
-    })
-    restoreBtn.MouseButton1Click:Connect(function() toggleWindow(true) end)
 
     -- Stats Updater
     local RunService = game:GetService("RunService")
