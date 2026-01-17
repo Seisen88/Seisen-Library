@@ -1493,10 +1493,14 @@ function Library:CreateWindow(options)
         })
         
         -- Auto canvas size
+        local updateThread
         local function updateCanvas()
-            local leftH = leftCol:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
-            local rightH = rightCol:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
-            page.CanvasSize = UDim2.new(0, 0, 0, math.max(leftH, rightH) + 10)
+            if updateThread then task.cancel(updateThread) end
+            updateThread = task.defer(function()
+                local leftH = leftCol:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
+                local rightH = rightCol:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
+                page.CanvasSize = UDim2.new(0, 0, 0, math.max(leftH, rightH) + 10)
+            end)
         end
         
         leftCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
