@@ -53,7 +53,9 @@ end
 
 function Library:UpdateColorsUsingRegistry()
     for _, entry in ipairs(self.Registry) do
-        if entry.Element and entry.Element.Parent then
+        if entry.Callback then
+            task.spawn(entry.Callback, self.Theme)
+        elseif entry.Element and entry.Element.Parent then
             local color = self.Theme[entry.ThemeProperty]
             if color then
                 pcall(function()
@@ -861,6 +863,14 @@ function Library:CreateWindow(options)
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
                 
+                table.insert(Library.Registry, {
+                    Callback = function(theme)
+                        local tTheme = theme or Library.Theme
+                        Tween(switchBg, {BackgroundColor3 = state and tTheme.Toggle or tTheme.ToggleOff})
+                        Tween(indicator, {BackgroundColor3 = state and tTheme.Accent or tTheme.ToggleOff})
+                    end
+                })
+                
                 -- Toggle Object
                 local toggleObj = {
                     Value = state,
@@ -1002,6 +1012,9 @@ function Library:CreateWindow(options)
                     Parent = bar
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
                 
+                Library:RegisterElement(bar, "ToggleOff")
+                Library:RegisterElement(fill, "Accent")
+                
                 local sliderObj = {
                     Value = value,
                     Type = "Slider",
@@ -1072,6 +1085,13 @@ function Library:CreateWindow(options)
                 
                 Library:RegisterElement(selectBtn, "Element")
                 Library:RegisterElement(dropStroke, "Border", "Color")
+                
+                selectBtn.MouseEnter:Connect(function()
+                    Tween(selectBtn, {BackgroundColor3 = Library.Theme.ElementHover})
+                end)
+                selectBtn.MouseLeave:Connect(function()
+                    Tween(selectBtn, {BackgroundColor3 = Library.Theme.Element})
+                end)
                 
                 local selectedLabel = Create("TextLabel", {
                     Size = UDim2.new(1, -25, 1, 0),
@@ -1189,12 +1209,12 @@ function Library:CreateWindow(options)
                     for _, data in ipairs(optionButtons) do
                         if data.value == dropObj.Value then
                             -- Selected option
-                            data.btn.BackgroundColor3 = theme.Accent
-                            data.btn.TextColor3 = theme.Text
+                            data.btn.BackgroundColor3 = Library.Theme.Accent
+                            data.btn.TextColor3 = Library.Theme.Text
                         else
                             -- Not selected
-                            data.btn.BackgroundColor3 = theme.Element
-                            data.btn.TextColor3 = theme.TextDim
+                            data.btn.BackgroundColor3 = Library.Theme.Element
+                            data.btn.TextColor3 = Library.Theme.TextDim
                         end
                     end
                 end
@@ -1217,14 +1237,14 @@ function Library:CreateWindow(options)
                     
                     optBtn.MouseEnter:Connect(function()
                         if opt ~= dropObj.Value then
-                            optBtn.BackgroundColor3 = theme.ElementHover
+                            optBtn.BackgroundColor3 = Library.Theme.ElementHover
                         end
                     end)
                     optBtn.MouseLeave:Connect(function()
                         if opt == dropObj.Value then
-                            optBtn.BackgroundColor3 = theme.Accent
+                            optBtn.BackgroundColor3 = Library.Theme.Accent
                         else
-                            optBtn.BackgroundColor3 = theme.Element
+                            optBtn.BackgroundColor3 = Library.Theme.Element
                         end
                     end)
                     optBtn.MouseButton1Click:Connect(function()
@@ -1368,6 +1388,13 @@ function Library:CreateWindow(options)
                 boxStroke.Parent = box
                 
                 Library:RegisterElement(boxStroke, "Border", "Color")
+                
+                table.insert(Library.Registry, {
+                    Callback = function(theme)
+                        local tTheme = theme or Library.Theme
+                        Tween(box, {BackgroundColor3 = state and tTheme.Accent or tTheme.Element})
+                    end
+                })
                 
                 Create("TextLabel", {
                     Size = UDim2.new(1, -30, 1, 0),
