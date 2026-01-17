@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Load Lucide icons (from our own source)
 local IconsLoaded, Icons = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/refs/heads/main/addons/source.lua"))()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/source.lua"))()
 end)
 
 local Library = {
