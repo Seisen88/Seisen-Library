@@ -1,7 +1,7 @@
 --[[
     Seisen UI Library
     Modern minimalist design with responsive layout
-    Version: 1.2.0 -- WindUI Revamp
+    Version: 1.2.0
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -642,25 +642,7 @@ function Library:CreateWindow(options)
     self:RegisterElement(searchInput, "Text", "TextColor3")
     self:RegisterElement(searchInput, "TextMuted", "PlaceholderColor3")
     
-    -- Search Filtering Function
-    local function filterTabs(query)
-        query = query:lower()
-        for _, child in ipairs(tabList:GetChildren()) do
-            if child:IsA("TextButton") then
-                local tabName = child.Name:lower()
-                child.Visible = query == "" or tabName:find(query, 1, true) ~= nil
-            elseif child:IsA("TextLabel") and child.Name:match("^Section_") then
-                -- Section headers - check if any tabs below it match
-                child.Visible = query == "" -- Hide sections when searching
-            elseif child:IsA("Frame") and child.Name == "Divider" then
-                child.Visible = query == "" -- Hide dividers when searching
-            end
-        end
-    end
-    
-    searchInput:GetPropertyChangedSignal("Text"):Connect(function()
-        filterTabs(searchInput.Text)
-    end)
+    -- Search Filtering (defined after tabList and pages are created)
 
     -- Tab List
     local tabList = Create("ScrollingFrame", {
@@ -677,6 +659,57 @@ function Library:CreateWindow(options)
             SortOrder = Enum.SortOrder.LayoutOrder
         })
     })
+    
+    -- Deep Search Filtering (searches tabs + elements inside pages)
+    local function deepSearch(query)
+        query = query:lower()
+        
+        if query == "" then
+            -- Show everything when search is empty
+            for _, child in ipairs(tabList:GetChildren()) do
+                if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("Frame") then
+                    child.Visible = true
+                end
+            end
+            return
+        end
+        
+        -- Search through tabs and their page contents
+        for _, child in ipairs(tabList:GetChildren()) do
+            if child:IsA("TextButton") then
+                local tabName = child.Name:lower()
+                local tabMatches = tabName:find(query, 1, true) ~= nil
+                
+                -- Also search page content
+                local pageMatches = false
+                local pageName = child.Name
+                for _, pageFrame in ipairs(pages:GetChildren()) do
+                    if pageFrame.Name == pageName then
+                        -- Search all descendants for matching text
+                        for _, element in ipairs(pageFrame:GetDescendants()) do
+                            if element:IsA("TextLabel") or element:IsA("TextButton") then
+                                local text = element.Text:lower()
+                                if text:find(query, 1, true) then
+                                    pageMatches = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                child.Visible = tabMatches or pageMatches
+            elseif child:IsA("TextLabel") and child.Name:match("^Section_") then
+                child.Visible = false -- Hide sections when searching
+            elseif child:IsA("Frame") and child.Name == "Divider" then
+                child.Visible = false -- Hide dividers when searching
+            end
+        end
+    end
+    
+    searchInput:GetPropertyChangedSignal("Text"):Connect(function()
+        deepSearch(searchInput.Text)
+    end)
     
     -- Watermark
     local watermark = Create("TextLabel", {
@@ -881,7 +914,7 @@ function Library:CreateWindow(options)
     
     -- Title
     local titleLabel = Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 40),
+        Size = UDim2.new(0, 200, 0, 40),
         Position = UDim2.new(0, 15, 0, 5),
         BackgroundTransparency = 1,
         Text = name:upper():gsub("(%w+)%s*(%w*)", function(a, b) 
@@ -895,8 +928,23 @@ function Library:CreateWindow(options)
         Font = Enum.Font.GothamBold,
         TextSize = 18,
         TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = header -- Parent to header now
+        Parent = header
     })
+    
+    -- Breadcrumb (Current Tab Name)
+    local breadcrumb = Create("TextLabel", {
+        Size = UDim2.new(0, 200, 0, 40),
+        Position = UDim2.new(0, 220, 0, 5),
+        BackgroundTransparency = 1,
+        Text = "/ Home",
+        TextColor3 = theme.TextDim,
+        Font = Enum.Font.Gotham,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = header
+    })
+    
+    self:RegisterElement(breadcrumb, "TextDim", "TextColor3")
     
     -- Pages Container
     local pages = Create("Folder", {Name = "Pages", Parent = content})
@@ -1032,7 +1080,7 @@ function Library:CreateWindow(options)
         
         -- Tab Name
         local tabLabel = Create("TextLabel", {
-            Size = UDim2.new(1, -40, 1, 0),
+            Size = UDim2.new(1, -45, 1, 0),
             Position = UDim2.new(0, 35, 0, 0),
             BackgroundTransparency = 1,
             Text = tabName,
@@ -1040,6 +1088,8 @@ function Library:CreateWindow(options)
             Font = Enum.Font.Gotham,
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            ClipsDescendants = true,
             Parent = tabBtn
         })
         
@@ -1104,6 +1154,7 @@ function Library:CreateWindow(options)
             -- Activate this
             activeTab = tabBtn
             page.Visible = true
+            breadcrumb.Text = "/ " .. tabName -- Update breadcrumb
             Tween(tabBtn, {BackgroundTransparency = 0, BackgroundColor3 = theme.Element}) -- Active pill
             Tween(tabLabel, {TextColor3 = theme.Text})
             local icon = tabBtn:FindFirstChildOfClass("ImageLabel")

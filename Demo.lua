@@ -4,7 +4,7 @@
     test
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/9e73836/SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/a39467d/SeisenUI.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
 local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
 
@@ -25,7 +25,7 @@ local Window = Library:CreateWindow({
 -- MAIN TAB - All Basic Elements
 --============================================================--
 Window:AddSidebarSection("General")
-local MainTab = Window:AddTab("Home", "home")
+local MainTab = Window:AddTab("Home", "User")
 
 Window:AddSidebarDivider()
 Window:AddSidebarSection("Elements")
