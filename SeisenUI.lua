@@ -524,7 +524,7 @@ function Library:CreateToggle(parent, options)
             state = val
             s.Value = val
             Tween(switchBg, {BackgroundColor3 = val and self.Theme.Toggle or self.Theme.ToggleOff})
-            Tween(knob, {Position = val and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)})
+            Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
             Tween(indicator, {BackgroundColor3 = val and self.Theme.Accent or self.Theme.ToggleOff})
             callback(val)
         end
@@ -828,6 +828,13 @@ function Library:CreateDropdown(parent, options)
             isOpen = false
             list.Visible = false
             Tween(arrow, {Rotation = 0})
+            
+            -- Update Highlight
+            for _, child in pairs(list:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.TextColor3 = (child.Text == tostring(val)) and self.Theme.Accent or self.Theme.TextDim
+                end
+            end
         end
     }
     
@@ -841,7 +848,7 @@ function Library:CreateDropdown(parent, options)
                 Size = UDim2.new(1, 0, 0, 20),
                 BackgroundTransparency = 1,
                 Text = tostring(opt),
-                TextColor3 = self.Theme.TextDim,
+                TextColor3 = (opt == currentVal) and self.Theme.Accent or self.Theme.TextDim,
                 Font = Enum.Font.Gotham,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
