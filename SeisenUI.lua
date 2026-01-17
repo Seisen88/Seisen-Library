@@ -150,6 +150,16 @@ local function MakeDraggable(handle, frame, onClick)
                 end
             end)
             
+            inputEnded = UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                    inputChanged:Disconnect()
+                    inputEnded:Disconnect()
+                    
+                    if onClick and not hasMoved then
+                        onClick()
+                    end
+                end
             end)
         end
     end)
