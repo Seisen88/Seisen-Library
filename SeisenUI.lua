@@ -1528,28 +1528,20 @@ function Library:CreateWindow(options)
     })
     
     -- Breadcrumb (Current Tab Subtitle)
-    local breadcrumb = Create("TextLabel", {
-        Size = UDim2.new(0, 300, 0, 40),
-        Position = (options.Version or options.SubTitle) and UDim2.new(0, 240, 0, 5) or UDim2.new(0, 175, 0, 5),
-        BackgroundTransparency = 1,
-        Text = "/ Home",
-        TextColor3 = theme.TextMuted,
-        Font = Enum.Font.Gotham,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = header
-    })
+    -- Breadcrumb Removed
+    -- local breadcrumb = Create("TextLabel", { ... })
     
-    self:RegisterElement(breadcrumb, "TextDim", "TextColor3")
+    -- self:RegisterElement(breadcrumb, "TextDim", "TextColor3")
     
-    -- Badges (Version / SubTitle) - Replaces Title if present
+    -- Badges (Version / SubTitle) - Right Aligned
     if options.Version or options.SubTitle then
-        titleLabel.Visible = false
+        -- titleLabel.Visible = false -- Keep title visible
         
         local badgeContainer = Create("Frame", {
             Name = "BadgeContainer",
+            AnchorPoint = Vector2.new(1, 0),
             Size = UDim2.new(0, 300, 1, 0),
-            Position = UDim2.new(0, 15, 0, 0),
+            Position = UDim2.new(1, -15, 0, 0), -- Right aligned
             BackgroundTransparency = 1,
             Parent = header
         }, {
@@ -1557,6 +1549,7 @@ function Library:CreateWindow(options)
                 FillDirection = Enum.FillDirection.Horizontal, 
                 Padding = UDim.new(0, 8), 
                 VerticalAlignment = Enum.VerticalAlignment.Center,
+                HorizontalAlignment = Enum.HorizontalAlignment.Right, -- Push items to right
                 SortOrder = Enum.SortOrder.LayoutOrder
             })
         })
@@ -1825,7 +1818,7 @@ function Library:CreateWindow(options)
             -- Activate this
             activeTab = tabBtn
             page.Visible = true
-            breadcrumb.Text = "/ " .. tabSubtitle -- Update breadcrumb with subtitle
+            -- breadcrumb.Text = "/ " .. tabSubtitle -- Update breadcrumb with subtitle
             Tween(tabBtn, {BackgroundTransparency = 0, BackgroundColor3 = theme.Element}) -- Active pill
             Tween(tabLabel, {TextColor3 = theme.Text})
             local icon = tabBtn:FindFirstChildOfClass("ImageLabel")
