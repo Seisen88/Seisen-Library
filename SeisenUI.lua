@@ -1944,6 +1944,8 @@ function Library:CreateWindow(options)
                     Create("UIStroke", {Color = theme.Border, Thickness = 1, ZIndex = 200})
                 })
                 
+                local popupScale = Create("UIScale", {Parent = popup, Scale = 1})
+
                 -- Preset colors
                 local presets = {
                     Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 127, 0),
@@ -1993,6 +1995,10 @@ function Library:CreateWindow(options)
 
                 local function updatePosition()
                     if popup.Visible and colorBox.Parent then
+                        -- Update scale to match main UI
+                        if mainScale then popupScale.Scale = mainScale.Scale end
+                        
+                        -- Position relative to colorBox with scale accounted for
                         popup.Position = UDim2.fromOffset(colorBox.AbsolutePosition.X + colorBox.AbsoluteSize.X + 5, colorBox.AbsolutePosition.Y)
                     end
                 end
