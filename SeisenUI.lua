@@ -1309,42 +1309,22 @@ function Library:CreateWindow(options)
     resizeHandle.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             resizing = true
-            -- Create Ghost Frame
-            ghostFrame = Instance.new("Frame")
-            ghostFrame.Name = "GhostResize"
-            ghostFrame.BackgroundTransparency = 1
-            ghostFrame.Size = main.Size
-            ghostFrame.Position = main.Position
-            ghostFrame.AnchorPoint = main.AnchorPoint
-            ghostFrame.ZIndex = 300
-            ghostFrame.Parent = main.Parent
-            
-            local stroke = Instance.new("UIStroke")
-            stroke.Color = theme.Accent
-            stroke.Thickness = 2
-            stroke.Parent = ghostFrame
-            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         end
     end)
     
     UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 and resizing then
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
             resizing = false
-            if ghostFrame then
-                main.Size = ghostFrame.Size
-                ghostFrame:Destroy()
-                ghostFrame = nil
-            end
         end
     end)
     
     UserInputService.InputChanged:Connect(function(i)
-        if resizing and ghostFrame and i.UserInputType == Enum.UserInputType.MouseMovement then
+        if resizing and i.UserInputType == Enum.UserInputType.MouseMovement then
              local newX = i.Position.X - main.AbsolutePosition.X + 5
              local newY = i.Position.Y - main.AbsolutePosition.Y + 5
              newX = math.max(newX, minSize.X)
              newY = math.max(newY, minSize.Y)
-             ghostFrame.Size = UDim2.new(0, newX, 0, newY)
+             main.Size = UDim2.new(0, newX, 0, newY)
         end
     end)
 
@@ -1364,13 +1344,8 @@ function Library:CreateWindow(options)
     local firstTab = true
     local activeTab = nil
     
-    local scaleDebounce
     function WindowFuncs:SetScale(scale)
-        -- Debounce scale updates to prevent freezing
-        if scaleDebounce then task.cancel(scaleDebounce) end
-        scaleDebounce = task.delay(0.05, function()
-            mainScale.Scale = scale
-        end)
+        mainScale.Scale = scale
     end
     
     function WindowFuncs:AddSidebarSection(sectionName)

@@ -1,184 +1,254 @@
---[[
-    Seisen UI Library Template
-    This file serves as a complete template containing examples of every UI element.
-    Use this as a starting point for your scripts.
-]]
+local Repo = "https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/"
 
--- Load Library and Addons (using cache buster to ensure latest version)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/SeisenUI.lua?v="..os.time()))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
-local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
+-- Note: To test your local 'SeisenUI.lua' changes, you can use:
+-- local Library = loadstring(readfile("SeisenLibrary/SeisenUI.lua"))() -- Adjust path as needed for your executor
+-- OR simply paste the entire content of SeisenUI.lua here instead of the loadstring.
 
--- Initialize Addons
-SaveManager:SetLibrary(Library)
-SaveManager:SetFolder("SeisenTemplate")
-ThemeManager:SetLibrary(Library)
-ThemeManager:SetFolder("SeisenTemplate")
+local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua"))()
+local ThemeManager = loadstring(game:HttpGet(Repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(Repo .. "addons/SaveManager.lua"))()
 
--- Create Window
 local Window = Library:CreateWindow({
-    Name = "Template Script",
-    Icon = "rbxassetid://125926861378074", -- Replace with your icon
-    Subtitle = "By Seisen",
-    Author = "Seisen",
-    Folder = "SeisenTemplate",
-    Size = UDim2.fromOffset(580, 460),
-    KeySystem = false -- Set to true to enable key system
+    Name = "Seisen UI Template",
+    Icon = "rbxassetid://125926861378074", -- Example Asset ID (or use Lucide "home")
+    Theme = Library.Theme, -- Optional: Use default theme
+    ToggleKeybind = Enum.KeyCode.LeftAlt
 })
 
--- Create Tabs
-local MainTab = Window:CreateTab("Main", "Principal Features", "home")
-local ElementsTab = Window:CreateTab("UI Elements", "Showcase of all items", "layers")
-local SettingsTab = Window:CreateTab("Settings", "Theme & Config", "settings")
+-- Sidebar Additions
+Window:AddSidebarSection("Main Navigation")
 
--- ==========================================
--- MAIN TAB EXAMPLES
--- ==========================================
+-- Tab 1: Home
+local HomeTab = Window:AddTab("Home", "Welcome", "home")
 
-local MainGroup = MainTab:CreateSection("Main Features", "Left")
-local InfoGroup = MainTab:CreateSection("Information", "Right")
+local HomeSection = HomeTab:AddSection("Information", "Left")
+HomeSection:AddLabel({ Text = "Welcome to the Seisen UI Template!" })
+HomeSection:AddLabel({ Text = "This script demonstrates every feature." })
+HomeSection:AddDivider("Controls")
+HomeSection:AddLabel({ Text = "Right Shift to toggle UI" })
 
-MainGroup:AddToggle({
-    Name = "Auto Farm",
+Window:AddSidebarDivider()
+Window:AddSidebarSection("Components")
+
+-- Tab 2: Basic Elements
+local ElementsTab = Window:AddTab("Elements", "Inputs & Logic", "box")
+
+-- Left Column: Toggles & Buttons
+local ToggleBox = ElementsTab:AddLeftSection("Toggles & Actions")
+
+ToggleBox:AddToggle({
+    Name = "Standard Toggle",
     Default = false,
-    Flag = "AutoFarm",
-    Keybind = "F1", -- Optional built-in keybind
-    Callback = function(val)
-        print("Auto Farm set to:", val)
+    Flag = "Toggle1",
+    Callback = function(Value)
+        print("Toggle 1:", Value)
     end
 })
 
-MainGroup:AddSlider({
-    Name = "WalkSpeed",
-    Default = 16,
-    Min = 16,
-    Max = 500,
-    decimals = 1,
-    Flag = "WalkSpeed",
-    Callback = function(val)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+ToggleBox:AddToggle({
+    Name = "Toggle with Keybind",
+    Default = true,
+    Flag = "ToggleKey",
+    Keybind = Enum.KeyCode.Q,
+    Callback = function(Value)
+        print("Toggle Key:", Value)
     end
 })
 
-InfoGroup:AddLabel({
-    Text = "Welcome to the template script!\nThis demonstrates all library features.",
-    Height = 40
+ToggleBox:AddCheckbox({
+    Name = "Checkbox Style",
+    Default = false,
+    Flag = "Check1",
+    Callback = function(Value)
+        print("Checkbox:", Value)
+    end
 })
 
-InfoGroup:AddButton({
-    Name = "Click Me",
+ToggleBox:AddDivider()
+
+ToggleBox:AddButton({
+    Name = "Simple Button",
     Callback = function()
-        Library:Notify("Button Clicked!", "You clicked the button.", 3)
+        print("Button Clicked")
     end
 })
 
--- ==========================================
--- UI ELEMENTS SHOWCASE
--- ==========================================
-
--- LEFT COLUMN
-local TogglesGroup = ElementsTab:CreateSection("Toggles & Inputs", "Left")
-
-TogglesGroup:AddToggle({Name = "Standard Toggle", Default = false})
-TogglesGroup:AddCheckbox({Name = "Checkbox Style", Default = true})
-
-TogglesGroup:AddDivider("Inputs")
-
-TogglesGroup:AddTextbox({
-    Name = "Text Input",
-    Default = "Hello World",
-    Placeholder = "Type here...",
-    Flag = "MyTextbox",
-    Callback = function(val)
-        print("Input changed:", val)
+ToggleBox:AddButton({
+    Name = "Button with Tooltip (Mock)",
+    Callback = function()
+        -- Tooltip implementation example if needed
+        print("Button 2 Clicked")
     end
 })
 
-TogglesGroup:AddKeybind({
+-- Keybinds Section
+local KeybindBox = ElementsTab:AddLeftSection("Keybinds")
+KeybindBox:AddKeybind({
     Name = "Standalone Keybind",
-    Default = "X",
+    Default = "E",
     Mode = "Toggle", -- Toggle, Hold, Always
-    Flag = "MyKeybind",
+    Flag = "Keybind1",
     Callback = function()
-        print("Keybind activated!")
+        print("Keybind Pressed")
     end
 })
 
--- RIGHT COLUMN
-local SlidersGroup = ElementsTab:CreateSection("Sliders & Pickers", "Right")
+-- Right Column: Inputs
+local InputBox = ElementsTab:AddRightSection("Values & Inputs")
 
-SlidersGroup:AddSlider({
+InputBox:AddSlider({
     Name = "Integer Slider",
-    Default = 50, Min = 0, Max = 100,
-    decimals = 0
-})
-
-SlidersGroup:AddDropdown({
-    Name = "Single Selection",
-    Options = {"Option 1", "Option 2", "Option 3"},
-    Default = "Option 1",
-    Flag = "Dropdown1",
-    Callback = function(val) print(val) end
-})
-
-SlidersGroup:AddDropdown({
-    Name = "Multi Selection",
-    Options = {"Head", "Torso", "LeftArm", "RightArm"},
-    Default = {"Head"},
-    Multi = true,
-    Flag = "MultiDropdown",
-    Callback = function(val) print(table.concat(val, ", ")) end
-})
-
-SlidersGroup:AddColorPicker({
-    Name = "Accent Color",
-    Default = Color3.fromRGB(0, 255, 128),
-    Flag = "ColorPicker1",
-    Callback = function(color)
-        print("Color changed")
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Flag = "SliderInt",
+    Callback = function(Value)
+        print("Slider Int:", Value)
     end
 })
 
--- TABBOX EXAMPLE
-local TabBox = ElementsTab:CreateTabbox({Name = "TabBox Example"}) -- Uses full width if no side specified? Or usually added to section? 
--- Wait, AddTabbox is usually a method of a Section in some libs, or Window in others.
--- Checking SeisenUI.lua line 2060: SectionFuncs:AddTabbox. So it must be inside a section.
--- Let's add a section for it.
-local TabBoxSection = ElementsTab:CreateSection("TabBox Container", "Left")
+-- Note: Library only supports integer steps currently via flooring
+InputBox:AddSlider({
+    Name = "Steps Slider (Mock)",
+    Min = 0,
+    Max = 10,
+    Default = 5,
+    Flag = "SliderStep",
+    Callback = function(Value)
+        print("Slider Step:", Value)
+    end
+})
 
--- Actually, in SeisenUI.lua:2060, AddTabbox puts it in `container` (which is the section container). 
--- BUT, in Demo.lua, it used `Window:AddLeftTabbox`??
--- Let's check Demo.lua usage of Tabbox.
--- In Demo.lua line 165: `local LeftTabBox = Window:AddLeftTabbox("TabBox Example")`
--- Wait, `AddLeftTabbox` is a method of `Window` (or `Library`).
--- Let's check `SeisenUI.lua` around Window creation.
--- Line 1464: `function WindowFuncs:AddLeftTabbox(name)`
--- Line 1475: `function WindowFuncs:AddRightTabbox(name)`
--- Ah, so there are two ways: Inside a section (`Section:AddTabbox`) or directly on the window columns (`Window:AddLeftTabbox`).
--- I will demonstrate `Window:AddLeftTabbox` in the Template as it's more clean for layout.
+InputBox:AddDivider("Selections")
 
--- Correcting layout for Template
--- I'll use Window-level Tabboxes for the example.
+InputBox:AddDropdown({
+    Name = "Single Selection",
+    Options = {"Option A", "Option B", "Option C"},
+    Default = "Option A",
+    Flag = "Drop1",
+    Callback = function(Value)
+        print("Dropdown:", Value)
+    end
+})
 
-local LeftBox = ElementsTab:AddLeftTabbox("Window TabBox")
-local RightBox = ElementsTab:AddRightTabbox("Another TabBox")
+InputBox:AddTextbox({
+    Name = "Text Input",
+    Default = "",
+    Placeholder = "Type here...",
+    Flag = "Text1",
+    Callback = function(Value)
+        print("Text Input:", Value)
+    end
+})
 
-local Tab1 = LeftBox:AddTab("Tab 1")
-Tab1:AddToggle({Name = "Toggle inside TabBox"})
-Tab1:AddSlider({Name = "Slider inside TabBox", Default=10, Min=0, Max=20})
+InputBox:AddColorPicker({
+    Name = "Accent Color",
+    Default = Color3.fromRGB(0, 200, 100),
+    Flag = "Color1",
+    Callback = function(Value)
+        print("Color Picked:", Value)
+    end
+})
 
-local Tab2 = LeftBox:AddTab("Tab 2")
-Tab2:AddLabel({Text = "This is a second tab"})
+-- Tab 3: Advanced
+local AdvancedTab = Window:AddTab("Advanced", "Complex Items", "layers")
 
-RightBox:AddTab("Settings"):AddButton({Name = "Reset", Callback = function() end})
+-- Left: Tabboxes
+local LeftTabbox = AdvancedTab:AddLeftTabbox("Nested Tabs")
 
+local NestedTab1 = LeftTabbox:AddTab("Settings A")
+NestedTab1:AddToggle({ Name = "Nested Toggle 1", Flag = "NestT1" })
+NestedTab1:AddButton({ Name = "Nested Action", Callback = function() print("Nest 1") end })
 
--- ==========================================
--- SETTINGS TAB
--- ==========================================
+local NestedTab2 = LeftTabbox:AddTab("Settings B")
+NestedTab2:AddLabel({ Text = "This is a second tab inside a box." })
+NestedTab2:AddSlider({ Name = "Nested Slider", Min = 0, Max = 10, Default = 1, Flag = "NestS1" })
 
+-- Right: Dependency & Visuals
+local VisualBox = AdvancedTab:AddRightSection("Visuals & Logic")
+
+-- Internal Tabbox (Tabbox inside a Section)
+local InternalTabbox = VisualBox:AddTabbox({ Name = "Internal Tabbox" })
+
+local IT1 = InternalTabbox:AddTab("Tab 1")
+IT1:AddLabel({ Text = "This is inside a section!" })
+IT1:AddButton({ Name = "Click Me", Callback = function() print("Internal Tab 1") end })
+
+local IT2 = InternalTabbox:AddTab("Tab 2")
+IT2:AddLabel({ Text = "Tab 2 Content" })
+
+VisualBox:AddDivider("Logic")
+
+VisualBox:AddLabel({ Text = "Dependency Box Demo:" })
+VisualBox:AddToggle({
+    Name = "Enable Detail View",
+    Default = false,
+    Flag = "ShowDetails"
+})
+
+-- DependencyBox: Only visible when "ShowDetails" toggle is ON
+local DepBox = VisualBox:AddDependencyBox({
+    DependsOn = "ShowDetails"
+})
+
+DepBox:AddLabel({ Text = "You can only see this if the toggle above is ON." })
+DepBox:AddButton({ Name = "Secret Action", Callback = function() print("Secret!") end })
+
+VisualBox:AddDivider("Media")
+
+-- Viewport (Simple Part)
+local TestPart = Instance.new("Part")
+TestPart.Color = Color3.fromRGB(0, 150, 255)
+TestPart.Material = Enum.Material.Neon
+local ViewportParams = VisualBox:AddViewport({
+    Height = 100
+})
+ViewportParams:SetModel(TestPart)
+
+-- Image using a placeholder
+VisualBox:AddImage({
+    Image = "rbxassetid://125926861378074", -- Example image
+    Height = 80
+})
+
+-- Passthrough (Custom Element)
+local params = VisualBox:AddPassthrough({
+    Height = 30
+})
+local customLabel = Instance.new("TextLabel")
+customLabel.Size = UDim2.new(1, 0, 1, 0)
+customLabel.BackgroundTransparency = 1
+customLabel.Text = "Custom Passthrough Element"
+customLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+customLabel.Font = Enum.Font.Code
+customLabel.Parent = params
+
+-- Tab 4: Settings (Theme & Config)
+local SettingsTab = Window:AddTab("Settings", "Theme & Config", "settings")
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+ThemeManager:SetFolder("SeisenTemplate")
+SaveManager:SetFolder("SeisenTemplate/Main")
+
+ThemeManager:BuildThemeSection(SettingsTab)
 SaveManager:BuildConfigSection(SettingsTab)
-ThemeManager:ApplyToTab(SettingsTab)
 
--- Final Load
-Library:Notify("Template Loaded", "Enjoy using Seisen UI!", 5)
+-- UI Settings (Scale)
+local UISettings = SettingsTab:AddRightSection("UI Settings")
+UISettings:AddSlider({
+    Name = "UI Scale",
+    Min = 50,
+    Max = 200,
+    Default = 100,
+    Callback = function(Value)
+        Window:SetScale(Value / 100)
+    end
+})
+
+
+-- Finish
+print("Seisen UI Template Loaded")
