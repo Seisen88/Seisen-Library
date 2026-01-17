@@ -1439,15 +1439,40 @@ function Library:CreateWindow(options)
         ZIndex = 200
     })
     
-    -- Toggle Window Function
+    
+    -- Toggle Window Function (Minimize)
     local function toggleWindow(visible)
         main.Visible = visible
         widget.Visible = not visible
     end
     
+    -- Maximize/Restore Toggle
+    local isMaximized = false
+    local normalSize = UDim2.new(0, 600, 0, 500)
+    local normalPosition = UDim2.new(0.5, -300, 0.5, -250)
+    
+    local function toggleMaximize()
+        if isMaximized then
+            -- Restore to normal size
+            Tween(main, {Size = normalSize, Position = normalPosition}, 0.3)
+            isMaximized = false
+        else
+            -- Maximize (fill screen with small padding)
+            local screenSize = gui.AbsoluteSize
+            Tween(main, {
+                Size = UDim2.new(0, screenSize.X - 40, 0, screenSize.Y - 40),
+                Position = UDim2.new(0, 20, 0, 20)
+            }, 0.3)
+            isMaximized = true
+        end
+    end
+    
     -- Connect Traffic Light Buttons
+    -- Red: Close window
+    -- Yellow: Minimize to widget
     minBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
-    maxBtn.MouseButton1Click:Connect(function() toggleWindow(true) end)
+    -- Green: Toggle Maximize/Restore
+    maxBtn.MouseButton1Click:Connect(function() toggleMaximize() end)
 
     -- Make Widget Draggable with Click to Restore
     MakeDraggable(widget, widget, function() toggleWindow(true) end)
