@@ -128,26 +128,28 @@ local function Tween(obj, props, duration)
 end
 
 local function MakeDraggable(handle, frame)
-    local dragging, dragStart, startPos
-    
     handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-        end
-    end)
-    
-    handle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local dragging = true
+            local dragStart = input.Position
+            local startPos = frame.Position
+            
+            local inputChanged, inputEnded
+            
+            inputChanged = UserInputService.InputChanged:Connect(function(i)
+                if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = i.Position - dragStart
+                    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                end
+            end)
+            
+            inputEnded = UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                    inputChanged:Disconnect()
+                    inputEnded:Disconnect()
+                end
+            end)
         end
     end)
 end
@@ -640,6 +642,7 @@ function Library:CreateWindow(options)
     local pages = Create("Folder", {Name = "Pages", Parent = content})
     
     MakeDraggable(sidebar, main)
+    MakeDraggable(content, main) -- Enable dragging on top header area too
     
     local resizeHandle = Create("Frame", {
         Size = UDim2.new(0, 16, 0, 16),
