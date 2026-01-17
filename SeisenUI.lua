@@ -1705,9 +1705,7 @@ function Library:CreateWindow(options)
     end
     
     -- Window Proxy for Notify
-    function WindowFuncs:Notify(opts)
-        Library:Notify(opts)
-    end
+    -- Window Proxy moved to after WindowFuncs definition
 
     -- Toggle Keybind Feature
     if options.ToggleKeybind then
@@ -1722,6 +1720,10 @@ function Library:CreateWindow(options)
     
     -- Window Functions
     local WindowFuncs = {}
+
+    function WindowFuncs:Notify(opts)
+        Library:Notify(opts)
+    end
     local firstTab = true
     local activeTab = nil
     
