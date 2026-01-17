@@ -302,7 +302,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             local state = default
             
             local toggle = Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 24),
+                Size = UDim2.new(1, 0, 0, 20),
                 BackgroundTransparency = 1,
                 Parent = tabPage
             })
@@ -320,15 +320,15 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Library:RegisterElement(tLabel, "Text", "TextColor3")
             
             local switchBg = Create("Frame", {
-                Size = UDim2.new(0, 40, 0, 22),
-                Position = UDim2.new(1, -40, 0.5, -11),
+                Size = UDim2.new(0, 30, 0, 16),
+                Position = UDim2.new(1, -30, 0.5, -8),
                 BackgroundColor3 = state and theme.Toggle or theme.ToggleOff,
                 Parent = toggle
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
             
             local knob = Create("Frame", {
-                Size = UDim2.new(0, 18, 0, 18),
-                Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9),
+                Size = UDim2.new(0, 14, 0, 14),
+                Position = state and UDim2.new(1, -15, 0.5, -7) or UDim2.new(0, 1, 0.5, -7),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Parent = switchBg
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
@@ -393,7 +393,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             local flag = opts.Flag
             local value = math.clamp(default, min, max)
             
-            local slider = Create("Frame", {Size = UDim2.new(1, 0, 0, 35), BackgroundTransparency = 1, Parent = tabPage})
+            local slider = Create("Frame", {Size = UDim2.new(1, 0, 0, 28), BackgroundTransparency = 1, Parent = tabPage})
             local valueLabel = Create("TextLabel", {
                 Size = UDim2.new(0, 40, 0, 14), Position = UDim2.new(1, -40, 0, 0),
                 BackgroundTransparency = 1, Text = tostring(value),
@@ -410,7 +410,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Library:RegisterElement(nameLabel, "Text", "TextColor3")
             
             local track = Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 8), Position = UDim2.new(0, 0, 0, 22),
+                Size = UDim2.new(1, 0, 0, 4), Position = UDim2.new(0, 0, 0, 20),
                 BackgroundColor3 = theme.ToggleOff, Parent = slider
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
             local fill = Create("Frame", {
@@ -420,7 +420,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             
             -- Draggable Knob
             local sliderKnob = Create("Frame", {
-                Size = UDim2.new(0, 14, 0, 14),
+                Size = UDim2.new(0, 10, 0, 10),
                 Position = UDim2.new((value - min) / (max - min), 0, 0.5, 0),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1282,7 +1282,7 @@ function Library:CreateWindow(options)
                 local keybind = Enum.KeyCode.Unknown
                 
                 local toggle = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 24),
+                    Size = UDim2.new(1, 0, 0, 20),
                     BackgroundTransparency = 1,
                     Parent = container
                 })
@@ -1312,16 +1312,16 @@ function Library:CreateWindow(options)
                 
                 -- Switch (Left of Indicator) - WindUI Pill Style
                 local switchBg = Create("Frame", {
-                    Size = UDim2.new(0, 40, 0, 22),
-                    Position = UDim2.new(1, -60, 0.5, -11), 
+                    Size = UDim2.new(0, 30, 0, 16),
+                    Position = UDim2.new(1, -30, 0.5, -8), 
                     BackgroundColor3 = state and Library.Theme.Toggle or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
                 
                 local knob = Create("Frame", {
-                    Size = UDim2.new(0, 18, 0, 18),
-                    Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9),
+                    Size = UDim2.new(0, 14, 0, 14),
+                    Position = state and UDim2.new(1, -15, 0.5, -7) or UDim2.new(0, 1, 0.5, -7),
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                     BorderSizePixel = 0,
                     Parent = switchBg
@@ -1450,7 +1450,7 @@ function Library:CreateWindow(options)
                 local value = default
                 
                 local slider = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 35),
+                    Size = UDim2.new(1, 0, 0, 28),
                     BackgroundTransparency = 1,
                     Parent = container
                 })
@@ -1479,8 +1479,8 @@ function Library:CreateWindow(options)
                 })
                 
                 local bar = Create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 8), -- Thicker track
-                    Position = UDim2.new(0, 0, 0, 22),
+                    Size = UDim2.new(1, 0, 0, 4), -- Thinner track
+                    Position = UDim2.new(0, 0, 0, 20),
                     BackgroundColor3 = theme.ToggleOff,
                     Text = "",
                     AutoButtonColor = false,
@@ -1496,7 +1496,7 @@ function Library:CreateWindow(options)
 
                 -- Draggable Knob for Slider
                 local sliderKnob = Create("Frame", {
-                    Size = UDim2.new(0, 14, 0, 14),
+                    Size = UDim2.new(0, 10, 0, 10),
                     Position = UDim2.new((default - min) / (max - min), 0, 0.5, 0),
                     AnchorPoint = Vector2.new(0.5, 0.5),
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
