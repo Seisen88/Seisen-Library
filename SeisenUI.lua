@@ -742,6 +742,8 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             tabBtn.BackgroundColor3 = Library.Theme.Accent
             tabBtn.TextColor3 = Library.Theme.Text
             activeTab = tabPage
+            
+            updateTabboxSize()
         end
         
         tabBtn.MouseButton1Click:Connect(activateTab)
@@ -781,14 +783,14 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     updateTabboxSize = function()
         if updateThread then task.cancel(updateThread) end
         updateThread = task.defer(function()
-            local maxHeight = 0
-            for _, t in ipairs(tabs) do
-                local layout = t.page:FindFirstChildOfClass("UIListLayout")
+            local height = 0
+            if activeTab then
+                local layout = activeTab:FindFirstChildOfClass("UIListLayout")
                 if layout then
-                    maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
+                    height = layout.AbsoluteContentSize.Y
                 end
             end
-            tabbox.Size = UDim2.new(1, 0, 0, math.max(80, maxHeight + 60))
+            tabbox.Size = UDim2.new(1, 0, 0, math.max(80, height + 60))
         end)
     end
     
