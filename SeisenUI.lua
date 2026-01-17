@@ -676,7 +676,8 @@ function Library:CreateWindow(options)
     local widgetLogo = Create("ImageLabel", {
         Size = UDim2.new(0, 40, 0, 40),
         Position = UDim2.new(0.5, -20, 0, 0), -- Centered top
-        BackgroundTransparency = 1,
+        BackgroundTransparency = 0.5,
+        BackgroundColor3 = Color3.new(1, 0, 0), -- Debug Red
         Parent = widget
     })
     
@@ -782,13 +783,17 @@ function Library:CreateWindow(options)
     MakeDraggable(sidebar, main)
     MakeDraggable(content, main) -- Enable dragging on top header area too
     
-    local resizeHandle = Create("Frame", {
+    local resizeHandle = Create("ImageLabel", {
         Size = UDim2.new(0, 16, 0, 16),
         Position = UDim2.new(1, -16, 1, -16),
         BackgroundTransparency = 1,
+        ImageColor3 = theme.TextDim,
         Parent = main,
         ZIndex = 200
     })
+    
+    Library:ApplyIcon(resizeHandle, "move-diagonal-2") -- Resize icon
+    Library:RegisterElement(resizeHandle, "TextDim", "ImageColor3")
     
     local resizing = false
     local minSize = Vector2.new(400, 300)
@@ -1069,6 +1074,7 @@ function Library:CreateWindow(options)
                     Font = Enum.Font.Gotham,
                     TextSize = 10,
                     AutoButtonColor = false,
+                    ZIndex = 2, -- Ensure it is clickable above the switchBtn
                     Parent = toggle
                 }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
                 Library:RegisterElement(keybindBtn, "Element")
