@@ -173,11 +173,15 @@ local GeneralTab = LeftTabBox:AddTab("General")
 GeneralTab:AddToggle({Name = "Option 1", Flag = "TB_Opt1"}) 
 GeneralTab:AddToggle({Name = "Option 2", Flag = "TB_Opt2"})
 GeneralTab:AddSlider({Name = "Value", Min = 0, Max = 50, Default = 25, Flag = "TB_Val1"})
+GeneralTab:AddDropdown({Name = "Selection", Options = {"A", "B", "C"}, Default = "A", Flag = "TB_Drop1"})
+GeneralTab:AddButton({Name = "Action", Callback = function() print("Tabbox Action") end})
 
 local AdvancedTab = LeftTabBox:AddTab("Advanced")
 AdvancedTab:AddToggle({Name = "Advanced 1", Flag = "TB_Adv1"})
 AdvancedTab:AddButton({Name = "Run Test", Callback = function() print("Test!") end})
 AdvancedTab:AddLabel({Text = "Advanced settings here"})
+AdvancedTab:AddSlider({Name = "Intensity", Min = 0, Max = 100, Default = 80, Flag = "TB_Intens"})
+AdvancedTab:AddToggle({Name = "Safe Mode", Default = true, Flag = "TB_Safe"})
 
 -- Right TabBox
 local RightTabBox = TabBoxTab:AddRightTabbox("Right Options")
@@ -185,10 +189,13 @@ local RightTabBox = TabBoxTab:AddRightTabbox("Right Options")
 local Tab1 = RightTabBox:AddTab("Config A")
 Tab1:AddToggle({Name = "Config Toggle", Flag = "TB_CfgA"})
 Tab1:AddSlider({Name = "Config Value", Min = 0, Max = 100, Default = 50, Flag = "TB_CfgAVal"})
+Tab1:AddDropdown({Name = "Preset", Options = {"Legit", "Rage", "HvH"}, Default = "Legit", Flag = "TB_Preset"})
 
 local Tab2 = RightTabBox:AddTab("Config B")
 Tab2:AddButton({Name = "Apply Config B", Callback = function() print("Applied!") end})
 Tab2:AddToggle({Name = "Enable B", Flag = "TB_CfgB"})
+Tab2:AddLabel({Text = "More options coming soon..."})
+Tab2:AddButton({Name = "Reset Config", Callback = function() print("Reset") end})
 
 -- Regular sections alongside TabBoxes
 local InfoSection = TabBoxTab:AddSection("Info", "Left")
