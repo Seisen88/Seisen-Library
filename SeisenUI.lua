@@ -886,6 +886,17 @@ function Library:CreateDropdown(parent, options)
         end
     end)
     
+    table.insert(self.Registry, {
+        Callback = function(theme)
+            local tTheme = theme or self.Theme
+            for _, child in pairs(list:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.TextColor3 = (child.Text == tostring(currentVal)) and tTheme.Accent or tTheme.TextDim
+                end
+            end
+        end
+    })
+    
     if flag then self.Options[flag] = dropObj end
     return dropObj
 end
