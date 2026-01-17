@@ -1,6 +1,7 @@
 --[[
     Seisen UI Library - XEZIOS Style
     Modern minimalist design with responsive layout
+    Version: 1.1.0
 ]]
 
 local UserInputService = game:GetService("UserInputService")
