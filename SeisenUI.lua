@@ -1656,6 +1656,7 @@ function Library:CreateWindow(options)
         end
     end)
     
+    --[[
     function Library:Notify(notifyOpts)
         local nTitle = notifyOpts.Title or "Notification"
         local nContent = notifyOpts.Content or "Content"
@@ -1763,6 +1764,7 @@ function Library:CreateWindow(options)
              notifyFrame:Destroy()
         end)
     end
+    ]]
     
     -- Window Proxy for Notify
     -- Window Proxy moved to after WindowFuncs definition
@@ -1781,9 +1783,11 @@ function Library:CreateWindow(options)
     -- Window Functions
     local WindowFuncs = {}
 
+    --[[
     function WindowFuncs:Notify(opts)
         Library:Notify(opts)
     end
+    ]]
     local firstTab = true
     local activeTab = nil
     
