@@ -4,7 +4,7 @@
     test
 ]]
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/e94877d/SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/5a717df/SeisenUI.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/SaveManager.lua?v="..os.time()))()
 local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ken-884/Seisen-Library/main/addons/ThemeManager.lua?v="..os.time()))()
 
@@ -136,7 +136,7 @@ InputSection:AddTextbox({
 })
 
 -- Right Section: Labels & Checkboxes
-local MiscSection = MainTab:AddSection("Misc Elements", "Right")
+local MiscSection = MainTab:AddLeftSection("Misc Elements", "Right")
 
 MiscSection:AddLabel({Text = "Status: Ready"})
 MiscSection:AddLabel({Text = "Version: 1.0.0"})

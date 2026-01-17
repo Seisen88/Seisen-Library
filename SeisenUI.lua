@@ -660,7 +660,10 @@ function Library:CreateWindow(options)
         })
     })
     
-    -- Deep Search Filtering (searches tabs + elements inside pages)
+    -- Forward declare pages (defined later)
+    local pages
+    
+    -- Deep Search Filtering (searches content inside pages only)
     local function deepSearch(query)
         query = query:lower()
         
@@ -680,25 +683,26 @@ function Library:CreateWindow(options)
                 local tabName = child.Name:lower()
                 local tabMatches = tabName:find(query, 1, true) ~= nil
                 
-                -- Also search page content
                 local pageMatches = false
                 local pageName = child.Name
-                for _, pageFrame in ipairs(pages:GetChildren()) do
-                    if pageFrame.Name == pageName then
-                        -- Search all descendants for matching text
-                        for _, element in ipairs(pageFrame:GetDescendants()) do
-                            if element:IsA("TextLabel") or element:IsA("TextButton") then
-                                local text = element.Text:lower()
-                                if text:find(query, 1, true) then
-                                    pageMatches = true
-                                    break
+                if pages then
+                    for _, pageFrame in ipairs(pages:GetChildren()) do
+                        if pageFrame.Name == pageName then
+                            -- Search all descendants for matching text
+                            for _, element in ipairs(pageFrame:GetDescendants()) do
+                                if element:IsA("TextLabel") or element:IsA("TextButton") then
+                                    local text = element.Text:lower()
+                                    if text:find(query, 1, true) then
+                                        pageMatches = true
+                                        break
+                                    end
                                 end
                             end
                         end
                     end
                 end
                 
-                child.Visible = tabMatches or pageMatches
+                child.Visible = pageMatches -- Only show if content matches (not tab name)
             elseif child:IsA("TextLabel") and child.Name:match("^Section_") then
                 child.Visible = false -- Hide sections when searching
             elseif child:IsA("Frame") and child.Name == "Divider" then
@@ -931,23 +935,23 @@ function Library:CreateWindow(options)
         Parent = header
     })
     
-    -- Breadcrumb (Current Tab Name)
+    -- Breadcrumb (Current Tab Subtitle)
     local breadcrumb = Create("TextLabel", {
-        Size = UDim2.new(0, 200, 0, 40),
-        Position = UDim2.new(0, 220, 0, 5),
+        Size = UDim2.new(0, 300, 0, 40),
+        Position = UDim2.new(0, 175, 0, 5),
         BackgroundTransparency = 1,
         Text = "/ Home",
-        TextColor3 = theme.TextDim,
+        TextColor3 = theme.TextMuted,
         Font = Enum.Font.Gotham,
-        TextSize = 16,
+        TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = header
     })
     
     self:RegisterElement(breadcrumb, "TextDim", "TextColor3")
     
-    -- Pages Container
-    local pages = Create("Folder", {Name = "Pages", Parent = content})
+    -- Pages Container (assigns to forward-declared variable)
+    pages = Create("Folder", {Name = "Pages", Parent = content})
     
     MakeDraggable(sidebar, main)
     MakeDraggable(header, main) -- Restrict dragging to Header (Top 50px) only
