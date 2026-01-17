@@ -1814,7 +1814,12 @@ function Library:CreateWindow(options)
     
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
-            Library:Toggle()
+            -- Toggle between main window and widget (same as green button)
+            if main.Visible then
+                toggleWindow(false) -- Minimize to widget
+            else
+                toggleWindow(true) -- Restore from widget
+            end
         end
     end)
     
