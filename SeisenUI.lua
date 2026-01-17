@@ -10,9 +10,9 @@ local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Load Lucide icons
+-- Load Lucide icons (from our own source)
 local IconsLoaded, Icons = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/lucide-roblox-direct/refs/heads/main/source.lua"))()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Seisen-Library/refs/heads/main/addons/source.lua"))()
 end)
 
 local Library = {
