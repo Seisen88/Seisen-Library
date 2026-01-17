@@ -1915,7 +1915,7 @@ function Library:CreateWindow(options)
                 
                 local colorBox = Create("TextButton", {
                     Size = UDim2.new(0, 40, 0, 18),
-                    Position = UDim2.new(0, 110, 0.5, -9),
+                    Position = UDim2.new(1, -45, 0.5, -9),
                     BackgroundColor3 = currentColor,
                     Text = "",
                     AutoButtonColor = false,
@@ -1998,8 +1998,11 @@ function Library:CreateWindow(options)
                         -- Update scale to match main UI
                         if mainScale then popupScale.Scale = mainScale.Scale end
                         
-                        -- Position relative to colorBox with scale accounted for
-                        popup.Position = UDim2.fromOffset(colorBox.AbsolutePosition.X + colorBox.AbsoluteSize.X + 5, colorBox.AbsolutePosition.Y)
+                        -- Position to the LEFT of the colorBox since it's now right-aligned
+                        popup.Position = UDim2.fromOffset(
+                            colorBox.AbsolutePosition.X - (popup.AbsoluteSize.X * popupScale.Scale) - 5, 
+                            colorBox.AbsolutePosition.Y
+                        )
                     end
                 end
 
