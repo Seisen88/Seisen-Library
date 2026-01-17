@@ -2132,8 +2132,31 @@ function Library:CreateWindow(options)
                     end)
                 end
                 
+                local RunService = game:GetService("RunService")
+                local connection = nil
+
+                local function updatePosition()
+                    if popup.Visible and colorBox.Parent then
+                        popup.Position = UDim2.fromOffset(colorBox.AbsolutePosition.X + colorBox.AbsoluteSize.X + 5, colorBox.AbsolutePosition.Y)
+                    end
+                end
+
                 colorBox.MouseButton1Click:Connect(function()
                     popup.Visible = not popup.Visible
+                    if popup.Visible then
+                        popup.Parent = gui -- Move to ScreenGui to bypass clipping
+                        updatePosition()
+                        connection = RunService.RenderStepped:Connect(updatePosition)
+                    else
+                        popup.Parent = colorBox -- Put back (optional, but keeps hierarchy clean)
+                        if connection then connection:Disconnect() connection = nil end
+                    end
+                end)
+                
+                -- Cleanup if destroyed
+                colorBox.Destroying:Connect(function()
+                    if connection then connection:Disconnect() end
+                    popup:Destroy()
                 end)
                 
                 if flag then Library.Options[flag] = colorObj end
