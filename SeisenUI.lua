@@ -44,24 +44,48 @@ local Library = {
 }
 
 function Library:SetCustomCursor(enabled, imageId)
-    -- Clean up existing connection if legacy method was used
+    -- Clean up existing cursor
     if self.CustomCursor then
         self.CustomCursor:Destroy()
         self.CustomCursor = nil
     end
-    -- self.CursorConnection is not stored in previous version but good to clear if existed
     
-    local mouse = LocalPlayer:GetMouse()
+    pcall(function() RunService:UnbindFromRenderStep("SeisenCustomCursor") end)
     
     if not enabled then
-        mouse.Icon = ""
         UserInputService.MouseIconEnabled = true
         return
     end
     
-    -- Use native mouse icon for best reliability and performance
-    mouse.Icon = imageId or "rbxassetid://6065775281"
-    UserInputService.MouseIconEnabled = true
+    -- Create new cursor (ImageLabel approach for smooth custom look)
+    local cursor = Instance.new("ImageLabel")
+    cursor.Name = "CustomCursor"
+    cursor.Size = UDim2.new(0, 24, 0, 24)
+    cursor.BackgroundTransparency = 1
+    cursor.Image = imageId or "rbxassetid://13475069273" -- Custom smooth white cursor
+    cursor.ZIndex = 10000
+    
+    if self.ScreenGui then
+        cursor.Parent = self.ScreenGui
+    else
+        warn("Library:SetCustomCursor called before CreateWindow or ScreenGui not found.")
+        return
+    end
+    
+    self.CustomCursor = cursor
+    
+    -- Use BindToRenderStep with Last priority to ensure it overrides everything
+    RunService:BindToRenderStep("SeisenCustomCursor", Enum.RenderPriority.Last.Value, function()
+        if not cursor.Parent then 
+            UserInputService.MouseIconEnabled = true
+            RunService:UnbindFromRenderStep("SeisenCustomCursor")
+            return 
+        end
+        
+        UserInputService.MouseIconEnabled = false
+        local mouse = UserInputService:GetMouseLocation()
+        cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y)
+    end)
 end
 
 -- Registry functions for live theme updates
