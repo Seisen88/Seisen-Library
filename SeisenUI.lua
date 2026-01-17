@@ -81,24 +81,12 @@ end
 
 -- Get Lucide icon by name
 -- Returns: { Url, ImageRectOffset, ImageRectSize } or nil
+-- Get Lucide icon or custom asset
+-- Returns: { Url, ImageRectOffset, ImageRectSize } or nil
 function Library:GetIcon(iconName)
-    if not iconName or iconName == "" then
-        return nil
-    end
+    if not iconName or iconName == "" then return nil end
     
-    -- Check if it's a custom Roblox asset
-    if type(iconName) == "string" then
-        if iconName:match("rbxasset") or iconName:match("rbxassetid://") or iconName:match("roblox%.com/asset") then
-            return {
-                Url = iconName,
-                ImageRectOffset = Vector2.zero,
-                ImageRectSize = Vector2.zero,
-                Custom = true
-            }
-        end
-    end
-    
-    -- Try to get from Lucide icons
+    -- 1. Try Lucide (returns table)
     if self.Icons then
         local success, icon = pcall(function()
             return self.Icons.GetAsset(iconName)
@@ -108,42 +96,26 @@ function Library:GetIcon(iconName)
         end
     end
     
-    return nil
-end
-
-function Library:GetIcon(iconName)
-    if not iconName then return nil end
-    
-    -- Try Lucide
-    if self.Icons then
-        local success, icon = pcall(function()
-            return self.Icons.GetAsset(iconName)
-        end)
-        if success and icon then
-            return icon
-        end
-    end
-    
-    -- Fallback: Return original string if it looks like an asset ID
-    if type(iconName) == "string" or type(iconName) == "number" then
-        return iconName
-    end
-    
-    return nil
+    -- 2. Fallback: Treat as Custom Asset ID (Return normalized table)
+    return {
+        Url = iconName,
+        ImageRectOffset = Vector2.zero,
+        ImageRectSize = Vector2.zero,
+        Custom = true
+    }
 end
 
 function Library:ApplyIcon(element, iconName)
     local iconData = self:GetIcon(iconName)
     
-    if type(iconData) == "table" then
-        element.Image = iconData.Url
-        element.ImageRectOffset = iconData.ImageRectOffset or Vector2.zero
-        element.ImageRectSize = iconData.ImageRectSize or Vector2.zero
-    else
-        element.Image = iconData or "rbxassetid://7733960981"
-        element.ImageRectOffset = Vector2.zero
-        element.ImageRectSize = Vector2.zero
+    if not iconData then
+        element.Image = ""
+        return
     end
+    
+    element.Image = iconData.Url or ""
+    element.ImageRectOffset = iconData.ImageRectOffset or Vector2.zero
+    element.ImageRectSize = iconData.ImageRectSize or Vector2.zero
 end
 
 -- Utilities
