@@ -53,7 +53,10 @@ function Library:SetCustomCursor(enabled, imageId)
     pcall(function() RunService:UnbindFromRenderStep("SeisenCustomCursor") end)
     
     if not enabled then
-        UserInputService.MouseIconEnabled = true
+        pcall(function() 
+             UserInputService.MouseIconEnabled = true 
+             LocalPlayer:GetMouse().Icon = "" 
+        end)
         return
     end
     
@@ -74,17 +77,26 @@ function Library:SetCustomCursor(enabled, imageId)
     
     self.CustomCursor = cursor
     
+    -- Dual-hiding strategy: Transparent Icon + MouseIconEnabled = false
+    -- This handles cases where one method fails.
+    local playerMouse = LocalPlayer:GetMouse()
+    local transparentIcon = "rbxassetid://2374665403" -- 1x1 Transparent PNG
+    
     -- Use BindToRenderStep with Last priority to ensure it overrides everything
     RunService:BindToRenderStep("SeisenCustomCursor", Enum.RenderPriority.Last.Value, function()
         if not cursor.Parent then 
             UserInputService.MouseIconEnabled = true
+            playerMouse.Icon = ""
             RunService:UnbindFromRenderStep("SeisenCustomCursor")
             return 
         end
         
+        -- Force hide system cursor
         UserInputService.MouseIconEnabled = false
-        local mouse = UserInputService:GetMouseLocation()
-        cursor.Position = UDim2.new(0, mouse.X, 0, mouse.Y)
+        playerMouse.Icon = transparentIcon 
+        
+        -- Update position using Mouse (matches Obsidian behavior, handles offsets automatically usually)
+        cursor.Position = UDim2.new(0, playerMouse.X, 0, playerMouse.Y)
     end)
 end
 
