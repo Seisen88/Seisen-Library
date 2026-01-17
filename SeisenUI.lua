@@ -1105,7 +1105,7 @@ function Library:CreateWindow(options)
                     Parent = selectBtn
                 })
                 
-                Create("TextLabel", {
+                local arrowLabel = Create("TextLabel", {
                     Size = UDim2.new(0, 20, 1, 0),
                     Position = UDim2.new(1, -20, 0, 0),
                     BackgroundTransparency = 1,
@@ -1115,6 +1115,9 @@ function Library:CreateWindow(options)
                     TextSize = 10,
                     Parent = selectBtn
                 })
+                
+                Library:RegisterElement(selectedLabel, "TextDim", "TextColor3")
+                Library:RegisterElement(arrowLabel, "TextDim", "TextColor3")
                 
                 -- Create dropdown list at GUI level for proper z-ordering
                 local maxVisibleItems = 8
@@ -1133,9 +1136,18 @@ function Library:CreateWindow(options)
                     Parent = gui
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1, ZIndex = 1000}),
                     Create("UIListLayout", {Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder})
                 })
+                
+                local listStroke = Instance.new("UIStroke")
+                listStroke.Color = theme.Border
+                listStroke.Thickness = 1
+                listStroke.ZIndex = 1000
+                listStroke.Parent = list
+                
+                Library:RegisterElement(list, "Element")
+                Library:RegisterElement(list, "Accent", "ScrollBarImageColor3")
+                Library:RegisterElement(listStroke, "Border", "Color")
                 
                 local dropObj = {
                     Value = default,
@@ -1255,6 +1267,12 @@ function Library:CreateWindow(options)
                         task.delay(0.15, function() list.Visible = false end)
                     end)
                 end
+                
+                table.insert(Library.Registry, {
+                    Callback = function()
+                        updateOptionHighlights()
+                    end
+                })
                 
                 if flag then Library.Options[flag] = dropObj end
             end
