@@ -223,19 +223,21 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             Create("UIPadding", {PaddingRight = UDim.new(0, 4)})
         })
         
+        Library:RegisterElement(tabPage, "Accent", "ScrollBarImageColor3")
+        
         table.insert(tabs, {btn = tabBtn, page = tabPage})
         
         local function activateTab()
             for _, t in ipairs(tabs) do
                 t.page.Visible = false
                 t.btn.BackgroundTransparency = 0.5
-                t.btn.BackgroundColor3 = theme.ToggleOff
-                t.btn.TextColor3 = theme.TextDim
+                t.btn.BackgroundColor3 = Library.Theme.ToggleOff
+                t.btn.TextColor3 = Library.Theme.TextDim
             end
             tabPage.Visible = true
             tabBtn.BackgroundTransparency = 0
-            tabBtn.BackgroundColor3 = theme.Accent
-            tabBtn.TextColor3 = theme.Text
+            tabBtn.BackgroundColor3 = Library.Theme.Accent
+            tabBtn.TextColor3 = Library.Theme.Text
             activeTab = tabPage
         end
         
@@ -260,6 +262,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = tabPage
             })
+            Library:RegisterElement(label, "TextDim", "TextColor3")
             return {SetText = function(self, t) label.Text = t end}
         end
         
@@ -276,7 +279,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 Parent = tabPage
             })
             
-            Create("TextLabel", {
+            local tLabel = Create("TextLabel", {
                 Size = UDim2.new(1, -45, 1, 0),
                 BackgroundTransparency = 1,
                 Text = toggleName,
@@ -286,6 +289,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = toggle
             })
+            Library:RegisterElement(tLabel, "Text", "TextColor3")
             
             local switchBg = Create("Frame", {
                 Size = UDim2.new(0, 32, 0, 16),
@@ -301,9 +305,18 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 Parent = switchBg
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
             
+            table.insert(Library.Registry, {
+                Callback = function(theme)
+                    local tTheme = theme or Library.Theme
+                    Tween(switchBg, {BackgroundColor3 = state and tTheme.Toggle or tTheme.ToggleOff})
+                    -- Knob is white, no theme update needed
+                end
+            })
+            
             local toggleObj = {Value = state, SetValue = function(self, val) 
                 state = val; self.Value = val
-                Tween(switchBg, {BackgroundColor3 = val and theme.Toggle or theme.ToggleOff})
+                local tTheme = Library.Theme
+                Tween(switchBg, {BackgroundColor3 = val and tTheme.Toggle or tTheme.ToggleOff})
                 Tween(knob, {Position = val and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)})
                 callback(val)
             end}
@@ -328,10 +341,19 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 TextSize = 11,
                 AutoButtonColor = false,
                 Parent = tabPage
-            }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)}), Create("UIStroke", {Color = theme.Border, Thickness = 1})})
+            }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
             
-            btn.MouseEnter:Connect(function() Tween(btn, {BackgroundColor3 = theme.ElementHover}) end)
-            btn.MouseLeave:Connect(function() Tween(btn, {BackgroundColor3 = theme.Element}) end)
+            local btnStroke = Instance.new("UIStroke")
+            btnStroke.Color = theme.Border
+            btnStroke.Thickness = 1
+            btnStroke.Parent = btn
+            
+            Library:RegisterElement(btn, "Element")
+            Library:RegisterElement(btn, "Text", "TextColor3")
+            Library:RegisterElement(btnStroke, "Border", "Color")
+            
+            btn.MouseEnter:Connect(function() Tween(btn, {BackgroundColor3 = Library.Theme.ElementHover}) end)
+            btn.MouseLeave:Connect(function() Tween(btn, {BackgroundColor3 = Library.Theme.Element}) end)
             btn.MouseButton1Click:Connect(callback)
         end
         
@@ -350,11 +372,15 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 TextColor3 = theme.TextDim, Font = Enum.Font.Gotham, TextSize = 10,
                 TextXAlignment = Enum.TextXAlignment.Right, Parent = slider
             })
-            Create("TextLabel", {
+            local nameLabel = Create("TextLabel", {
                 Size = UDim2.new(1, -45, 0, 14), BackgroundTransparency = 1, Text = sliderName,
                 TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 11,
                 TextXAlignment = Enum.TextXAlignment.Left, Parent = slider
             })
+            
+            Library:RegisterElement(valueLabel, "TextDim", "TextColor3")
+            Library:RegisterElement(nameLabel, "Text", "TextColor3")
+            
             local track = Create("Frame", {
                 Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 20),
                 BackgroundColor3 = theme.ToggleOff, Parent = slider
@@ -363,6 +389,9 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
                 BackgroundColor3 = theme.Accent, Parent = track
             }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+            
+            Library:RegisterElement(track, "ToggleOff")
+            Library:RegisterElement(fill, "Accent")
             
             local sliderObj = {Value = value}
             local dragging = false
@@ -401,6 +430,20 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     end
     
     task.defer(updateTabboxSize)
+    
+    table.insert(Library.Registry, {
+        Callback = function()
+            for _, t in ipairs(tabs) do
+                if t.page == activeTab then
+                    t.btn.BackgroundColor3 = Library.Theme.Accent
+                    t.btn.TextColor3 = Library.Theme.Text
+                else
+                    t.btn.BackgroundColor3 = Library.Theme.ToggleOff
+                    t.btn.TextColor3 = Library.Theme.TextDim
+                end
+            end
+        end
+    })
     
     return TabboxFuncs
 end
