@@ -821,7 +821,8 @@ function Library:CreateWindow(options)
             
             local section = Create("Frame", {
                 Name = sectionName,
-                Size = UDim2.new(1, 0, 0, 35),
+                Size = UDim2.new(1, 0, 0, 0), -- Auto height
+                AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
                 Parent = parent
@@ -834,13 +835,14 @@ function Library:CreateWindow(options)
             sectionStroke.Thickness = 1
             sectionStroke.Parent = section
             
+            -- Padding for the entire section
             Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), Parent = section})
             
             Library:RegisterElement(section, "Element")
             Library:RegisterElement(sectionStroke, "Border", "Color")
             
             -- Section Title
-            Create("TextLabel", {
+            local titleLabel = Create("TextLabel", {
                 Size = UDim2.new(1, 0, 0, 18),
                 BackgroundTransparency = 1,
                 Text = sectionName,
@@ -851,23 +853,19 @@ function Library:CreateWindow(options)
                 Parent = section
             })
             
-            -- Container
+            -- Container for elements
             local container = Create("Frame", {
                 Name = "Container",
-                Size = UDim2.new(1, 0, 0, 0),
-                Position = UDim2.new(0, 0, 0, 22),
+                Size = UDim2.new(1, 0, 0, 0), -- Auto height
+                AutomaticSize = Enum.AutomaticSize.Y,
+                Position = UDim2.new(0, 0, 0, 22), -- Below title
                 BackgroundTransparency = 1,
                 Parent = section
             }, {
                 Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder})
             })
             
-            -- Auto resize
-            container:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                local h = container:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
-                container.Size = UDim2.new(1, 0, 0, h)
-                section.Size = UDim2.new(1, 0, 0, h + 35)
-            end)
+            -- Manual resize listener removed (AutomaticSize handles it)
             
             local SectionFuncs = {}
             
@@ -886,23 +884,24 @@ function Library:CreateWindow(options)
                     Parent = container
                 })
                 
-                -- Label
+                -- Label (takes up remaining space)
                 local toggleLabel = Create("TextLabel", {
-                    Size = UDim2.new(0, 100, 1, 0),
+                    Size = UDim2.new(1, -110, 1, 0), -- Leave room for right-side controls
                     BackgroundTransparency = 1,
                     Text = toggleName,
                     TextColor3 = Library.Theme.Text,
                     Font = Enum.Font.Gotham,
                     TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Left,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
                     Parent = toggle
                 })
                 Library:RegisterElement(toggleLabel, "Text", "TextColor3")
                 
-                -- Switch
+                -- Switch (Right Aligned)
                 local switchBg = Create("Frame", {
                     Size = UDim2.new(0, 36, 0, 18),
-                    Position = UDim2.new(0, 110, 0.5, -9),
+                    Position = UDim2.new(1, -36, 0.5, -9), -- Anchored Right
                     BackgroundColor3 = state and Library.Theme.Toggle or Library.Theme.ToggleOff,
                     BorderSizePixel = 0,
                     Parent = toggle
@@ -916,10 +915,10 @@ function Library:CreateWindow(options)
                     Parent = switchBg
                 }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
                 
-                -- Keybind Button
+                -- Keybind Button (Left of Switch)
                 local keybindBtn = Create("TextButton", {
                     Size = UDim2.new(0, 50, 0, 18),
-                    Position = UDim2.new(0, 155, 0.5, -9),
+                    Position = UDim2.new(1, -96, 0.5, -9), -- Left of switch (36 + 10 gap)
                     BackgroundColor3 = Library.Theme.Element,
                     Text = "NONE",
                     TextColor3 = Library.Theme.TextDim,
@@ -930,20 +929,13 @@ function Library:CreateWindow(options)
                 }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
                 Library:RegisterElement(keybindBtn, "Element")
                 
-                -- Toggle indicator
-                local indicator = Create("Frame", {
-                    Size = UDim2.new(0, 8, 0, 8),
-                    Position = UDim2.new(1, -12, 0.5, -4),
-                    BackgroundColor3 = state and Library.Theme.Accent or Library.Theme.ToggleOff,
-                    BorderSizePixel = 0,
-                    Parent = toggle
-                }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
+                -- Toggle indicator (Removed as redundant or integrated into switch color)
+                local indicator = nil -- Previously at right edge, now redundant
                 
                 table.insert(Library.Registry, {
                     Callback = function(theme)
                         local tTheme = theme or Library.Theme
                         Tween(switchBg, {BackgroundColor3 = state and tTheme.Toggle or tTheme.ToggleOff})
-                        Tween(indicator, {BackgroundColor3 = state and tTheme.Accent or tTheme.ToggleOff})
                     end
                 })
                 
@@ -955,7 +947,6 @@ function Library:CreateWindow(options)
                         self.Value = val
                         Tween(switchBg, {BackgroundColor3 = val and Library.Theme.Toggle or Library.Theme.ToggleOff})
                         Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
-                        Tween(indicator, {BackgroundColor3 = val and Library.Theme.Accent or Library.Theme.ToggleOff})
                         callback(val)
                     end
                 }
