@@ -1573,11 +1573,11 @@ function Library:CreateWindow(options)
         end
         
         if options.Version then
-             createBadge(options.Version, Color3.fromRGB(255, 206, 69), 1) -- Yellow
+             createBadge(options.Version, theme.Accent, 1) -- Uses Theme Accent
         end
         
         if options.SubTitle then
-             createBadge(options.SubTitle, Color3.fromRGB(46, 204, 113), 2) -- Green
+             createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2) -- Safe Soft Blue
         end
     end
     pages = Create("Folder", {Name = "Pages", Parent = content})
