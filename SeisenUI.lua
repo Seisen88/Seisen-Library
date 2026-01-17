@@ -1576,13 +1576,17 @@ function Library:CreateWindow(options)
              createBadge(options.Version, theme.Accent, 1) -- Uses Theme Accent
         end
         
+        if options.SubTitle then
+             createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2) -- Safe Soft Blue
+        end
+    end
+    
     -- Notification Container (Top Center)
     local notificationContainer = Create("Frame", {
         Name = "NotificationContainer",
         Size = UDim2.new(0, 300, 1, 0),
         Position = UDim2.new(0.5, -150, 0, 10), -- Center Top alignment
-        BackgroundTransparency = 0.5,           -- DEBUG: Semi-transparent
-        BackgroundColor3 = Color3.new(1, 0, 0), -- DEBUG: Red box
+        BackgroundTransparency = 1,
         Parent = gui,
         ZIndex = 500
     }, {
@@ -1596,17 +1600,16 @@ function Library:CreateWindow(options)
     })
     
     function Library:Notify(notifyOpts)
-        print("DEBUG: Notify called") -- DEBUG PRINT
         local nTitle = notifyOpts.Title or "Notification"
         local nContent = notifyOpts.Content or "Content"
         local nDuration = notifyOpts.Duration or 3
         local nImage = notifyOpts.Image or "rbxassetid://10709791437" -- Info icon
         
         local notifyFrame = Create("Frame", {
-            Size = UDim2.new(0, 280, 0, 60), -- DEBUG: Force fixed size
-            -- AutomaticSize = Enum.AutomaticSize.XY, -- Disable auto size
+            Size = UDim2.new(0, 280, 0, 0), 
+            AutomaticSize = Enum.AutomaticSize.XY, 
             BackgroundColor3 = theme.Background,
-            BackgroundTransparency = 0.1, 
+            BackgroundTransparency = 1, -- Start invisible for fade in
             Parent = notificationContainer,
             BorderSizePixel = 0,
             ClipsDescendants = true
