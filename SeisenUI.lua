@@ -438,15 +438,41 @@ function Library:CreateSlider(parent, options)
         end
     }
     
+    local sliding = false
+    local lastUpdate = 0
+    local updateThread
+    
     local function update(input)
         local pct = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        sliderObj:SetValue(math.floor(min + (max - min) * pct))
+        local newVal = math.floor(min + (max - min) * pct)
+        
+        -- Throttle visual updates to ~60 FPS, but callback might needed significantly less often for heavy ops
+        -- For now, we trust the debounce in SetScale, but we should also limit how often we set value visually if needed.
+        -- Actually, visual update is cheap, callback is expensive.
+        
+        if newVal ~= value then
+            sliderObj:SetValue(newVal)
+        end
     end
     
-    local sliding = false
-    bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true; update(i) end end)
-    UserInputService.InputChanged:Connect(function(i) if sliding and i.UserInputType == Enum.UserInputType.MouseMovement then update(i) end end)
-    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
+    bar.InputBegan:Connect(function(i) 
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
+            sliding = true; 
+            update(i) 
+        end 
+    end)
+    
+    UserInputService.InputChanged:Connect(function(i) 
+        if sliding and i.UserInputType == Enum.UserInputType.MouseMovement then 
+            update(i) 
+        end 
+    end)
+    
+    UserInputService.InputEnded:Connect(function(i) 
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
+            sliding = false 
+        end 
+    end)
     
     if flag then self.Options[flag] = sliderObj end
     return sliderObj
