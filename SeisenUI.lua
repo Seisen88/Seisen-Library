@@ -222,6 +222,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         Parent = tabbox
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        Create("UIStroke", {Color = theme.Border, Thickness = 1, Transparency = 0.5}),
         Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)})
     })
     
@@ -471,6 +472,8 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         for _, t in ipairs(tabs) do
             local layout = t.page:FindFirstChildOfClass("UIListLayout")
             if layout then
+                -- Connect to size changes
+                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabboxSize)
                 maxHeight = math.max(maxHeight, layout.AbsoluteContentSize.Y)
             end
         end
