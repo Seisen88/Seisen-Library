@@ -829,10 +829,11 @@ function Library:CreateDropdown(parent, options)
             list.Visible = false
             Tween(arrow, {Rotation = 0})
             
-            -- Update Highlight
+            -- Update Highlight using Tween
             for _, child in pairs(list:GetChildren()) do
                 if child:IsA("TextButton") then
-                    child.TextColor3 = (child.Text == tostring(val)) and self.Theme.Accent or self.Theme.TextDim
+                    local targetColor = (child.Text == tostring(val)) and self.Theme.Accent or self.Theme.TextDim
+                    Tween(child, {TextColor3 = targetColor})
                 end
             end
         end
@@ -889,9 +890,12 @@ function Library:CreateDropdown(parent, options)
     table.insert(self.Registry, {
         Callback = function(theme)
             local tTheme = theme or self.Theme
+             -- Debug print to check if callback runs and what color it sees
+            -- print("Dropdown Registry Callback:", tTheme.Accent)
             for _, child in pairs(list:GetChildren()) do
                 if child:IsA("TextButton") then
-                    child.TextColor3 = (child.Text == tostring(currentVal)) and tTheme.Accent or tTheme.TextDim
+                    local targetColor = (child.Text == tostring(currentVal)) and tTheme.Accent or tTheme.TextDim
+                    Tween(child, {TextColor3 = targetColor})
                 end
             end
         end
