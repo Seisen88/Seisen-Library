@@ -269,9 +269,16 @@ function Library:CreateWindow(options)
     local firstTab = true
     local activeTab = nil
     
-    function WindowFuncs:CreateTab(tabOptions)
-        local tabName = tabOptions.Name or "Tab"
-        local tabIconName = tabOptions.Icon or "home"
+    function WindowFuncs:CreateTab(tabOptions, iconArg)
+        -- Support both: CreateTab({Name = "x", Icon = "y"}) and AddTab("x", "y")
+        local tabName, tabIconName
+        if type(tabOptions) == "string" then
+            tabName = tabOptions
+            tabIconName = iconArg or "home"
+        else
+            tabName = tabOptions.Name or "Tab"
+            tabIconName = tabOptions.Icon or "home"
+        end
         
         -- Get icon data (supports Lucide names or Roblox asset IDs)
         local iconData = Library:GetIcon(tabIconName)
@@ -1441,6 +1448,9 @@ function Library:CreateWindow(options)
         
         return TabFuncs
     end
+    
+    -- Alias for cleaner API: Window:AddTab("TabName", "icon-name")
+    WindowFuncs.AddTab = WindowFuncs.CreateTab
     
     return WindowFuncs
 end

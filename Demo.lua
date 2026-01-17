@@ -18,29 +18,17 @@ local Window = Library:CreateWindow({
     Name = "SEISEN PRIME"
 })
 
--- Combat Tab (using Lucide icon name)
-local CombatTab = Window:CreateTab({
-    Name = "Combat",
-    Icon = "sword"  -- Lucide icon name
-})
+-- Combat Tab (using Lucide icon name - simpler syntax!)
+local CombatTab = Window:AddTab("Combat", "sword")
 
 -- Visuals Tab
-local VisualsTab = Window:CreateTab({
-    Name = "Visuals",
-    Icon = "eye"  -- Lucide icon name
-})
+local VisualsTab = Window:AddTab("Visuals", "eye")
 
 -- Players Tab
-local PlayersTab = Window:CreateTab({
-    Name = "Players",
-    Icon = "users"  -- Lucide icon name
-})
+local PlayersTab = Window:AddTab("Players", "users")
 
 -- Settings Tab
-local SettingsTab = Window:CreateTab({
-    Name = "Settings",
-    Icon = "settings"  -- Lucide icon name
-})
+local SettingsTab = Window:AddTab("Settings", "settings")
 
 -- Combat Sections
 local AimbotSection = CombatTab:CreateSection({
