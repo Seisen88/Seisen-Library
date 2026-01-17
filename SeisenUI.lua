@@ -286,7 +286,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 Text = text,
                 TextColor3 = theme.TextDim,
                 Font = Enum.Font.Gotham,
-                TextSize = 11,
+                TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = tabPage
             })
@@ -302,7 +302,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             local state = default
             
             local toggle = Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 20),
+                Size = UDim2.new(1, 0, 0, 24),
                 BackgroundTransparency = 1,
                 Parent = tabPage
             })
@@ -313,7 +313,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
                 Text = toggleName,
                 TextColor3 = theme.Text,
                 Font = Enum.Font.Gotham,
-                TextSize = 11,
+                TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = toggle
             })
@@ -397,12 +397,12 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             local valueLabel = Create("TextLabel", {
                 Size = UDim2.new(0, 40, 0, 14), Position = UDim2.new(1, -40, 0, 0),
                 BackgroundTransparency = 1, Text = tostring(value),
-                TextColor3 = theme.TextDim, Font = Enum.Font.Gotham, TextSize = 10,
+                TextColor3 = theme.TextDim, Font = Enum.Font.Gotham, TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Right, Parent = slider
             })
             local nameLabel = Create("TextLabel", {
                 Size = UDim2.new(1, -45, 0, 14), BackgroundTransparency = 1, Text = sliderName,
-                TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 11,
+                TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left, Parent = slider
             })
             
