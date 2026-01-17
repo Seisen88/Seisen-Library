@@ -609,6 +609,143 @@ function Library:CreateWindow(options)
     
     self:RegisterElement(content, "Content")
     
+    -- Window Controls (Minimize/Close)
+    local controls = Create("Frame", {
+        Size = UDim2.new(0, 60, 0, 30),
+        Position = UDim2.new(1, -70, 0, 0), -- Top Right
+        BackgroundTransparency = 1,
+        Parent = content,
+        ZIndex = 110 -- Above content
+    }, {
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 4)
+        })
+    })
+
+    -- Min/Close Button Creator
+    local function createControl(icon, callback)
+        local btn = Create("TextButton", {
+            Size = UDim2.new(0, 24, 0, 24),
+            BackgroundColor3 = theme.Sidebar, -- Distinct from content
+            Text = "",
+            AutoButtonColor = false,
+            Parent = controls
+        }, {Create("UICorner", {CornerRadius = UDim.new(0, 6)})})
+        
+        local ico = Create("ImageLabel", {
+            Size = UDim2.new(0, 14, 0, 14),
+            Position = UDim2.new(0.5, -7, 0.5, -7),
+            BackgroundTransparency = 1,
+            Image = Library:GetIcon(icon) or "",
+            ImageColor3 = theme.Text,
+            Parent = btn
+        })
+        
+        btn.MouseEnter:Connect(function() Tween(btn, {BackgroundColor3 = theme.Accent}) end)
+        btn.MouseLeave:Connect(function() Tween(btn, {BackgroundColor3 = theme.Sidebar}) end)
+        btn.MouseButton1Click:Connect(callback)
+        
+        Library:RegisterElement(btn, "Sidebar")
+        Library:RegisterElement(ico, "Text", "ImageColor3")
+        return btn
+    end
+
+    -- Stats Widget (Minimized State)
+    local widget = Create("Frame", {
+        Size = UDim2.new(0, 120, 0, 60),
+        Position = UDim2.new(0.1, 0, 0.1, 0),
+        BackgroundTransparency = 1, -- Floating look
+        Visible = false,
+        Parent = gui,
+        ZIndex = 200
+    })
+    
+    MakeDraggable(widget, widget)
+    
+    -- Widget Logo
+    local widgetLogo = Create("ImageLabel", {
+        Size = UDim2.new(0, 40, 0, 40),
+        Position = UDim2.new(0.5, -20, 0, 0), -- Centered top
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://16053733390", -- Dragon logo from user image? Or placeholders. 
+        -- Using a generic cool dragon/logo or Seisen defaults. User provided 16053733390 in a previous prompt? 
+        -- Actually, I'll use a placeholder or the same as standard logo if available. 
+        -- I'll use a generic "Shield" or "Circle" icon for now, or let user customize.
+        -- Wait, user image showed a specific dragon logo. I cannot guess the ID.
+        -- I will use a reliable default (Roblox logo or similar) or just a Circle.
+        -- I'll use the 'scan-face' icon from Lucide (looks like a face/mask) as placeholder.
+        -- Or better: A nicely styled circle with "S".
+        Image = "rbxassetid://108496397228805", -- Seisen logo if I knew it.
+        -- I'll use a standard icon for now.
+        Image = "rbxassetid://7072718336", -- Generic
+        Parent = widget
+    })
+    
+    -- Round Logo
+    Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = widgetLogo})
+    
+    -- Seisenhub Text
+    local widgetTitle = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 14),
+        Position = UDim2.new(0, 0, 0, 42), -- Below logo
+        BackgroundTransparency = 1,
+        Text = "Seisenhub",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        TextStrokeTransparency = 0.5,
+        Parent = widget
+    })
+    
+    -- Stats Text (FPS/Ping)
+    local widgetStats = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 26),
+        Position = UDim2.new(0, 0, 0, 56), -- Below title
+        BackgroundTransparency = 1,
+        Text = "60 fps\n50 ms",
+        TextColor3 = Color3.fromRGB(200, 200, 200),
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextStrokeTransparency = 0.5,
+        Parent = widget
+    })
+
+    -- Restore Function
+    local function toggleWindow(visible)
+        main.Visible = visible
+        widget.Visible = not visible
+    end
+    
+    -- Buttons
+    createControl("minus", function() toggleWindow(false) end) -- Minimize
+    createControl("x", function() gui:Destroy() end) -- Close
+    
+    -- Widget Click to Restore
+    local restoreBtn = Create("TextButton", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        Parent = widget
+    })
+    restoreBtn.MouseButton1Click:Connect(function() toggleWindow(true) end)
+
+    -- Stats Updater
+    local RunService = game:GetService("RunService")
+    local Stats = game:GetService("Stats")
+    local lastUpdate = 0
+    
+    RunService.RenderStepped:Connect(function(dt)
+        local now = tick()
+        if now - lastUpdate > 0.5 and widget.Visible then -- Update every 0.5s when visible
+            local fps = math.floor(1 / dt)
+            local ping = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            widgetStats.Text = string.format("%d fps\n%d ms", fps, ping)
+            lastUpdate = now
+        end
+    end)
+    
     -- Cover left corners of content
     local contentCover = Create("Frame", {
         Size = UDim2.new(0, 10, 1, 0),
