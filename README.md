@@ -78,7 +78,7 @@ For a complete feature showcase and all available components, check out:
 
 For detailed documentation, API reference, and advanced usage:
 
-**[SeisenUI Documentation](https://seisen88.github.io/Seisen-Library/)**
+**[SeisenUI Documentation](https://seisenui.onrender.com/)**
 
 ## 🙏 Credits
 
@@ -91,7 +91,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - [GitHub Repository](https://github.com/Seisen88/Seisen-Library)
-- [Documentation](https://seisen88.github.io/Seisen-Library/)
+- [Documentation](https://seisenui.onrender.com/)
 - [Changelog](CHANGELOG.md)
 - [Report Issues](https://github.com/Seisen88/Seisen-Library/issues)
 
