@@ -1,0 +1,55 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Changelog to track project changes
+
+## [1.0.0] - 2026-01-18
+
+### Added
+
+- Modern UI library for Roblox with dark theme aesthetic
+- Window management system with draggable windows
+- Sidebar navigation with tab support
+- Lucide Icons integration for consistent iconography
+- Core UI components:
+  - Toggle switches with keybind support
+  - Sliders with customizable ranges and increments
+  - Dropdowns with search functionality
+  - Buttons with double-click and confirm options
+  - Labels and text elements
+  - Input fields (TextBox)
+  - Color pickers
+  - Tab boxes for organized content
+- Theme system with live color updates
+- Save/Load manager for persistent settings
+- Theme manager for custom color schemes
+- Tooltip system with hover delays
+- Common properties support (Disabled, Visible, Risky, Tooltip)
+- Template and Debug template files for quick setup
+- Comprehensive documentation website
+
+### Features
+
+- Smooth animations and transitions using TweenService
+- Click-away dropdown closing
+- Global toggle keybind support
+- Registry system for dynamic theme updates
+- Custom icon support alongside Lucide icons
+- Responsive UI scaling
+- Professional dark theme with accent colors
+
+---
+
+## How to Update
+
+Add changes under `[Unreleased]` using: **Added**, **Changed**, **Deprecated**, **Removed**, **Fixed**, **Security**
+
+When releasing: Change `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD` and create a new `[Unreleased]` section above it.

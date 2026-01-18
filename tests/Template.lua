@@ -8,8 +8,8 @@ local Window = Library:CreateWindow({
     Icon = "rbxassetid://125926861378074", -- Example Asset ID (or use Lucide "home")
     Theme = Library.Theme, -- Optional: Use default theme
     ToggleKeybind = Enum.KeyCode.LeftAlt,
-    Version = "v1.6.41",      -- New Feature: Yellow Pill
-    SubTitle = "UI Library"   -- New Feature: Green Pill
+    Version = "v1.0.0",      -- New Feature: Yellow Pill
+    SubTitle = "Seisen Library"   -- New Feature: Green Pill
 })
 
 -- Sidebar Additions
