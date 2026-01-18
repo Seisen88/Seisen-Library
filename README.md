@@ -4,24 +4,20 @@
   <strong>A modern, feature-rich UI library for Roblox</strong>
 </p>
 
-<p align="center">
-  <img src="docs/public/images/Windows.png" alt="SeisenUI Window Example" width="600">
-</p>
-
 > [!WARNING]
 > SeisenUI is currently in active development. While stable, new features and improvements are being added regularly. Please report any issues you encounter.
 
 ## ✨ Features
 
-- **🎨 Modern Dark Theme** - Sleek, professional dark interface with customizable accent colors
-- **🎯 Lucide Icons** - Beautiful, consistent iconography with 1000+ icons
-- **🧩 Rich Components** - Toggles, sliders, dropdowns, buttons, color pickers, and more
-- **🎭 Theme System** - Live theme updates with built-in theme manager
-- **💾 Save Manager** - Persistent settings across sessions
-- **✨ Smooth Animations** - Polished transitions using TweenService
-- **⌨️ Keybind Support** - Customizable keybinds for toggles
-- **💡 Tooltips** - Helpful hover tooltips for better UX
-- **📱 Responsive Design** - Scales beautifully across different screen sizes
+- 🎨 **Modern Dark Theme** - Sleek, professional dark interface with customizable accent colors
+- 🎯 **Lucide Icons** - Beautiful, consistent iconography with 1000+ icons
+- 🧩 **Rich Components** - Toggles, sliders, dropdowns, buttons, color pickers, and more
+- 🎭 **Theme System** - Live theme updates with built-in theme manager
+- 💾 **Save Manager** - Persistent settings across sessions
+- ✨ **Smooth Animations** - Polished transitions using TweenService
+- ⌨️ **Keybind Support** - Customizable keybinds for toggles
+- 💡 **Tooltips** - Helpful hover tooltips for better UX
+- 📱 **Responsive Design** - Scales beautifully across different screen sizes
 
 ## 📦 Installation
 
@@ -72,162 +68,21 @@ Tab:AddSlider({
 })
 ```
 
-For more examples, check out:
+## 📚 Full Template
 
-- [Template.lua](https://github.com/Seisen88/Seisen-Library/blob/main/Template.lua) - Full feature showcase
+For a complete feature showcase and all available components, check out:
 
-## 🎨 Components
+**[Template.lua](https://github.com/Seisen88/Seisen-Library/blob/main/tests/Template.lua)** - Full feature showcase with all components
 
-SeisenUI includes a comprehensive set of UI components designed for modern Roblox scripts:
+## � Documentation
 
-### Toggle Switches
-
-<img src="docs/public/images/Toggle.png" alt="Toggle Component" width="500">
-
-On/off switches with optional keybind support. Perfect for enabling/disabling features.
-
-```lua
-Tab:AddToggle({
-    Name = "Auto Farm",
-    Default = false,
-    Keybind = Enum.KeyCode.F,
-    Callback = function(value)
-        print("Toggled:", value)
-    end
-})
-```
-
-### Sliders
-
-<img src="docs/public/images/Slider.png" alt="Slider Component" width="500">
-
-Numeric input with customizable ranges, increments, and value formatting.
-
-```lua
-Tab:AddSlider({
-    Name = "Speed",
-    Min = 0,
-    Max = 100,
-    Default = 50,
-    Increment = 5,
-    Suffix = "%",
-    Callback = function(value)
-        print("Speed:", value)
-    end
-})
-```
-
-### Dropdowns
-
-<img src="docs/public/images/Dropdown.png" alt="Dropdown Component" width="500">
-
-Selection lists with search functionality for easy navigation.
-
-```lua
-Tab:AddDropdown({
-    Name = "Select Weapon",
-    Options = {"Sword", "Bow", "Staff"},
-    Default = "Sword",
-    Callback = function(value)
-        print("Selected:", value)
-    end
-})
-```
-
-### Tab Boxes
-
-<img src="docs/public/images/Tabbox.png" alt="TabBox Component" width="500">
-
-Organize related content into tabbed containers for better organization.
-
-```lua
-local TabBox = Tab:AddTabBox()
-local SubTab1 = TabBox:AddTab("Combat")
-local SubTab2 = TabBox:AddTab("Movement")
-```
-
-### Additional Components
-
-- **Buttons** - Clickable buttons with double-click and confirm options
-- **TextBox** - Text input fields with placeholders
-- **ColorPicker** - Full-featured color selection with RGB/HSV
-- **Labels** - Text labels for organization and information
-- **Dividers** - Visual separators for better layout
-- **Sections** - Group related components together
-
-<img src="docs/public/images/Section.png" alt="Section Component" width="500">
-
-### Common Properties
-
-All components support these properties for enhanced functionality:
-
-- **`Tooltip`** - Hover tooltips for helpful information
-- **`Disabled`** - Disable/enable state for conditional features
-- **`Visible`** - Show/hide elements dynamically
-- **`Risky`** - Visual warning for dangerous actions (red accent)
-- **`Flag`** - Unique identifier for saving/loading values
-
-## 🔧 Advanced Features
-
-### Theme Manager
-
-<img src="docs/public/images/Thememanager.png" alt="Theme Manager" width="500">
-
-Customize the entire UI color scheme with the built-in theme manager:
-
-```lua
-local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/addons/ThemeManager.lua"))()
-ThemeManager:SetLibrary(Library)
-ThemeManager:ApplyToTab(Tab)
-```
-
-### Save Manager
-
-<img src="docs/public/images/Savemanager.png" alt="Save Manager" width="500">
-
-Automatically save and load user settings across sessions:
-
-```lua
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/addons/SaveManager.lua"))()
-SaveManager:SetLibrary(Library)
-SaveManager:SetFolder("MyScript")
-SaveManager:BuildConfigSection(Tab)
-SaveManager:LoadAutoloadConfig()
-```
-
-### Custom Icons
-
-Use Lucide icons by name or custom Roblox asset IDs:
-
-```lua
--- Lucide icon
-Tab:AddTab({
-    Name = "Settings",
-    Icon = "settings"
-})
-
--- Custom asset ID
-Tab:AddTab({
-    Name = "Custom",
-    Icon = "rbxassetid://1234567890"
-})
-```
-
-## 📚 Documentation
-
-For detailed documentation, API reference, and advanced usage, visit:
+For detailed documentation, API reference, and advanced usage:
 
 **[SeisenUI Documentation](https://seisen88.github.io/Seisen-Library/)**
 
 ## 🙏 Credits
 
-### Icons
-
 - [Lucide Icons](https://github.com/lucide-icons/lucide) - Beautiful & consistent icon toolkit
-
-### Inspiration
-
-- Various Roblox UI libraries that paved the way for modern UI design
 
 ## 📝 License
 
