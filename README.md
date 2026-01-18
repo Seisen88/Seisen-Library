@@ -4,6 +4,10 @@
   <strong>A modern, feature-rich UI library for Roblox</strong>
 </p>
 
+<p align="center">
+  <img src="images/Windows.png" alt="SeisenUI Window Example" width="800">
+</p>
+
 > [!WARNING]
 > SeisenUI is currently in active development. While stable, new features and improvements are being added regularly. Please report any issues you encounter.
 
