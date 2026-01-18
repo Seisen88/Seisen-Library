@@ -729,7 +729,8 @@ end
 function Library:CreateDropdown(parent, options)
     local dropName = options.Name or "Dropdown"
     local opts = options.Options or {}
-    local default = options.Default or opts[1]
+    local isMulti = options.Multi or false
+    local default = options.Default or (isMulti and {} or opts[1])
     local callback = options.Callback or function() end
     local flag = options.Flag
     
@@ -737,12 +738,26 @@ function Library:CreateDropdown(parent, options)
     local isOpen = false
     local currentVal = default
     
+    -- Helper for Text Display
+    local function getDisplayVal()
+        if isMulti then
+            if type(currentVal) == "table" then
+                if #currentVal == 0 then return "None" end
+                return table.concat(currentVal, ", ")
+            else
+                return tostring(currentVal) 
+            end
+        else
+            return tostring(currentVal)
+        end
+    end
+
     local drop = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 45),
         BackgroundTransparency = 1,
-        ClipsDescendants = false, -- Important for overlay
+        ClipsDescendants = false, 
         Parent = parent,
-        ZIndex = 10 -- Higher ZIndex to float above
+        ZIndex = 50 -- Check if this needs to be higher relative to siblings
     })
     
     Create("TextLabel", {
@@ -771,7 +786,7 @@ function Library:CreateDropdown(parent, options)
         Size = UDim2.new(1, -30, 1, 0),
         Position = UDim2.new(0, 10, 0, 0),
         BackgroundTransparency = 1,
-        Text = tostring(currentVal),
+        Text = getDisplayVal(),
         TextColor3 = self.Theme.TextDim,
         Font = Enum.Font.Gotham,
         TextSize = 12,
@@ -807,8 +822,8 @@ function Library:CreateDropdown(parent, options)
         ScrollBarImageColor3 = self.Theme.Accent,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         Visible = false,
-        ZIndex = 20, -- Topmost
-        Parent = selectBtn -- Parented to button so it moves with it
+        ZIndex = 100, -- Topmost
+        Parent = selectBtn
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
         Create("UIListLayout", {Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder}),
@@ -819,20 +834,55 @@ function Library:CreateDropdown(parent, options)
     local dropObj = {
         Value = currentVal,
         SetValue = function(s, val)
-            currentVal = val
-            s.Value = val
-            displayLabel.Text = tostring(val)
-            callback(val)
-            
-            -- Close
-            isOpen = false
-            list.Visible = false
-            Tween(arrow, {Rotation = 0})
-            
-            -- Update Highlight
+            if isMulti then
+                -- Toggle value in table
+                local found = false
+                local index = -1
+                for i, v in ipairs(currentVal) do
+                    if v == val then
+                        found = true
+                        index = i
+                        break
+                    end
+                end
+                
+                if found then
+                    table.remove(currentVal, index)
+                else
+                    table.insert(currentVal, val)
+                end
+                s.Value = currentVal
+                displayLabel.Text = getDisplayVal()
+                callback(currentVal)
+                
+                -- Update Highlights logic is shared below
+            else
+                currentVal = val
+                s.Value = val
+                displayLabel.Text = tostring(val)
+                callback(val)
+                
+                -- Close
+                isOpen = false
+                list.Visible = false
+                Tween(arrow, {Rotation = 0})
+            end
+
+            -- Update Highlights
             for _, child in pairs(list:GetChildren()) do
                 if child:IsA("TextButton") then
-                    child.TextColor3 = (child.Text == tostring(val)) and self.Theme.Accent or self.Theme.TextDim
+                    local isActive = false
+                    if isMulti then
+                        for _, v in ipairs(currentVal) do
+                            if tostring(v) == child.Text then
+                                isActive = true
+                                break
+                            end
+                        end
+                    else
+                        isActive = (child.Text == tostring(currentVal))
+                    end
+                    child.TextColor3 = isActive and self.Theme.Accent or self.Theme.TextDim
                 end
             end
         end
@@ -844,16 +894,25 @@ function Library:CreateDropdown(parent, options)
         end
         
         for _, opt in ipairs(opts) do
+            local isActive = false
+            if isMulti and type(currentVal) == "table" then
+                for _, v in ipairs(currentVal) do
+                    if v == opt then isActive = true break end
+                end
+            else
+                isActive = (opt == currentVal)
+            end
+
             local btn = Create("TextButton", {
                 Size = UDim2.new(1, 0, 0, 20),
                 BackgroundTransparency = 1,
                 Text = tostring(opt),
-                TextColor3 = (opt == currentVal) and self.Theme.Accent or self.Theme.TextDim,
+                TextColor3 = isActive and self.Theme.Accent or self.Theme.TextDim,
                 Font = Enum.Font.Gotham,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = list,
-                ZIndex = 21
+                ZIndex = 110
             })
             
             btn.MouseButton1Click:Connect(function()
@@ -868,6 +927,18 @@ function Library:CreateDropdown(parent, options)
     
     populate()
     
+    -- Method to refresh options
+    function dropObj:Refresh(newOptions, keepCurrent)
+        opts = newOptions or {}
+        if not keepCurrent then
+            currentVal = isMulti and {} or (opts[1])
+            dropObj.Value = currentVal
+            displayLabel.Text = getDisplayVal()
+            callback(currentVal)
+        end
+        populate()
+    end
+
     selectBtn.MouseButton1Click:Connect(function()
         if not isOpen then
             self:CloseAllDropdowns()
@@ -891,7 +962,18 @@ function Library:CreateDropdown(parent, options)
             local tTheme = theme or self.Theme
             for _, child in pairs(list:GetChildren()) do
                 if child:IsA("TextButton") then
-                    child.TextColor3 = (child.Text == tostring(currentVal)) and tTheme.Accent or tTheme.TextDim
+                     local isActive = false
+                    if isMulti then
+                        for _, v in ipairs(currentVal) do
+                            if tostring(v) == child.Text then
+                                isActive = true
+                                break
+                            end
+                        end
+                    else
+                        isActive = (child.Text == tostring(currentVal))
+                    end
+                    child.TextColor3 = isActive and tTheme.Accent or tTheme.TextDim
                 end
             end
         end
