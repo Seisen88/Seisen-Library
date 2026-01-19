@@ -361,7 +361,8 @@ function Library:CreateToggle(parent, options)
         Parent = parent
     })
     local toggleLabel = Create("TextLabel", {
-        Size = UDim2.new(1, -130, 1, 0),
+        -- Adjusted to -90 to allow more space for text (reduced gap between text and keybind)
+        Size = UDim2.new(1, -90, 1, 0),
         BackgroundTransparency = 1,
         Text = toggleName,
         TextColor3 = self.Theme.Text,
@@ -777,11 +778,13 @@ function Library:CreateDropdown(parent, options)
         end
         isOpen = not isOpen
         list.Visible = isOpen
+        drop.ZIndex = isOpen and 200 or 50 -- Boost ZIndex when open
         Tween(arrow, {Rotation = isOpen and 180 or 0})
         if isOpen then
             table.insert(self.OpenDropdowns, {Close = function() 
                 isOpen = false
                 list.Visible = false
+                drop.ZIndex = 50 -- Reset ZIndex
                 Tween(arrow, {Rotation = 0})
             end})
         end
@@ -1555,40 +1558,37 @@ function Library:CreateWindow(options)
     local ghostFrame = nil
     
     resizeHandle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             resizing = true
-            local startSize = main.AbsoluteSize
+            local startSize = Vector2.new(main.Size.X.Offset, main.Size.Y.Offset)
             local startPos = i.Position
             
-            local connection
-            connection = game:GetService("RunService").RenderStepped:Connect(function()
-                if not resizing then
-                    connection:Disconnect()
-                    return
+            local inputChanged
+            local inputEnded
+            
+            inputChanged = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    local currentPos = input.Position
+                    local currentScale = mainScale.Scale
+                    
+                    local deltaX = (currentPos.X - startPos.X) / currentScale
+                    local deltaY = (currentPos.Y - startPos.Y) / currentScale
+                    
+                    local newX = startSize.X + deltaX
+                    local newY = startSize.Y + deltaY
+                    
+                    newX = math.max(newX, minSize.X)
+                    newY = math.max(newY, minSize.Y)
+                    
+                    main.Size = UDim2.fromOffset(newX, newY)
                 end
-                
-                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
-                -- Adjust delta for scale to ensure 1:1 mouse movement
-                local currentScale = mainScale.Scale
-                local deltaX = (mouseProxy.X - startPos.X) / currentScale
-                local deltaY = (mouseProxy.Y - startPos.Y) / currentScale
-                
-                local newX = startSize.X + deltaX
-                local newY = startSize.Y + deltaY
-                
-                newX = math.max(newX, minSize.X)
-                newY = math.max(newY, minSize.Y)
-                
-                main.Size = UDim2.fromOffset(newX, newY)
             end)
             
-            -- Disconnect on release
-            local releaseConnection
-            releaseConnection = UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            inputEnded = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     resizing = false
-                    connection:Disconnect()
-                    releaseConnection:Disconnect()
+                    if inputChanged then inputChanged:Disconnect() end
+                    if inputEnded then inputEnded:Disconnect() end
                 end
             end)
         end
