@@ -978,13 +978,25 @@ function Library:CreateWindow(options)
     self.ScreenGui = gui
     local viewport = workspace.CurrentCamera.ViewportSize
     local isSmallScreen = viewport.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
-    local windowSize = UDim2.new(0, 600, 0, 600)
+    local windowSize = UDim2.new(0, 600, 0, 500)
+    local targetScale = 1
+    
     if isSmallScreen then
-        windowSize = UDim2.new(0, 500, 0, 350)
-        if viewport.X < 500 then
-             windowSize = UDim2.new(0, 320, 0, 240)
+        -- On mobile, make it wider relative to height for landscape friendly UI
+        windowSize = UDim2.new(0, 600, 0, 450)
+        
+        -- Dynamic scaling based on screen width
+        -- 600px width target. If screen is smaller, scale down.
+        if viewport.X < 650 then
+            targetScale = viewport.X / 650
+        else
+            targetScale = 0.85 -- Default "Small" scale for larger mobile/tablets
         end
+        
+        -- Clamp scale to prevent it being too tiny
+        targetScale = math.clamp(targetScale, 0.5, 0.9)
     end
+    
     local main = Create("Frame", {
         Name = "Main",
         Size = windowSize,
@@ -997,6 +1009,7 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
     local mainScale = Instance.new("UIScale")
+    mainScale.Scale = targetScale
     mainScale.Parent = main
     self.MainScale = mainScale
     self:RegisterElement(main, "Background")
@@ -1158,7 +1171,7 @@ function Library:CreateWindow(options)
         Text = "UI Library by Seisen",
         TextColor3 = theme.TextMuted,
         Font = Enum.Font.Gotham,
-        TextSize = 10,
+        TextSize = 9,
         Parent = sidebar
     })
     self:RegisterElement(watermark, "TextMuted", "TextColor3")
