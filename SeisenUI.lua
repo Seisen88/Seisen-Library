@@ -990,7 +990,7 @@ function Library:CreateWindow(options)
     
     if isSmallScreen then
         -- Mobile sizes (Smaller base)
-        initialWidth = 500
+        initialWidth = 550 -- Increased width
         initialHeight = 350
         
         -- Aggressive scaling for "small little" look
@@ -1034,6 +1034,7 @@ function Library:CreateWindow(options)
         Font = Enum.Font.RobotoMono, -- Monospace for numbers
         TextSize = 10,
         TextTransparency = 0.5,
+        ZIndex = 300, -- Boost ZIndex to show above Content
         Parent = main
     })
     
