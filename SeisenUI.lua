@@ -1347,6 +1347,11 @@ function Library:CreateWindow(options)
         Parent = gui,
         ZIndex = 200
     })
+
+    -- Apply same scaling as Main window
+    local widgetScale = Instance.new("UIScale")
+    widgetScale.Scale = targetScale
+    widgetScale.Parent = widget
     
     
     -- Toggle Window Function (Minimize)
