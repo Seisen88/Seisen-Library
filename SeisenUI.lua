@@ -984,14 +984,14 @@ function Library:CreateWindow(options)
     local isSmallScreen = viewport.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
     
     -- PC Default: Slightly adjusted as requested
-    local initialWidth = 550
-    local initialHeight = 475
+    local initialWidth = 680
+    local initialHeight = 560
     local targetScale = 1
     
     if isSmallScreen then
         -- Mobile sizes (Smaller base)
-        initialWidth = 550 -- Increased width
-        initialHeight = 350
+        initialWidth = 670 -- Requested Mobile Width
+        initialHeight = 350 -- Requested Mobile Height
         
         -- Aggressive scaling for "small little" look
         if viewport.X < 650 then
