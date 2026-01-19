@@ -24,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Resize Logic**: Completely rewritten to support Touch inputs and fix "snapping" bugs.
 - **Toggle**: Adjusted padding to prevent text truncation.
 - **Dropdown**: Boosted Z-Index visibility to fix layering issues.
-- **Codebase**: Removed all comments for a cleaner, production-ready file.
 
 ### Added
 
