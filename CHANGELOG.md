@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-01-19
+
+### Added
+
+- **Mobile Support**: Full responsive design for mobile devices.
+  - Dynamic window scaling based on screen width.
+  - Auto-scaling floating widget (Watermark).
+  - Touch-specific input handling.
+- **Size Footer**: Live dimension tracker at the bottom of the UI.
+
+### Changed
+
+- **PC Default Size**: Updated to 680x560.
+- **Mobile Default Size**: Updated to 670x350.
+- **Resize Logic**: Completely rewritten to support Touch inputs and fix "snapping" bugs.
+- **Toggle**: Adjusted padding to prevent text truncation.
+- **Dropdown**: Boosted Z-Index visibility to fix layering issues.
+- **Codebase**: Removed all comments for a cleaner, production-ready file.
+
 ### Added
 
 - Changelog to track project changes

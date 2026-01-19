@@ -361,7 +361,6 @@ function Library:CreateToggle(parent, options)
         Parent = parent
     })
     local toggleLabel = Create("TextLabel", {
-        -- Adjusted to -90 to allow more space for text (reduced gap between text and keybind)
         Size = UDim2.new(1, -90, 1, 0),
         BackgroundTransparency = 1,
         Text = toggleName,
@@ -778,13 +777,13 @@ function Library:CreateDropdown(parent, options)
         end
         isOpen = not isOpen
         list.Visible = isOpen
-        drop.ZIndex = isOpen and 200 or 50 -- Boost ZIndex when open
+        drop.ZIndex = isOpen and 200 or 50
         Tween(arrow, {Rotation = isOpen and 180 or 0})
         if isOpen then
             table.insert(self.OpenDropdowns, {Close = function() 
                 isOpen = false
                 list.Visible = false
-                drop.ZIndex = 50 -- Reset ZIndex
+                drop.ZIndex = 50
                 Tween(arrow, {Rotation = 0})
             end})
         end
@@ -979,68 +978,49 @@ function Library:CreateWindow(options)
         ResetOnSpawn = false
     })
     self.ScreenGui = gui
-    -- Mobile/Responsive check
     local viewport = workspace.CurrentCamera.ViewportSize
     local isSmallScreen = viewport.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
-    
-    -- PC Default: Slightly adjusted as requested
     local initialWidth = 680
     local initialHeight = 560
     local targetScale = 1
-    
     if isSmallScreen then
-        -- Mobile sizes (Smaller base)
-        initialWidth = 670 -- Requested Mobile Width
-        initialHeight = 350 -- Requested Mobile Height
-        
-        -- Aggressive scaling for "small little" look
+        initialWidth = 670
+        initialHeight = 350
         if viewport.X < 650 then
-            targetScale = viewport.X / 900 -- Divisor increased to make UI smaller
+            targetScale = viewport.X / 900
         else
             targetScale = 0.75 
         end
-        
         targetScale = math.clamp(targetScale, 0.4, 0.9)
     end
-    
     local windowSize = UDim2.fromOffset(initialWidth, initialHeight)
-    
     local main = Create("Frame", {
         Name = "Main",
         Size = windowSize,
-        -- AnchorPoint = Vector2.new(0, 0), -- Default TopLeft ensures resize grows Right/Down
-        Position = UDim2.new(0.5, -initialWidth/2 * targetScale, 0.5, -initialHeight/2 * targetScale), -- Manually centered
+        Position = UDim2.new(0.5, -initialWidth/2 * targetScale, 0.5, -initialHeight/2 * targetScale),
         BackgroundColor3 = theme.Background,
         BorderSizePixel = 0,
         Parent = gui
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
-    
     local mainScale = Instance.new("UIScale")
     mainScale.Scale = targetScale
     mainScale.Parent = main
     self.MainScale = mainScale
-    
     self:RegisterElement(main, "Background")
-    
-    -- Size Footer (Realtime resizing info)
     local sizeLabel = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 14),
         Position = UDim2.new(0, 0, 1, -14),
         BackgroundTransparency = 1,
         Text = string.format("%d x %d", initialWidth, initialHeight),
         TextColor3 = theme.TextDim,
-        Font = Enum.Font.RobotoMono, -- Monospace for numbers
+        Font = Enum.Font.RobotoMono,
         TextSize = 10,
         TextTransparency = 0.5,
-        ZIndex = 300, -- Boost ZIndex to show above Content
+        ZIndex = 300,
         Parent = main
     })
-    
-    -- ... (Sidebar creation and logic mostly unchanged) ...
-
-    -- Sidebar
     local sidebar = Create("Frame", {
         Name = "Sidebar",
         Size = UDim2.new(0, 150, 1, 0),
@@ -1050,10 +1030,7 @@ function Library:CreateWindow(options)
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
-    
     self:RegisterElement(sidebar, "Sidebar")
-    
-    -- Cover right corners of sidebar
     local sidebarCover = Create("Frame", {
         Size = UDim2.new(0, 10, 1, 0),
         Position = UDim2.new(1, -10, 0, 0),
@@ -1061,10 +1038,7 @@ function Library:CreateWindow(options)
         BorderSizePixel = 0,
         Parent = sidebar
     })
-    
     self:RegisterElement(sidebarCover, "Sidebar")
-    
-    -- Window Controls (Traffic Lights) - Top Left of Sidebar
     local controls = Create("Frame", {
         Name = "WindowControls",
         Size = UDim2.new(1, 0, 0, 30),
@@ -1074,14 +1048,12 @@ function Library:CreateWindow(options)
     }, {
         Create("UIPadding", {PaddingLeft = UDim.new(0, 14), PaddingTop = UDim.new(0, 10)})
     })
-    
     local controlList = Create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 8),
         Parent = controls
     })
-
     local function createTrafficLight(color, callback, hoverIcon)
         local btn = Create("TextButton", {
             Size = UDim2.new(0, 12, 0, 12),
@@ -1090,49 +1062,40 @@ function Library:CreateWindow(options)
             AutoButtonColor = false,
             Parent = controls
         }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
-        
         local icon = Create("ImageLabel", {
             Size = UDim2.new(0, 8, 0, 8),
             Position = UDim2.new(0.5, -4, 0.5, -4),
             BackgroundTransparency = 1,
             Image = hoverIcon,
-            ImageTransparency = 1, -- Initial hidden
+            ImageTransparency = 1,
             ImageColor3 = Color3.new(0,0,0),
             Parent = btn
         })
-        
         btn.MouseEnter:Connect(function() 
             icon.ImageTransparency = 0.5 
         end)
         btn.MouseLeave:Connect(function() 
             icon.ImageTransparency = 1 
         end)
-        
         if callback then
             btn.MouseButton1Click:Connect(callback)
         end
-        
         return btn
     end
-
-    -- Close (Red), Minimize (Yellow), Maximize/Expand (Green)
-    local closeBtn = createTrafficLight(Color3.fromRGB(255, 95, 87), function() Library:Unload() end, "rbxassetid://10747384351") -- lucide 'x'
-    local minBtn = createTrafficLight(Color3.fromRGB(255, 189, 46), nil, "rbxassetid://10747384534") -- Connected later
-    local maxBtn = createTrafficLight(Color3.fromRGB(39, 201, 63), nil, "rbxassetid://10747384661") -- Connected later
-
-    -- Search Bar
+    local closeBtn = createTrafficLight(Color3.fromRGB(255, 95, 87), function() Library:Unload() end, "rbxassetid://10747384351")
+    local minBtn = createTrafficLight(Color3.fromRGB(255, 189, 46), nil, "rbxassetid://10747384534")
+    local maxBtn = createTrafficLight(Color3.fromRGB(39, 201, 63), nil, "rbxassetid://10747384661")
     local searchContainer = Create("Frame", {
         Name = "SidebarSearch",
         Size = UDim2.new(1, -20, 0, 32),
         Position = UDim2.new(0, 10, 0, 40),
-        BackgroundColor3 = theme.Background, -- Slightly darker/lighter than sidebar
+        BackgroundColor3 = theme.Background,
         Parent = sidebar,
         LayoutOrder = 2
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
         Create("UIStroke", {Color = theme.Border, Thickness = 1})
     })
-    
     local searchIcon = Create("ImageLabel", {
         Size = UDim2.new(0, 14, 0, 14),
         Position = UDim2.new(0, 10, 0.5, -7),
@@ -1141,7 +1104,6 @@ function Library:CreateWindow(options)
         Parent = searchContainer
     })
     Library:ApplyIcon(searchIcon, "search")
-
     local searchInput = Create("TextBox", {
         Size = UDim2.new(1, -34, 1, 0),
         Position = UDim2.new(0, 34, 0, 0),
@@ -1155,20 +1117,15 @@ function Library:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = searchContainer
     })
-    
     self:RegisterElement(searchContainer, "Background")
     self:RegisterElement(searchContainer:FindFirstChild("UIStroke"), "Border", "Color")
     self:RegisterElement(searchIcon, "TextDim", "ImageColor3")
     self:RegisterElement(searchInput, "Text", "TextColor3")
     self:RegisterElement(searchInput, "TextMuted", "PlaceholderColor3")
-    
-    -- Search Filtering (defined after tabList and pages are created)
-
-    -- Tab List
     local tabList = Create("ScrollingFrame", {
         Name = "TabList",
-        Size = UDim2.new(1, 0, 1, -130), -- Adjusted for header/search + profile
-        Position = UDim2.new(0, 0, 0, 80), -- Pushed down by controls + search
+        Size = UDim2.new(1, 0, 1, -130),
+        Position = UDim2.new(0, 0, 0, 80),
         BackgroundTransparency = 1,
         ScrollBarThickness = 0,
         Parent = sidebar,
@@ -1179,33 +1136,21 @@ function Library:CreateWindow(options)
             SortOrder = Enum.SortOrder.LayoutOrder
         })
     })
-    
-    -- Forward declare pages (defined later)
     local pages
-    
-    -- Content Search (filters sections inside pages - shows ENTIRE section if any content matches)
     local function contentSearch(query)
         query = query:lower()
-        
         if not pages then return end
-        
-        -- Search through all page content
         for _, pageFrame in ipairs(pages:GetChildren()) do
             if pageFrame:IsA("ScrollingFrame") then
-                -- Find Left and Right columns
                 local leftCol = pageFrame:FindFirstChild("Left")
                 local rightCol = pageFrame:FindFirstChild("Right")
-                
-                -- Filter sections in both columns
                 for _, col in ipairs({leftCol, rightCol}) do
                     if col then
                         for _, section in ipairs(col:GetChildren()) do
-                            -- Only filter actual section frames (not layout constraints)
                             if section:IsA("Frame") then
                                 if query == "" then
                                     section.Visible = true
                                 else
-                                    -- Check if ANY text in this section matches
                                     local matches = false
                                     for _, child in ipairs(section:GetDescendants()) do
                                         if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
@@ -1215,7 +1160,6 @@ function Library:CreateWindow(options)
                                             end
                                         end
                                     end
-                                    -- Show or hide the ENTIRE section
                                     section.Visible = matches
                                 end
                             end
@@ -1225,15 +1169,12 @@ function Library:CreateWindow(options)
             end
         end
     end
-    
     searchInput:GetPropertyChangedSignal("Text"):Connect(function()
         contentSearch(searchInput.Text)
     end)
-    
-    -- Watermark
     local watermark = Create("TextLabel", {
         Size = UDim2.new(1, -20, 0, 14),
-        Position = UDim2.new(0, 10, 1, -75), -- Above Profile
+        Position = UDim2.new(0, 10, 1, -75),
         BackgroundTransparency = 1,
         Text = "UI Library by Seisen",
         TextColor3 = theme.TextMuted,
@@ -1241,10 +1182,7 @@ function Library:CreateWindow(options)
         TextSize = 9,
         Parent = sidebar
     })
-    
     self:RegisterElement(watermark, "TextMuted", "TextColor3")
-
-    -- Player Profile Section (at bottom of sidebar)
     local profileSection = Create("Frame", {
         Name = "PlayerProfile",
         Size = UDim2.new(1, -10, 0, 50),
@@ -1255,28 +1193,22 @@ function Library:CreateWindow(options)
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 6)})
     })
-    
     local profileStroke = Instance.new("UIStroke")
     profileStroke.Color = theme.Border
     profileStroke.Thickness = 1
     profileStroke.Parent = profileSection
-    
     self:RegisterElement(profileSection, "Element")
     self:RegisterElement(profileStroke, "Border", "Color")
-    
-    -- Player Avatar
     local avatarImage = Create("ImageLabel", {
         Name = "Avatar",
         Size = UDim2.new(0, 36, 0, 36),
         Position = UDim2.new(0, 7, 0.5, -18),
         BackgroundColor3 = theme.ToggleOff,
-        Image = "", -- Will be set below
+        Image = "",
         Parent = profileSection
     }, {
         Create("UICorner", {CornerRadius = UDim.new(1, 0)})
     })
-    
-    -- Get player avatar
     pcall(function()
         local userId = LocalPlayer.UserId
         local thumbType = Enum.ThumbnailType.HeadShot
@@ -1284,8 +1216,6 @@ function Library:CreateWindow(options)
         local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
         avatarImage.Image = content
     end)
-    
-    -- Player Name
     local playerName = Create("TextLabel", {
         Name = "PlayerName",
         Size = UDim2.new(1, -55, 0, 16),
@@ -1299,8 +1229,6 @@ function Library:CreateWindow(options)
         TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = profileSection
     })
-    
-    -- Player Username (smaller)
     local username = Create("TextLabel", {
         Name = "Username",
         Size = UDim2.new(1, -55, 0, 12),
@@ -1314,8 +1242,6 @@ function Library:CreateWindow(options)
         TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = profileSection
     })
-    
-    -- Content Area
     local content = Create("Frame", {
         Name = "Content",
         Size = UDim2.new(1, -150, 1, 0),
@@ -1326,56 +1252,38 @@ function Library:CreateWindow(options)
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
-    
     self:RegisterElement(content, "Content")
-    
-    -- Window Controls (Minimize/Close)
-    -- Header Frame (Container for Title and Controls) - Draggable Area
     local header = Create("Frame", {
         Name = "Header",
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
         Parent = content,
     })
-
-    -- Stats Widget (Minimized State)
     local widget = Create("Frame", {
         Size = UDim2.new(0, 120, 0, 60),
         Position = UDim2.new(0.1, 0, 0.1, 0),
-        BackgroundTransparency = 1, -- Floating look
+        BackgroundTransparency = 1,
         Visible = false,
         Parent = gui,
         ZIndex = 200
     })
-
-    -- Apply same scaling as Main window
     local widgetScale = Instance.new("UIScale")
     widgetScale.Scale = targetScale
     widgetScale.Parent = widget
-    
-    
-    -- Toggle Window Function (Minimize)
     local function toggleWindow(visible)
         main.Visible = visible
         widget.Visible = not visible
     end
-    
-    -- Store references for keybind access
     Library.MainWindow = main
     Library.Widget = widget
-    
-    -- Maximize/Restore Toggle
     local isMaximized = false
     local normalSize = UDim2.new(0, 600, 0, 500)
     local normalPosition = UDim2.new(0.5, -300, 0.5, -250)
-    
     local function toggleMaximize()
         if isMaximized then
-            -- Restore to normal size
             Tween(main, {Size = normalSize, Position = normalPosition}, 0.3)
             isMaximized = false
         else
-            -- Maximize (fill screen with small padding)
             local screenSize = gui.AbsoluteSize
             Tween(main, {
                 Size = UDim2.new(0, screenSize.X - 40, 0, screenSize.Y - 40),
@@ -1384,37 +1292,22 @@ function Library:CreateWindow(options)
             isMaximized = true
         end
     end
-    
-    -- Connect Traffic Light Buttons
-    -- Red: Close window
-    -- Yellow: Toggle Maximize/Restore
     minBtn.MouseButton1Click:Connect(function() toggleMaximize() end)
-    -- Green: Minimize to widget
     maxBtn.MouseButton1Click:Connect(function() toggleWindow(false) end)
-
-    -- Make Widget Draggable with Click to Restore
     MakeDraggable(widget, widget, function() toggleWindow(true) end)
-    
-    -- Widget Logo
     local widgetLogo = Create("ImageLabel", {
         Size = UDim2.new(0, 40, 0, 40),
-        Position = UDim2.new(0.5, -20, 0, 0), -- Centered top
+        Position = UDim2.new(0.5, -20, 0, 0),
         BackgroundTransparency = 0,
-        BackgroundColor3 = Color3.new(0, 0, 0), -- Black
+        BackgroundColor3 = Color3.new(0, 0, 0),
         Parent = widget
     })
-    
-    -- Apply Icon from options or default
     local widgetIcon = options.Icon or "rbxassetid://7072718336"
     Library:ApplyIcon(widgetLogo, widgetIcon)
-    
-    -- Round Logo
     Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = widgetLogo})
-    
-    -- Seisenhub Text
     local widgetTitle = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 14),
-        Position = UDim2.new(0, 0, 0, 42), -- Below logo
+        Position = UDim2.new(0, 0, 0, 42),
         BackgroundTransparency = 1,
         Text = "Seisenhub",
         TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -1423,11 +1316,9 @@ function Library:CreateWindow(options)
         TextStrokeTransparency = 0.5,
         Parent = widget
     })
-    
-    -- Stats Text (FPS/Ping)
     local widgetStats = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 26),
-        Position = UDim2.new(0, 0, 0, 56), -- Below title
+        Position = UDim2.new(0, 0, 0, 56),
         BackgroundTransparency = 1,
         Text = "60 fps\n50 ms",
         TextColor3 = Color3.fromRGB(200, 200, 200),
@@ -1436,36 +1327,25 @@ function Library:CreateWindow(options)
         TextStrokeTransparency = 0.5,
         Parent = widget
     })
-
-    -- Buttons
-
-
-    -- Stats Updater
     local RunService = game:GetService("RunService")
     local Stats = game:GetService("Stats")
     local lastUpdate = 0
-    
     RunService.RenderStepped:Connect(function(dt)
         local now = tick()
-        if now - lastUpdate > 0.5 and widget.Visible then -- Update every 0.5s when visible
+        if now - lastUpdate > 0.5 and widget.Visible then
             local fps = math.floor(1 / dt)
             local ping = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
             widgetStats.Text = string.format("%d fps\n%d ms", fps, ping)
             lastUpdate = now
         end
     end)
-    
-    -- Cover left corners of content
     local contentCover = Create("Frame", {
         Size = UDim2.new(0, 10, 1, 0),
         BackgroundColor3 = theme.Content,
         BorderSizePixel = 0,
         Parent = content
     })
-    
     self:RegisterElement(contentCover, "Content")
-    
-    -- Title
     local titleLabel = Create("TextLabel", {
         Size = UDim2.new(0, 200, 0, 40),
         Position = UDim2.new(0, 15, 0, 5),
@@ -1483,22 +1363,12 @@ function Library:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = header
     })
-    
-    -- Breadcrumb (Current Tab Subtitle)
-    -- Breadcrumb Removed
-    -- local breadcrumb = Create("TextLabel", { ... })
-    
-    -- self:RegisterElement(breadcrumb, "TextDim", "TextColor3")
-    
-    -- Badges (Version / SubTitle) - Right Aligned
     if options.Version or options.SubTitle then
-        -- titleLabel.Visible = false -- Keep title visible
-        
         local badgeContainer = Create("Frame", {
             Name = "BadgeContainer",
             AnchorPoint = Vector2.new(1, 0),
             Size = UDim2.new(0, 300, 1, 0),
-            Position = UDim2.new(1, -15, 0, 0), -- Right aligned
+            Position = UDim2.new(1, -15, 0, 0),
             BackgroundTransparency = 1,
             Parent = header
         }, {
@@ -1506,11 +1376,10 @@ function Library:CreateWindow(options)
                 FillDirection = Enum.FillDirection.Horizontal, 
                 Padding = UDim.new(0, 8), 
                 VerticalAlignment = Enum.VerticalAlignment.Center,
-                HorizontalAlignment = Enum.HorizontalAlignment.Right, -- Push items to right
+                HorizontalAlignment = Enum.HorizontalAlignment.Right,
                 SortOrder = Enum.SortOrder.LayoutOrder
             })
         })
-        
         local function createBadge(text, color, layoutOrder)
              Create("TextLabel", {
                  Name = "Badge",
@@ -1518,7 +1387,7 @@ function Library:CreateWindow(options)
                  Size = UDim2.new(0, 0, 0, 24),
                  BackgroundColor3 = color,
                  Text = text,
-                 TextColor3 = Color3.new(0,0,0), -- Black text
+                 TextColor3 = Color3.new(0,0,0),
                  Font = Enum.Font.GothamBold,
                  TextSize = 13,
                  Parent = badgeContainer,
@@ -1528,21 +1397,17 @@ function Library:CreateWindow(options)
                  Create("UIPadding", {PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})
              })
         end
-        
         if options.Version then
-             createBadge(options.Version, theme.Accent, 1) -- Uses Theme Accent
+             createBadge(options.Version, theme.Accent, 1)
         end
-        
         if options.SubTitle then
-             createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2) -- Safe Soft Blue
+             createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2)
         end
     end
-    
-    -- Notification Container (Top Center)
     local notificationContainer = Create("Frame", {
         Name = "NotificationContainer",
         Size = UDim2.new(0, 300, 1, 0),
-        Position = UDim2.new(0.5, -150, 0, 10), -- Center Top alignment
+        Position = UDim2.new(0.5, -150, 0, 10),
         BackgroundTransparency = 1,
         Parent = gui,
         ZIndex = 500
@@ -1550,18 +1415,14 @@ function Library:CreateWindow(options)
         Create("UIListLayout", {
             Padding = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
-            VerticalAlignment = Enum.VerticalAlignment.Top, -- Start from top
+            VerticalAlignment = Enum.VerticalAlignment.Top,
             HorizontalAlignment = Enum.HorizontalAlignment.Center
         }),
         Create("UIPadding", {PaddingTop = UDim.new(0, 10)})
     })
-
-    -- Restore Missing Pages and Logic
     pages = Create("Folder", {Name = "Pages", Parent = content})
-    
     MakeDraggable(sidebar, main)
-    MakeDraggable(header, main) -- Restrict dragging to Header (Top 50px) only
-    
+    MakeDraggable(header, main)
     local resizeHandle = Create("ImageLabel", {
         Size = UDim2.new(0, 16, 0, 16),
         Position = UDim2.new(1, -16, 1, -16),
@@ -1570,64 +1431,45 @@ function Library:CreateWindow(options)
         Parent = main,
         ZIndex = 200
     })
-    
-    Library:ApplyIcon(resizeHandle, "move-diagonal-2") -- Resize icon
+    Library:ApplyIcon(resizeHandle, "move-diagonal-2")
     Library:RegisterElement(resizeHandle, "TextDim", "ImageColor3")
-    
     local resizing = false
     local minSize = Vector2.new(400, 300)
-    
     local ghostFrame = nil
-    
     resizeHandle.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             local startSize = Vector2.new(main.Size.X.Offset, main.Size.Y.Offset)
             local startPos = i.Position
-            
             local inputChanged
             local inputEnded
-            
             inputChanged = UserInputService.InputChanged:Connect(function(input)
-                -- 1. TRACK THE CORRECT INPUT: Only update if the input matching the start input changes
-                -- For Mouse: checks MouseMovement. For Touch: checks strictly the same input object (input == i)
                 local isValid = false
                 local currentPos = input.Position
-                
                 if input.UserInputType == Enum.UserInputType.MouseMovement then
-                    isValid = true -- Mouse always moves
+                    isValid = true
                 elseif input.UserInputType == Enum.UserInputType.Touch and input == i then
-                    isValid = true -- Only track the specific finger interacting with handle
+                    isValid = true
                 end
-                
                 if isValid then
                     local currentScale = mainScale.Scale
-                    -- Calculate delta based on current pos
                     local deltaX = (currentPos.X - startPos.X) / currentScale
                     local deltaY = (currentPos.Y - startPos.Y) / currentScale
-                    
                     local newX = startSize.X + deltaX
                     local newY = startSize.Y + deltaY
-                    
                     newX = math.max(newX, minSize.X)
                     newY = math.max(newY, minSize.Y)
-                    
                     main.Size = UDim2.fromOffset(newX, newY)
-                    
-                    -- Update Size Footer
                     sizeLabel.Text = string.format("%d x %d", math.floor(newX), math.floor(newY))
                 end
             end)
-            
             inputEnded = UserInputService.InputEnded:Connect(function(input)
-                -- End on release of the specific input or mouse
                 local isRelease = false
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                      isRelease = true
                 elseif input.UserInputType == Enum.UserInputType.Touch and input == i then
                      isRelease = true
                 end
-                
                 if isRelease then
                     resizing = false
                     if inputChanged then inputChanged:Disconnect() end
