@@ -983,14 +983,15 @@ function Library:CreateWindow(options)
     local viewport = workspace.CurrentCamera.ViewportSize
     local isSmallScreen = viewport.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
     
-    local initialWidth = 600
-    local initialHeight = 500
+    -- PC Default: Slightly adjusted as requested
+    local initialWidth = 550
+    local initialHeight = 475
     local targetScale = 1
     
     if isSmallScreen then
         -- Mobile sizes (Smaller base)
-        initialWidth = 550
-        initialHeight = 400
+        initialWidth = 500
+        initialHeight = 350
         
         -- Aggressive scaling for "small little" look
         if viewport.X < 650 then
@@ -1023,6 +1024,21 @@ function Library:CreateWindow(options)
     
     self:RegisterElement(main, "Background")
     
+    -- Size Footer (Realtime resizing info)
+    local sizeLabel = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 14),
+        Position = UDim2.new(0, 0, 1, -14),
+        BackgroundTransparency = 1,
+        Text = string.format("%d x %d", initialWidth, initialHeight),
+        TextColor3 = theme.TextDim,
+        Font = Enum.Font.RobotoMono, -- Monospace for numbers
+        TextSize = 10,
+        TextTransparency = 0.5,
+        Parent = main
+    })
+    
+    -- ... (Sidebar creation and logic mostly unchanged) ...
+
     -- Sidebar
     local sidebar = Create("Frame", {
         Name = "Sidebar",
@@ -1567,10 +1583,20 @@ function Library:CreateWindow(options)
             local inputEnded
             
             inputChanged = UserInputService.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                    local currentPos = input.Position
+                -- 1. TRACK THE CORRECT INPUT: Only update if the input matching the start input changes
+                -- For Mouse: checks MouseMovement. For Touch: checks strictly the same input object (input == i)
+                local isValid = false
+                local currentPos = input.Position
+                
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    isValid = true -- Mouse always moves
+                elseif input.UserInputType == Enum.UserInputType.Touch and input == i then
+                    isValid = true -- Only track the specific finger interacting with handle
+                end
+                
+                if isValid then
                     local currentScale = mainScale.Scale
-                    
+                    -- Calculate delta based on current pos
                     local deltaX = (currentPos.X - startPos.X) / currentScale
                     local deltaY = (currentPos.Y - startPos.Y) / currentScale
                     
@@ -1581,11 +1607,22 @@ function Library:CreateWindow(options)
                     newY = math.max(newY, minSize.Y)
                     
                     main.Size = UDim2.fromOffset(newX, newY)
+                    
+                    -- Update Size Footer
+                    sizeLabel.Text = string.format("%d x %d", math.floor(newX), math.floor(newY))
                 end
             end)
             
             inputEnded = UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                -- End on release of the specific input or mouse
+                local isRelease = false
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                     isRelease = true
+                elseif input.UserInputType == Enum.UserInputType.Touch and input == i then
+                     isRelease = true
+                end
+                
+                if isRelease then
                     resizing = false
                     if inputChanged then inputChanged:Disconnect() end
                     if inputEnded then inputEnded:Disconnect() end
