@@ -684,19 +684,25 @@ function Library:CreateDropdown(parent, options)
         Value = currentVal,
         SetValue = function(s, val)
             if isMulti then
-                local found = false
-                local index = -1
-                for i, v in ipairs(currentVal) do
-                    if v == val then
-                        found = true
-                        index = i
-                        break
-                    end
-                end
-                if found then
-                    table.remove(currentVal, index)
+                if type(val) == "table" then
+                    -- Replace correctly if it's a table (e.g. from SaveManager)
+                    currentVal = val
                 else
-                    table.insert(currentVal, val)
+                    -- Toggle if it's a single value (e.g. from UI Click)
+                    local found = false
+                    local index = -1
+                    for i, v in ipairs(currentVal) do
+                        if v == val then
+                            found = true
+                            index = i
+                            break
+                        end
+                    end
+                    if found then
+                        table.remove(currentVal, index)
+                    else
+                        table.insert(currentVal, val)
+                    end
                 end
                 s.Value = currentVal
                 displayLabel.Text = getDisplayVal()

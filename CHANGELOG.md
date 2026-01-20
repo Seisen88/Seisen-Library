@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-01-21
+
+### Fixed
+
+- **SaveManager**: Config list now automatically refreshes upon creation, deletion, or overwriting of configs.
+- **Dropdown**: Fixed `SetValue` logic for Multi-Select dropdowns to correctly accept table values, ensuring saved configurations load properly.
+
 ## [1.1.0] - 2026-01-19
 
 ### Added
