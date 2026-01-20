@@ -261,6 +261,14 @@ local SaveManager = {} do
             Callback = function() end
         })
 
+        local function UpdateList()
+            local list = self:RefreshConfigList()
+            local dropdown = self.Library.Options.SaveManager_ConfigList
+            if dropdown then
+                dropdown:Refresh(list, true)
+            end
+        end
+
         section:AddButton({
             Name = "Create Config",
             Callback = function()
@@ -275,6 +283,7 @@ local SaveManager = {} do
                     return
                 end
                 print("[SaveManager] Created config:", name)
+                UpdateList()
             end
         })
 
@@ -323,14 +332,13 @@ local SaveManager = {} do
                     return
                 end
                 print("[SaveManager] Deleted config:", name)
+                UpdateList()
             end
         })
 
         section:AddButton({
             Name = "Refresh List",
-            Callback = function()
-                print("[SaveManager] Refreshed config list")
-            end
+            Callback = UpdateList
         })
 
         section:AddDivider()
