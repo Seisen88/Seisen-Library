@@ -41,13 +41,8 @@ local SaveManager = {} do
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Options[idx]
-                print("[SaveManager] Loading dropdown:", idx)
-                print("[SaveManager] Data value:", data.value, "Type:", type(data.value))
                 if object then
-                    print("[SaveManager] Object found, calling SetValue")
                     object:SetValue(data.value)
-                else
-                    print("[SaveManager] Object NOT found for idx:", idx)
                 end
             end,
         },

@@ -685,8 +685,6 @@ function Library:CreateDropdown(parent, options)
         Multi = isMulti,
         Type = "Dropdown",
         SetValue = function(s, val)
-            print("[Dropdown SetValue] Called with value:", val, "Type:", type(val))
-            print("[Dropdown SetValue] isMulti:", isMulti, "Current opts:", table.concat(opts, ", "))
             if isMulti then
                 if type(val) == "table" then
                     -- Validate and filter table values to only include valid options

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-01-21
+
+### Fixed
+
+- **Dropdown**: Fixed save/load functionality by adding `Multi` and `Type` properties to dropdown objects
+- **Dropdown**: Added value validation in `SetValue` to ensure loaded values exist in current options list
+- **Dropdown**: Single-select dropdowns now fall back to first option if loaded value is invalid
+- **Dropdown**: Multi-select dropdowns now filter out invalid values when loading
+- **SaveManager**: Removed flawed value comparison check that prevented dropdown values from loading
+- **SaveManager**: Added `multi` property to saved dropdown data for proper restoration
+
 ## [1.1.1] - 2026-01-21
 
 ### Fixed
