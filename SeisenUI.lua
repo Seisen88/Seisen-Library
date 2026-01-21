@@ -682,6 +682,8 @@ function Library:CreateDropdown(parent, options)
     })
     local dropObj = {
         Value = currentVal,
+        Multi = isMulti,
+        Type = "Dropdown",
         SetValue = function(s, val)
             if isMulti then
                 if type(val) == "table" then
