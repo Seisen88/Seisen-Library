@@ -37,11 +37,11 @@ local SaveManager = {} do
         },
         Dropdown = {
             Save = function(idx, object)
-                return { type = "Dropdown", idx = idx, value = object.Value }
+                return { type = "Dropdown", idx = idx, value = object.Value, multi = object.Multi }
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Options[idx]
-                if object and object.Value ~= data.value then
+                if object then
                     object:SetValue(data.value)
                 end
             end,
