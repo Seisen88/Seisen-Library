@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-01-21
+
+### Fixed
+
+- **Toggle**: Added `Type` property to toggle objects for SaveManager compatibility
+- **Slider**: Fixed SaveManager parser to properly convert string values to numbers when loading
+- **Input**: Fixed SaveManager parser to remove flawed value comparison check
+- **SaveManager**: Removed `object.Value ~= data.value` comparison from Toggle and Slider parsers that prevented values from loading
+- **SaveManager**: All UI elements now consistently call SetValue without comparison checks
+
 ## [1.1.2] - 2026-01-21
 
 ### Fixed

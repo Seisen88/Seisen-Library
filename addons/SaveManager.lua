@@ -19,7 +19,7 @@ local SaveManager = {} do
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Toggles[idx]
-                if object and object.Value ~= data.value then
+                if object then
                     object:SetValue(data.value)
                 end
             end,
@@ -30,8 +30,8 @@ local SaveManager = {} do
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Options[idx]
-                if object and object.Value ~= data.value then
-                    object:SetValue(data.value)
+                if object then
+                    object:SetValue(tonumber(data.value))
                 end
             end,
         },
@@ -62,8 +62,8 @@ local SaveManager = {} do
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Options[idx]
-                if object and object.Value ~= data.text and type(data.text) == "string" then
-                    SaveManager.Library.Options[idx]:SetValue(data.text)
+                if object and type(data.text) == "string" then
+                    object:SetValue(data.text)
                 end
             end,
         },

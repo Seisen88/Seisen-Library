@@ -418,6 +418,7 @@ function Library:CreateToggle(parent, options)
     })
     local toggleObj = {
         Value = state,
+        Type = "Toggle",
         SetValue = function(s, val)
             state = val
             s.Value = val
