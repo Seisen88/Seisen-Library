@@ -685,8 +685,17 @@ function Library:CreateDropdown(parent, options)
         SetValue = function(s, val)
             if isMulti then
                 if type(val) == "table" then
-                    -- Replace correctly if it's a table (e.g. from SaveManager)
-                    currentVal = val
+                    -- Validate and filter table values to only include valid options
+                    local validValues = {}
+                    for _, v in ipairs(val) do
+                        for _, opt in ipairs(opts) do
+                            if tostring(v) == tostring(opt) then
+                                table.insert(validValues, v)
+                                break
+                            end
+                        end
+                    end
+                    currentVal = validValues
                 else
                     -- Toggle if it's a single value (e.g. from UI Click)
                     local found = false
@@ -708,6 +717,20 @@ function Library:CreateDropdown(parent, options)
                 displayLabel.Text = getDisplayVal()
                 callback(currentVal)
             else
+                -- For single-select, validate the value exists in options
+                local isValid = false
+                for _, opt in ipairs(opts) do
+                    if tostring(val) == tostring(opt) then
+                        isValid = true
+                        break
+                    end
+                end
+                
+                -- If value is invalid, fall back to first option
+                if not isValid and #opts > 0 then
+                    val = opts[1]
+                end
+                
                 currentVal = val
                 s.Value = val
                 displayLabel.Text = tostring(val)
