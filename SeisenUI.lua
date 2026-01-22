@@ -596,6 +596,85 @@ function Library:CreateSlider(parent, options)
     if flag then self.Options[flag] = sliderObj end
     return sliderObj
 end
+function Library:CreateKeybind(parent, options)
+    local keybindName = options.Name or "Keybind"
+    local default = options.Default or Enum.KeyCode.None
+    local callback = options.Callback or function() end
+    local flag = options.Flag
+    local currentKey = default
+    
+    local keybind = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 36),
+        BackgroundTransparency = 1,
+        Parent = parent
+    })
+    local nameLabel = Create("TextLabel", {
+        Size = UDim2.new(0.5, -5, 1, 0),
+        BackgroundTransparency = 1,
+        Text = keybindName,
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = keybind
+    })
+    local keyButton = Create("TextButton", {
+        Size = UDim2.new(0.5, -5, 0, 28),
+        Position = UDim2.new(0.5, 5, 0.5, -14),
+        BackgroundColor3 = self.Theme.Element,
+        Text = currentKey.Name,
+        TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        Parent = keybind
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+        Create("UIStroke", {Color = self.Theme.Border, Thickness = 1})
+    })
+    self:RegisterElement(nameLabel, "Text", "TextColor3")
+    self:RegisterElement(keyButton, "Element")
+    self:RegisterElement(keyButton:FindFirstChild("UIStroke"), "Border", "Color")
+    self:RegisterElement(keyButton, "TextDim", "TextColor3")
+    
+    local listening = false
+    local keybindObj = {
+        Value = currentKey,
+        Type = "Keybind",
+        SetValue = function(s, key)
+            currentKey = key
+            s.Value = key
+            keyButton.Text = key.Name
+            callback(key)
+        end
+    }
+    
+    keyButton.MouseButton1Click:Connect(function()
+        if listening then return end
+        listening = true
+        keyButton.Text = "..."
+        keyButton.TextColor3 = self.Theme.Accent
+        
+        local connection
+        connection = UserInputService.InputBegan:Connect(function(input, processed)
+            if input.UserInputType == Enum.UserInputType.Keyboard then
+                connection:Disconnect()
+                listening = false
+                
+                local newKey = input.KeyCode
+                if newKey == Enum.KeyCode.Escape or newKey == Enum.KeyCode.Backspace then
+                    newKey = Enum.KeyCode.None
+                end
+                
+                keybindObj:SetValue(newKey)
+                keyButton.TextColor3 = self.Theme.TextDim
+            end
+        end)
+    end)
+    
+    self:ApplyCommonProperties(keybind, options, keybindObj)
+    if flag then self.Options[flag] = keybindObj end
+    return keybindObj
+end
 function Library:CreateDropdown(parent, options)
     local dropName = options.Name or "Dropdown"
     local opts = options.Options or {}
@@ -1001,6 +1080,9 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         end
         function TabPageFuncs:AddDropdown(opts)
             return Library:CreateDropdown(tabPage, opts)
+        end
+        function TabPageFuncs:AddKeybind(opts)
+            return Library:CreateKeybind(tabPage, opts)
         end
         return TabPageFuncs
     end
@@ -2577,13 +2659,14 @@ function Library:CreateWindow(options)
         })
 
         -- UI Settings Section
-        UIGroup:AddToggle({
-            Name = "Enable Toggle Keybind",
-            Default = true,
-            Flag = "BuiltIn_EnableKeybind",
-            Tooltip = "Enable/disable the keybind to toggle UI visibility",
-            Callback = function(v)
-                Library.KeybindEnabled = v
+        UIGroup:AddKeybind({
+            Name = "Toggle UI Keybind",
+            Default = Library.ToggleKeybind or Enum.KeyCode.RightShift,
+            Flag = "BuiltIn_ToggleKeybind",
+            Tooltip = "Choose a key to toggle the UI visibility",
+            Callback = function(key)
+                Library.ToggleKeybind = key
+                Library.KeybindEnabled = (key ~= Enum.KeyCode.None)
             end
         })
 

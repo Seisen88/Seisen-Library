@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Built-in Settings**: Added optional "Settings" tab automatically generated via `ConfigSettings = true` in `CreateWindow`. Includes:
   - **Player Settings**: WalkSpeed, JumpPower, Fly, Anti-AFK, and FPS Boost toggles.
-  - **UI Settings**: Enable Toggle Keybind and Auto Hide UI toggles.
+  - **UI Settings**: Toggle UI Keybind picker and Auto Hide UI toggle.
 
 ### Fixed
 
