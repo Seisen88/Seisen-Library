@@ -673,7 +673,7 @@ function Library:CreateDropdown(parent, options)
         ScrollBarImageColor3 = self.Theme.Accent,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         Visible = false,
-        ZIndex = 100,
+        ZIndex = 1100, -- Higher ZIndex for ScreenGui parent
         Parent = selectBtn
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
@@ -681,6 +681,29 @@ function Library:CreateDropdown(parent, options)
         Create("UIPadding", {PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 5), PaddingTop = UDim.new(0, 5), PaddingBottom = UDim.new(0, 5)}),
         Create("UIStroke", {Color = self.Theme.Border, Thickness = 1})
     })
+
+    local listScale = Instance.new("UIScale")
+    listScale.Parent = list
+
+    local posConnection
+    local function updateListPosition()
+        if isOpen and selectBtn and selectBtn.Parent then
+            local scale = self.MainScale and self.MainScale.Scale or 1
+            listScale.Scale = scale
+            
+            local absPos = selectBtn.AbsolutePosition
+            local absSize = selectBtn.AbsoluteSize
+            
+            -- Adjust for UIScale if parented to ScreenGui
+            -- ScreenGui is 1:1 with screen pixels, list is scaled by listScale
+            -- So we divide absolute position by scale to get the correct "pixel" position if needed,
+            -- but since ScreenGui elements use Offset, and AbsolutePosition is in screen pixels,
+            -- we just use the AbsolutePosition directly.
+            
+            list.Position = UDim2.fromOffset(absPos.X / scale, (absPos.Y + absSize.Y + 5) / scale)
+            list.Size = UDim2.new(0, absSize.X / scale, 0, math.min(#opts * 22 + 10, 150))
+        end
+    end
     local dropObj = {
         Value = currentVal,
         Multi = isMulti,
@@ -808,17 +831,32 @@ function Library:CreateDropdown(parent, options)
             self:CloseAllDropdowns()
         end
         isOpen = not isOpen
-        list.Visible = isOpen
-        drop.ZIndex = isOpen and 200 or 50
-        Tween(arrow, {Rotation = isOpen and 180 or 0})
+        
         if isOpen then
+            list.Parent = self.ScreenGui
+            list.Visible = true
+            updateListPosition()
+            posConnection = game:GetService("RunService").RenderStepped:Connect(updateListPosition)
+            
             table.insert(self.OpenDropdowns, {Close = function() 
                 isOpen = false
                 list.Visible = false
-                drop.ZIndex = 50
+                list.Parent = selectBtn
+                if posConnection then posConnection:Disconnect() posConnection = nil end
                 Tween(arrow, {Rotation = 0})
             end})
+        else
+            list.Visible = false
+            list.Parent = selectBtn
+            if posConnection then posConnection:Disconnect() posConnection = nil end
         end
+
+        Tween(arrow, {Rotation = isOpen and 180 or 0})
+    end)
+    
+    selectBtn.Destroying:Connect(function()
+        if posConnection then posConnection:Disconnect() end
+        list:Destroy()
     end)
     table.insert(self.Registry, {
         Callback = function(theme)
