@@ -598,7 +598,7 @@ function Library:CreateSlider(parent, options)
 end
 function Library:CreateKeybind(parent, options)
     local keybindName = options.Name or "Keybind"
-    local default = options.Default or Enum.KeyCode.None
+    local default = options.Default or Enum.KeyCode.Unknown
     local callback = options.Callback or function() end
     local flag = options.Flag
     local currentKey = default
@@ -662,7 +662,7 @@ function Library:CreateKeybind(parent, options)
                 
                 local newKey = input.KeyCode
                 if newKey == Enum.KeyCode.Escape or newKey == Enum.KeyCode.Backspace then
-                    newKey = Enum.KeyCode.None
+                    newKey = Enum.KeyCode.Unknown
                 end
                 
                 keybindObj:SetValue(newKey)
@@ -2674,7 +2674,7 @@ function Library:CreateWindow(options)
             Tooltip = "Choose a key to toggle the UI visibility",
             Callback = function(key)
                 Library.ToggleKeybind = key
-                Library.KeybindEnabled = (key ~= Enum.KeyCode.None)
+                Library.KeybindEnabled = (key ~= Enum.KeyCode.Unknown)
             end
         })
 
