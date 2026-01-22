@@ -2525,6 +2525,20 @@ function Library:CreateWindow(options)
                 end
             end
         })
+
+        PlayerGroup:AddToggle({
+            Name = "Auto Hide UI",
+            Default = false,
+            Flag = "BuiltIn_AutoHideUI",
+            Tooltip = "Automatically hide the UI when the script loads",
+            Callback = function(v)
+                if v then
+                    task.defer(function()
+                        Library:Toggle(false)
+                    end)
+                end
+            end
+        })
     end
 
     return WindowFuncs
