@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.4] - 2026-01-22
+
+### Fixed
+
+- **Icons**: Fixed syntax error in Lucide icon library loader that prevented icons from loading.
+- **Icons**: Improved `Library:GetIcon` to automatically support numeric asset IDs.
+- **Watermark**: Fixed background transparency and made the title dynamic based on window name.
+
+### Changed
+
+- **API**: Reordered `AddTab` arguments to `(name, icon, subtitle)` for a more intuitive developer experience.
+- **Sections**: Added support for icons in Section titles (`AddLeftSection(name, icon)`).
+- **Cleanup**: Removed all internal developer comments and debug prints from the source code.
 
 ## [1.1.3] - 2026-01-21
 

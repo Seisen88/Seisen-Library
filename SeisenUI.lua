@@ -67,7 +67,7 @@ end
 function Library:GetIcon(iconName)
     if not iconName or iconName == "" then return nil end
     
-    -- Handle raw asset IDs
+
     if type(iconName) == "number" then
         iconName = "rbxassetid://" .. tostring(iconName)
     end
@@ -679,7 +679,7 @@ function Library:CreateDropdown(parent, options)
         ScrollBarImageColor3 = self.Theme.Accent,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         Visible = false,
-        ZIndex = 1100, -- Higher ZIndex for ScreenGui parent
+        ZIndex = 1100,
         Parent = selectBtn
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
@@ -700,11 +700,11 @@ function Library:CreateDropdown(parent, options)
             local absPos = selectBtn.AbsolutePosition
             local absSize = selectBtn.AbsoluteSize
             
-            -- Adjust for UIScale if parented to ScreenGui
-            -- ScreenGui is 1:1 with screen pixels, list is scaled by listScale
-            -- So we divide absolute position by scale to get the correct "pixel" position if needed,
-            -- but since ScreenGui elements use Offset, and AbsolutePosition is in screen pixels,
-            -- we just use the AbsolutePosition directly.
+
+
+
+
+
             
             list.Position = UDim2.fromOffset(absPos.X / scale, (absPos.Y + absSize.Y + 5) / scale)
             list.Size = UDim2.new(0, absSize.X / scale, 0, math.min(#opts * 22 + 10, 150))
@@ -717,7 +717,7 @@ function Library:CreateDropdown(parent, options)
         SetValue = function(s, val)
             if isMulti then
                 if type(val) == "table" then
-                    -- Validate and filter table values to only include valid options
+
                     local validValues = {}
                     for _, v in ipairs(val) do
                         for _, opt in ipairs(opts) do
@@ -729,7 +729,7 @@ function Library:CreateDropdown(parent, options)
                     end
                     currentVal = validValues
                 else
-                    -- Toggle if it's a single value (e.g. from UI Click)
+
                     local found = false
                     local index = -1
                     for i, v in ipairs(currentVal) do
@@ -749,7 +749,7 @@ function Library:CreateDropdown(parent, options)
                 displayLabel.Text = getDisplayVal()
                 callback(currentVal)
             else
-                -- For single-select, validate the value exists in options
+
                 local isValid = false
                 for _, opt in ipairs(opts) do
                     if tostring(val) == tostring(opt) then
@@ -758,7 +758,7 @@ function Library:CreateDropdown(parent, options)
                     end
                 end
                 
-                -- If value is invalid, fall back to first option
+
                 if not isValid and #opts > 0 then
                     val = opts[1]
                 end
