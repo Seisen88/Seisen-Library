@@ -1349,6 +1349,15 @@ function Library:CreateWindow(options)
     local function toggleWindow(visible)
         main.Visible = visible
         widget.Visible = not visible
+        if not visible then
+            Library:CloseAllDropdowns()
+        end
+    end
+    function Library:Toggle(visible)
+        if visible == nil then
+            visible = not main.Visible
+        end
+        toggleWindow(visible)
     end
     Library.MainWindow = main
     Library.Widget = widget
@@ -1646,15 +1655,7 @@ function Library:CreateWindow(options)
     end
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
-            if Library.MainWindow and Library.Widget then
-                if Library.MainWindow.Visible then
-                    Library.MainWindow.Visible = false
-                    Library.Widget.Visible = true
-                else
-                    Library.MainWindow.Visible = true
-                    Library.Widget.Visible = false
-                end
-            end
+            Library:Toggle()
         end
     end)
     local WindowFuncs = {}
