@@ -1652,9 +1652,10 @@ function Library:CreateWindow(options)
     end
     if options.ToggleKeybind then
         Library.ToggleKeybind = options.ToggleKeybind
+        Library.KeybindEnabled = true -- Initialize as enabled
     end
     UserInputService.InputBegan:Connect(function(input, processed)
-        if not processed and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
+        if not processed and Library.KeybindEnabled and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
             Library:Toggle()
         end
     end)
@@ -2438,6 +2439,7 @@ function Library:CreateWindow(options)
     if options.ConfigSettings then
         local SettingsTab = WindowFuncs:CreateTab("Settings", "settings")
         local PlayerGroup = SettingsTab:AddLeftSection("Player Settings", "user")
+        local UIGroup = SettingsTab:AddRightSection("UI Settings", "monitor")
         
         PlayerGroup:AddSlider({
             Name = "WalkSpeed",
@@ -2526,7 +2528,66 @@ function Library:CreateWindow(options)
             end
         })
 
+        -- FPS Boost
+        local fpsBoostEnabled = false
+        local originalSettings = {}
         PlayerGroup:AddToggle({
+            Name = "FPS Boost",
+            Default = false,
+            Flag = "BuiltIn_FPSBoost",
+            Tooltip = "Optimize graphics for better performance",
+            Callback = function(v)
+                fpsBoostEnabled = v
+                local Lighting = game:GetService("Lighting")
+                
+                if fpsBoostEnabled then
+                    -- Save original settings
+                    originalSettings.GlobalShadows = Lighting.GlobalShadows
+                    originalSettings.FogEnd = Lighting.FogEnd
+                    originalSettings.Brightness = Lighting.Brightness
+                    
+                    -- Apply optimizations
+                    Lighting.GlobalShadows = false
+                    Lighting.FogEnd = 100000
+                    Lighting.Brightness = 1
+                    
+                    -- Optimize workspace
+                    for _, obj in pairs(workspace:GetDescendants()) do
+                        pcall(function()
+                            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+                                obj.Enabled = false
+                            elseif obj:IsA("MeshPart") then
+                                obj.RenderFidelity = Enum.RenderFidelity.Performance
+                            end
+                        end)
+                    end
+                    
+                    -- Set quality
+                    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+                else
+                    -- Restore original settings
+                    if originalSettings.GlobalShadows ~= nil then
+                        Lighting.GlobalShadows = originalSettings.GlobalShadows
+                        Lighting.FogEnd = originalSettings.FogEnd
+                        Lighting.Brightness = originalSettings.Brightness
+                    end
+                    settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+                end
+            end
+        })
+
+        -- UI Settings Section
+        UIGroup:AddToggle({
+            Name = "Enable Toggle Keybind",
+            Default = true,
+            Flag = "BuiltIn_EnableKeybind",
+            Tooltip = "Enable/disable the keybind to toggle UI visibility",
+            Callback = function(v)
+                Library.KeybindEnabled = v
+            end
+        })
+
+        UIGroup:AddToggle({
             Name = "Auto Hide UI",
             Default = false,
             Flag = "BuiltIn_AutoHideUI",
