@@ -66,6 +66,12 @@ function Library:CloseAllDropdowns()
 end
 function Library:GetIcon(iconName)
     if not iconName or iconName == "" then return nil end
+    
+    -- Handle raw asset IDs
+    if type(iconName) == "number" then
+        iconName = "rbxassetid://" .. tostring(iconName)
+    end
+
     if self.Icons then
         local success, icon = pcall(function()
             return self.Icons.GetAsset(iconName)
@@ -1368,7 +1374,7 @@ function Library:CreateWindow(options)
     local widgetLogo = Create("ImageLabel", {
         Size = UDim2.new(0, 40, 0, 40),
         Position = UDim2.new(0.5, -20, 0, 0),
-        BackgroundTransparency = 0,
+        BackgroundTransparency = 1,
         BackgroundColor3 = Color3.new(0, 0, 0),
         Parent = widget
     })
@@ -1379,7 +1385,7 @@ function Library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 14),
         Position = UDim2.new(0, 0, 0, 42),
         BackgroundTransparency = 1,
-        Text = "Seisenhub",
+        Text = options.Name or "Seisen UI",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 14,
