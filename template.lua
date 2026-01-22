@@ -1,6 +1,6 @@
 -- Load Seisen UI Library
 local Repo = "https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/"
-local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua"))()
+local Library = loadstring(game:HttpGet(Repo .. "SeisenUI.lua?v=" .. tick()))()
 
 -- Create Window
 local Window = Library:CreateWindow({
