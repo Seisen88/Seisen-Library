@@ -2122,7 +2122,15 @@ function Library:CreateWindow(options)
                 local callback = keybindOptions.Callback or function() end
                 local flag = keybindOptions.Flag
                 local mode = keybindOptions.Mode or "Toggle"
-                local currentKey = default ~= "NONE" and Enum.KeyCode[default] or Enum.KeyCode.Unknown
+                
+                -- Handle both string and EnumItem defaults
+                local currentKey
+                if type(default) == "string" then
+                    currentKey = default ~= "NONE" and Enum.KeyCode[default] or Enum.KeyCode.Unknown
+                else
+                    currentKey = default
+                end
+                
                 local keybind = Create("Frame", {
                     Size = UDim2.new(1, 0, 0, 20),
                     BackgroundTransparency = 1,
@@ -2143,7 +2151,7 @@ function Library:CreateWindow(options)
                     AnchorPoint = Vector2.new(1, 0.5),
                     Position = UDim2.new(1, 0, 0.5, 0),
                     BackgroundColor3 = theme.Element,
-                    Text = default,
+                    Text = type(default) == "string" and default or tostring(currentKey.Name),
                     TextColor3 = theme.TextDim,
                     Font = Enum.Font.Gotham,
                     TextSize = 10,
