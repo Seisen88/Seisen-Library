@@ -2117,76 +2117,7 @@ function Library:CreateWindow(options)
                 if default then callback(true) end
             end
             function SectionFuncs:AddKeybind(keybindOptions)
-                local keybindName = keybindOptions.Name or "Keybind"
-                local default = keybindOptions.Default or "NONE"
-                local callback = keybindOptions.Callback or function() end
-                local flag = keybindOptions.Flag
-                local mode = keybindOptions.Mode or "Toggle"
-                
-                -- Handle both string and EnumItem defaults
-                local currentKey
-                if type(default) == "string" then
-                    currentKey = default ~= "NONE" and Enum.KeyCode[default] or Enum.KeyCode.Unknown
-                else
-                    currentKey = default
-                end
-                
-                local keybind = Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 20),
-                    BackgroundTransparency = 1,
-                    Parent = container
-                })
-                Create("TextLabel", {
-                    Size = UDim2.new(0, 100, 1, 0),
-                    BackgroundTransparency = 1,
-                    Text = keybindName,
-                    TextColor3 = theme.Text,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 12,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = keybind
-                })
-                local keyBtn = Create("TextButton", {
-                    Size = UDim2.new(0, 40, 0, 16),
-                    AnchorPoint = Vector2.new(1, 0.5),
-                    Position = UDim2.new(1, 0, 0.5, 0),
-                    BackgroundColor3 = theme.Element,
-                    Text = type(default) == "string" and default or tostring(currentKey.Name),
-                    TextColor3 = theme.TextDim,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 10,
-                    AutoButtonColor = false,
-                    Parent = keybind
-                }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1})
-                })
-                Library:RegisterElement(keyBtn, "Element")
-                local keybindObj = {
-                    Value = currentKey,
-                    Mode = mode,
-                    SetValue = function(self, key)
-                        currentKey = key
-                        self.Value = key
-                        keyBtn.Text = key.Name:upper()
-                    end
-                }
-                local listening = false
-                keyBtn.MouseButton1Click:Connect(function()
-                    listening = true
-                    keyBtn.Text = "..."
-                end)
-                UserInputService.InputBegan:Connect(function(input, processed)
-                    if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-                        currentKey = input.KeyCode
-                        keyBtn.Text = input.KeyCode.Name:upper()
-                        keybindObj.Value = input.KeyCode
-                        listening = false
-                    elseif currentKey ~= Enum.KeyCode.Unknown and input.KeyCode == currentKey and not processed then
-                        callback()
-                    end
-                end)
-                if flag then Library.Options[flag] = keybindObj end
+                return Library:CreateKeybind(container, keybindOptions)
             end
             function SectionFuncs:AddColorPicker(colorOptions)
                 local colorName = colorOptions.Name or "Color"
