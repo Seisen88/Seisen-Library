@@ -2598,17 +2598,6 @@ function Library:CreateWindow(options)
         })
 
         -- UI Settings Section
-        UIGroup:AddKeybind({
-            Name = "Toggle UI Keybind",
-            Default = Library.ToggleKeybind or Enum.KeyCode.RightShift,
-            Flag = "BuiltIn_ToggleKeybind",
-            Tooltip = "Choose a key to toggle the UI visibility",
-            Callback = function(key)
-                Library.ToggleKeybind = key
-                Library.KeybindEnabled = (key ~= Enum.KeyCode.Unknown)
-            end
-        })
-
         UIGroup:AddToggle({
             Name = "Auto Hide UI",
             Default = false,
