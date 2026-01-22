@@ -622,7 +622,7 @@ function Library:CreateKeybind(parent, options)
         Size = UDim2.new(0.5, -5, 0, 28),
         Position = UDim2.new(0.5, 5, 0.5, -14),
         BackgroundColor3 = self.Theme.Element,
-        Text = currentKey.Name,
+        Text = tostring(currentKey.Name),
         TextColor3 = self.Theme.TextDim,
         Font = Enum.Font.GothamBold,
         TextSize = 12,
@@ -643,7 +643,7 @@ function Library:CreateKeybind(parent, options)
         SetValue = function(s, key)
             currentKey = key
             s.Value = key
-            keyButton.Text = key.Name
+            keyButton.Text = tostring(key.Name)
             callback(key)
         end
     }
