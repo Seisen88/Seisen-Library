@@ -1698,16 +1698,16 @@ function Library:CreateWindow(options)
         })
         Library:RegisterElement(line, "Border")
     end
-    function WindowFuncs:CreateTab(tabOptions, subtitleArg, iconArg)
+    function WindowFuncs:CreateTab(tabOptions, iconArg, subtitleArg)
         local tabName, tabSubtitle, tabIconName
         if type(tabOptions) == "string" then
             tabName = tabOptions
-            tabSubtitle = subtitleArg or tabOptions
             tabIconName = iconArg or "home"
+            tabSubtitle = subtitleArg or tabOptions
         else
             tabName = tabOptions.Name or "Tab"
-            tabSubtitle = tabOptions.Subtitle or tabName
             tabIconName = tabOptions.Icon or "home"
+            tabSubtitle = tabOptions.Subtitle or tabName
         end
         local tabBtn = Create("TextButton", {
             Name = tabName,
@@ -1823,14 +1823,16 @@ function Library:CreateWindow(options)
             firstTab = false
         end
         local TabFuncs = {}
-        function TabFuncs:CreateSection(sectionOptions, sideArg)
-            local sectionName, side
+        function TabFuncs:CreateSection(sectionOptions, sideArg, iconArg)
+            local sectionName, side, sectionIconName
             if type(sectionOptions) == "string" then
                 sectionName = sectionOptions
                 side = sideArg or "Left"
+                sectionIconName = iconArg
             else
                 sectionName = sectionOptions.Name or "Section"
                 side = sectionOptions.Side or "Left"
+                sectionIconName = sectionOptions.Icon
             end
             local parent = (side == "Right") and rightCol or leftCol
             local section = Create("Frame", {
@@ -1850,8 +1852,21 @@ function Library:CreateWindow(options)
             Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), Parent = section})
             Library:RegisterElement(section, "Element")
             Library:RegisterElement(sectionStroke, "Border", "Color")
+            
+            if sectionIconName then
+                local iconProps = {
+                    Size = UDim2.new(0, 14, 0, 14),
+                    Position = UDim2.new(0, 0, 0, 2),
+                    BackgroundTransparency = 1,
+                    ImageColor3 = theme.Text,
+                    Parent = section
+                }
+                Library:ApplyIcon(Create("ImageLabel", iconProps), sectionIconName)
+            end
+
             local titleLabel = Create("TextLabel", {
                 Size = UDim2.new(1, 0, 0, 18),
+                Position = sectionIconName and UDim2.new(0, 18, 0, 0) or UDim2.new(0, 0, 0, 0),
                 BackgroundTransparency = 1,
                 Text = sectionName,
                 TextColor3 = theme.Text,
@@ -2409,11 +2424,11 @@ function Library:CreateWindow(options)
         function TabFuncs:AddRightTabbox(name)
             return createTabbox(name, rightCol, theme, gui, Create, Tween, Library)
         end
-        function TabFuncs:AddLeftSection(name)
-            return TabFuncs:CreateSection(name, "Left")
+        function TabFuncs:AddLeftSection(name, icon)
+            return TabFuncs:CreateSection(name, "Left", icon)
         end
-        function TabFuncs:AddRightSection(name)
-            return TabFuncs:CreateSection(name, "Right")
+        function TabFuncs:AddRightSection(name, icon)
+            return TabFuncs:CreateSection(name, "Right", icon)
         end
         return TabFuncs
     end
