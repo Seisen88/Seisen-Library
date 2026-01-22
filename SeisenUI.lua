@@ -2434,6 +2434,99 @@ function Library:CreateWindow(options)
         return TabFuncs
     end
     WindowFuncs.AddTab = WindowFuncs.CreateTab
+
+    if options.ConfigSettings then
+        local SettingsTab = WindowFuncs:CreateTab("Settings", "settings")
+        local PlayerGroup = SettingsTab:AddLeftSection("Player Settings", "user")
+        
+        PlayerGroup:AddSlider({
+            Name = "WalkSpeed",
+            Min = 16,
+            Max = 300,
+            Default = 16,
+            Flag = "BuiltIn_WalkSpeed",
+            Callback = function(v)
+                pcall(function()
+                    LocalPlayer.Character.Humanoid.WalkSpeed = v
+                end)
+            end
+        })
+
+        PlayerGroup:AddSlider({
+            Name = "JumpPower",
+            Min = 50,
+            Max = 300,
+            Default = 50,
+            Flag = "BuiltIn_JumpPower",
+            Callback = function(v)
+                pcall(function()
+                    local hum = LocalPlayer.Character.Humanoid
+                    hum.UseJumpPower = true
+                    hum.JumpPower = v
+                end)
+            end
+        })
+
+        local flying = false
+        local flyVel
+        PlayerGroup:AddToggle({
+            Name = "Fly",
+            Default = false,
+            Flag = "BuiltIn_Fly",
+            Callback = function(v)
+                flying = v
+                if flying then
+                    pcall(function()
+                        local hrp = LocalPlayer.Character.HumanoidRootPart
+                        flyVel = Instance.new("BodyVelocity")
+                        flyVel.MaxForce = Vector3.new(1, 1, 1) * 10^6
+                        flyVel.Velocity = Vector3.zero
+                        flyVel.Parent = hrp
+                        
+                        task.spawn(function()
+                            while flying and hrp and hrp.Parent do
+                                local cam = workspace.CurrentCamera
+                                local dir = Vector3.zero
+                                if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+                                if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+                                if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+                                if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+                                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+                                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+                                
+                                flyVel.Velocity = dir * (LocalPlayer.Character.Humanoid.WalkSpeed * 2.5)
+                                task.wait()
+                            end
+                            if flyVel then flyVel:Destroy() end
+                        end)
+                    end)
+                else
+                    if flyVel then flyVel:Destroy() end
+                end
+            end
+        })
+
+        local antiAfk = false
+        PlayerGroup:AddToggle({
+            Name = "Anti-AFK",
+            Default = false,
+            Flag = "BuiltIn_AntiAFK",
+            Callback = function(v)
+                antiAfk = v
+                if antiAfk then
+                    task.spawn(function()
+                        local VirtualUser = game:GetService("VirtualUser")
+                        while antiAfk do
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.zero)
+                            task.wait(60)
+                        end
+                    end)
+                end
+            end
+        })
+    end
+
     return WindowFuncs
 end
 return Library

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.4] - 2026-01-22
 
+### Added
+
+- **Built-in Settings**: Added optional "Settings" tab automatically generated via `ConfigSettings = true` in `CreateWindow`. Includes:
+  - WalkSpeed & JumpPower sliders.
+  - Fly & Anti-AFK toggles.
+
 ### Fixed
 
 - **Dropdown**: Fixed issue where open dropdowns remained visible when the UI was hidden.
