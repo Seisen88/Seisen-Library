@@ -1800,7 +1800,8 @@ function Library:CreateWindow(options)
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false,
-            Parent = tabList
+            Parent = tabList,
+            LayoutOrder = type(tabOptions) == "table" and tabOptions.LayoutOrder or 0
         }, {
              Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
              Create("UIStroke", {Color = theme.Border, Thickness = 1, Transparency = 0.5})
@@ -2458,7 +2459,7 @@ function Library:CreateWindow(options)
     WindowFuncs.AddTab = WindowFuncs.CreateTab
 
     if options.ConfigSettings then
-        local SettingsTab = WindowFuncs:CreateTab("Settings", "settings")
+        local SettingsTab = WindowFuncs:CreateTab({ Name = "Settings", Icon = "settings", LayoutOrder = 9999 })
         local PlayerGroup = SettingsTab:AddLeftSection("Player Settings", "user")
         local UIGroup = SettingsTab:AddRightSection("UI Settings", "monitor")
         
