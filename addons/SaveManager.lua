@@ -7,17 +7,18 @@ local cloneref = (cloneref or clonereference or function(instance) return instan
 local HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
-local function Notify(title, text, duration)
-    if SaveManager.Library and SaveManager.Library.Notify then
-        SaveManager.Library:Notify({
-            Title = title,
-            Content = text,
-            Duration = duration or 5
-        })
-    end
-end
-
 local SaveManager = {} do
+    -- Internal Notify Helper
+    local function Notify(title, text, duration)
+        if SaveManager.Library and SaveManager.Library.Notify then
+            SaveManager.Library:Notify({
+                Title = title,
+                Content = text,
+                Duration = duration or 5
+            })
+        end
+    end
+
     SaveManager.Folder = "SeisenSettings"
     SaveManager.SubFolder = ""
     SaveManager.Ignore = {}
