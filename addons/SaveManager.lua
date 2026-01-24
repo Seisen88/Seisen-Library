@@ -8,17 +8,6 @@ local HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
 local SaveManager = {} do
-    -- Internal Notify Helper
-    local function Notify(title, text, duration)
-        if SaveManager.Library and SaveManager.Library.Notify then
-            SaveManager.Library:Notify({
-                Title = title,
-                Content = text,
-                Duration = duration or 5
-            })
-        end
-    end
-
     SaveManager.Folder = "SeisenSettings"
     SaveManager.SubFolder = ""
     SaveManager.Ignore = {}
@@ -264,6 +253,16 @@ local SaveManager = {} do
         assert(self.Library, "Must set SaveManager.Library")
 
         local section = tab:CreateSection({ Name = "Configuration", Side = "Right" })
+
+        local function Notify(title, text, duration)
+            if self.Library and self.Library.Notify then
+                self.Library:Notify({
+                    Title = title,
+                    Content = text,
+                    Duration = duration or 5
+                })
+            end
+        end
 
         section:AddTextbox({
             Name = "Config Name",
