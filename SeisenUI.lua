@@ -984,6 +984,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         Size = UDim2.new(1, 0, 0, 150),
         BackgroundColor3 = theme.Element,
         BackgroundTransparency = 0.5,
+        ClipsDescendants = true,
         Parent = parent
     }, {
         Create("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)}),
@@ -1001,7 +1002,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
         ScrollBarThickness = 0,
         CanvasSize = UDim2.fromScale(0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.X,
-        ClipsDescendants = false,
+        ClipsDescendants = true,
         Parent = tabbox
     }, {
         Create("UIListLayout", {
@@ -2276,6 +2277,7 @@ function Library:CreateWindow(options)
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundColor3 = theme.Element,
                     BorderSizePixel = 0,
+                    ClipsDescendants = true,
                     Parent = container
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 6)})
@@ -2286,7 +2288,7 @@ function Library:CreateWindow(options)
                     ScrollBarThickness = 0,
                     CanvasSize = UDim2.fromScale(0, 0),
                     AutomaticCanvasSize = Enum.AutomaticSize.X,
-                    ClipsDescendants = false,
+                    ClipsDescendants = true,
                     Parent = tabbox
                 }, {
                     Create("UIListLayout", {
