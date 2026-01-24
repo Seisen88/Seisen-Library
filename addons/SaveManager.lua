@@ -7,6 +7,16 @@ local cloneref = (cloneref or clonereference or function(instance) return instan
 local HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
+local function Notify(title, text, duration)
+    if SaveManager.Library and SaveManager.Library.Notify then
+        SaveManager.Library:Notify({
+            Title = title,
+            Content = text,
+            Duration = duration or 5
+        })
+    end
+end
+
 local SaveManager = {} do
     SaveManager.Folder = "SeisenSettings"
     SaveManager.SubFolder = ""
@@ -274,15 +284,15 @@ local SaveManager = {} do
             Callback = function()
                 local name = self.Library.Options.SaveManager_ConfigName and self.Library.Options.SaveManager_ConfigName.Value or ""
                 if name:gsub(" ", "") == "" then
-                    print("[SaveManager] Invalid config name (empty)")
+                    Notify("Seisen Hub", "Invalid config name (empty)", 3)
                     return
                 end
                 local success, err = self:Save(name)
                 if not success then
-                    print("[SaveManager] Failed to create config:", err)
+                    Notify("Seisen Hub", "Failed to create config: " .. tostring(err), 5)
                     return
                 end
-                print("[SaveManager] Created config:", name)
+                Notify("Seisen Hub", "Created config: " .. name, 5)
                 UpdateList()
             end
         })
@@ -302,10 +312,10 @@ local SaveManager = {} do
                 local name = self.Library.Options.SaveManager_ConfigList and self.Library.Options.SaveManager_ConfigList.Value
                 local success, err = self:Load(name)
                 if not success then
-                    print("[SaveManager] Failed to load config:", err)
+                    Notify("Seisen Hub", "Failed to load config: " .. tostring(err), 5)
                     return
                 end
-                print("[SaveManager] Loaded config:", name)
+                Notify("Seisen Hub", "Loaded config: " .. name, 5)
             end
         })
 
@@ -315,10 +325,10 @@ local SaveManager = {} do
                 local name = self.Library.Options.SaveManager_ConfigList and self.Library.Options.SaveManager_ConfigList.Value
                 local success, err = self:Save(name)
                 if not success then
-                    print("[SaveManager] Failed to overwrite config:", err)
+                    Notify("Seisen Hub", "Failed to overwrite config: " .. tostring(err), 5)
                     return
                 end
-                print("[SaveManager] Overwrote config:", name)
+                Notify("Seisen Hub", "Overwrote config: " .. name, 5)
             end
         })
 
@@ -349,10 +359,10 @@ local SaveManager = {} do
                 local name = self.Library.Options.SaveManager_ConfigList and self.Library.Options.SaveManager_ConfigList.Value
                 local success, err = self:SaveAutoloadConfig(name)
                 if not success then
-                    print("[SaveManager] Failed to set autoload:", err)
+                    Notify("Seisen Hub", "Failed to set autoload: " .. tostring(err), 5)
                     return
                 end
-                print("[SaveManager] Set autoload to:", name)
+                Notify("Seisen Hub", "Set autoload to: " .. name, 5)
             end
         })
 
@@ -361,10 +371,10 @@ local SaveManager = {} do
             Callback = function()
                 local success, err = self:DeleteAutoLoadConfig()
                 if not success then
-                    print("[SaveManager] Failed to reset autoload:", err)
+                    Notify("Seisen Hub", "Failed to reset autoload: " .. tostring(err), 5)
                     return
                 end
-                print("[SaveManager] Reset autoload")
+                Notify("Seisen Hub", "Reset autoload", 5)
             end
         })
 
