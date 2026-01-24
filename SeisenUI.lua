@@ -2315,7 +2315,7 @@ function Library:CreateWindow(options)
                         Create("UIPadding", {PaddingBottom = UDim.new(0, 8)})
                     })
                     table.insert(tabs, {btn = tabBtn, page = tabPage})
-                    tabBtn.MouseButton1Click:Connect(function()
+                    local function activate()
                         for _, t in ipairs(tabs) do
                             t.page.Visible = false
                             t.btn.BackgroundTransparency = 0.5
@@ -2326,7 +2326,13 @@ function Library:CreateWindow(options)
                         tabBtn.TextColor3 = theme.Text
                         tabBtn.BackgroundColor3 = theme.Accent
                         activeTab = tabPage
-                    end)
+                    end
+
+                    tabBtn.MouseButton1Click:Connect(activate)
+
+                    if #tabs == 1 then
+                        activate()
+                    end
                     local TabPageFuncs = {}
                     setmetatable(TabPageFuncs, {__index = function(_, key)
                         if SectionFuncs[key] then
