@@ -995,16 +995,21 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     tabboxStroke.Parent = tabbox
     Library:RegisterElement(tabbox, "Element")
     Library:RegisterElement(tabboxStroke, "Border", "Color")
-    local tabHeader = Create("Frame", {
+    local tabHeader = Create("ScrollingFrame", {
         Size = UDim2.new(1, 0, 0, 24),
         BackgroundTransparency = 1,
+        ScrollBarThickness = 0,
+        CanvasSize = UDim2.fromScale(0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.X,
+        ClipsDescendants = false,
         Parent = tabbox
     }, {
         Create("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
             Padding = UDim.new(0, 4),
             SortOrder = Enum.SortOrder.LayoutOrder
-        })
+        }),
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2)})
     })
     local tabContent = Create("Frame", {
         Size = UDim2.new(1, 0, 1, -30),
@@ -1023,8 +1028,9 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     local updateTabboxSize
     function TabboxFuncs:AddTab(tabName)
         local tabBtn = Create("TextButton", {
-            Size = UDim2.new(0, 70, 1, 0),
-            BackgroundColor3 = theme.ToggleOff,
+            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.new(0, 0, 1, 0),
+            BackgroundColor3 = Library.Theme.ToggleOff,
             BackgroundTransparency = 0.5,
             Text = tabName,
             TextColor3 = theme.TextDim,
@@ -1032,7 +1038,10 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             TextSize = 11,
             AutoButtonColor = false,
             Parent = tabHeader
-        }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+        }, {
+            Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+            Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)})
+        })
         local tabPage = Create("Frame", {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
@@ -2271,16 +2280,21 @@ function Library:CreateWindow(options)
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 6)})
                 })
-                local tabHeader = Create("Frame", {
+                local tabHeader = Create("ScrollingFrame", {
                     Size = UDim2.new(1, 0, 0, 26),
                     BackgroundTransparency = 1,
+                    ScrollBarThickness = 0,
+                    CanvasSize = UDim2.fromScale(0, 0),
+                    AutomaticCanvasSize = Enum.AutomaticSize.X,
+                    ClipsDescendants = false,
                     Parent = tabbox
                 }, {
                     Create("UIListLayout", {
                         FillDirection = Enum.FillDirection.Horizontal,
                         Padding = UDim.new(0, 2),
                         SortOrder = Enum.SortOrder.LayoutOrder
-                    })
+                    }),
+                    Create("UIPadding", {PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2)})
                 })
                 local tabContent = Create("Frame", {
                     Size = UDim2.new(1, -10, 0, 0),
@@ -2294,7 +2308,8 @@ function Library:CreateWindow(options)
                 local activeTab = nil
                 function TabboxFuncs:AddTab(name)
                     local tabBtn = Create("TextButton", {
-                        Size = UDim2.new(0, 60, 1, -4),
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        Size = UDim2.new(0, 0, 1, -4),
                         BackgroundColor3 = theme.ToggleOff,
                         BackgroundTransparency = 0.5,
                         Text = name,
@@ -2303,7 +2318,10 @@ function Library:CreateWindow(options)
                         TextSize = 11,
                         AutoButtonColor = false,
                         Parent = tabHeader
-                    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+                    }, {
+                        Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+                        Create("UIPadding", {PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})
+                    })
                     local tabPage = Create("Frame", {
                         Size = UDim2.new(1, 0, 0, 0),
                         AutomaticSize = Enum.AutomaticSize.Y,
@@ -2323,7 +2341,6 @@ function Library:CreateWindow(options)
                         end
                         tabPage.Visible = true
                         tabBtn.BackgroundTransparency = 0
-                        tabBtn.TextColor3 = theme.Text
                         tabBtn.BackgroundColor3 = theme.Accent
                         activeTab = tabPage
                     end
