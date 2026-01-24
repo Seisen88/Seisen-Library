@@ -2337,11 +2337,13 @@ function Library:CreateWindow(options)
                         for _, t in ipairs(tabs) do
                             t.page.Visible = false
                             t.btn.BackgroundTransparency = 0.5
+                            t.btn.BackgroundColor3 = theme.ToggleOff
                             t.btn.TextColor3 = theme.TextDim
                         end
                         tabPage.Visible = true
                         tabBtn.BackgroundTransparency = 0
                         tabBtn.BackgroundColor3 = theme.Accent
+                        tabBtn.TextColor3 = theme.Text
                         activeTab = tabPage
                     end
 
