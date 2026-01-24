@@ -1357,6 +1357,7 @@ function Library:CreateWindow(options)
         Position = UDim2.new(0, 5, 1, -55),
         BackgroundColor3 = theme.Element,
         BackgroundTransparency = 0.5,
+        ClipsDescendants = true,
         Parent = sidebar
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 6)})
@@ -1936,6 +1937,7 @@ function Library:CreateWindow(options)
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
+                ClipsDescendants = true,
                 Parent = parent
             }, {
                 Create("UICorner", {CornerRadius = UDim.new(0, 6)})
@@ -1977,6 +1979,7 @@ function Library:CreateWindow(options)
                 Position = UDim2.new(0, 0, 0, 22),
                 BackgroundColor3 = theme.Sidebar,
                 BackgroundTransparency = 0.5,
+                ClipsDescendants = true,
                 Parent = section
             }, {
                 Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}),
