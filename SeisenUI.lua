@@ -2502,10 +2502,39 @@ function Library:CreateWindow(options)
             Callback = function(v)
                 pcall(function()
                     getgenv().SeisenWalkSpeed = v
+                    
+                    local function enforceWalkSpeed(char)
+                        local hum = char:WaitForChild("Humanoid", 1)
+                        if hum then
+                            hum.WalkSpeed = v
+                            
+                            -- Clean up old connection if exists (though we use a unique name in getgenv for the main loop, signal is per humanoid)
+                            local signalName = "SeisenWalkSpeedSignal_" .. hum:GetDebugId()
+                            if getgenv()[signalName] then getgenv()[signalName]:Disconnect() end
+                            
+                            getgenv()[signalName] = hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+                                if hum.WalkSpeed ~= getgenv().SeisenWalkSpeed then
+                                    hum.WalkSpeed = getgenv().SeisenWalkSpeed
+                                end
+                            end)
+                        end
+                    end
+
+                    if LocalPlayer.Character then enforceWalkSpeed(LocalPlayer.Character) end
+                    
+                    if not getgenv().SeisenCharacterAdded then
+                        getgenv().SeisenCharacterAdded = LocalPlayer.CharacterAdded:Connect(function(char)
+                            task.delay(0.5, function() enforceWalkSpeed(char) end)
+                        end)
+                    end
+
                     if not getgenv().SeisenWalkSpeedConnection then
-                        getgenv().SeisenWalkSpeedConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                                LocalPlayer.Character.Humanoid.WalkSpeed = getgenv().SeisenWalkSpeed
+                        getgenv().SeisenWalkSpeedConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                            if LocalPlayer.Character then
+                                local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+                                if hum and hum.WalkSpeed ~= getgenv().SeisenWalkSpeed then
+                                    hum.WalkSpeed = getgenv().SeisenWalkSpeed
+                                end
                             end
                         end)
                     end
