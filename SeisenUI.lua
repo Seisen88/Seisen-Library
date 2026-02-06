@@ -2501,7 +2501,14 @@ function Library:CreateWindow(options)
             Flag = "BuiltIn_WalkSpeed",
             Callback = function(v)
                 pcall(function()
-                    LocalPlayer.Character.Humanoid.WalkSpeed = v
+                    getgenv().SeisenWalkSpeed = v
+                    if not getgenv().SeisenWalkSpeedConnection then
+                        getgenv().SeisenWalkSpeedConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                                LocalPlayer.Character.Humanoid.WalkSpeed = getgenv().SeisenWalkSpeed
+                            end
+                        end)
+                    end
                 end)
             end
         })

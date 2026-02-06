@@ -1,8 +1,3 @@
---[[
-    ThemeManager - Seisen UI
-    All built-in themes only, no custom themes
-]]
-
 local cloneref = (cloneref or clonereference or function(instance) return instance end)
 local HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile = isfolder, isfile

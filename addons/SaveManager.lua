@@ -1,7 +1,3 @@
---[[
-    SaveManager - Adapted from Obsidian
-    https://github.com/deividcomsono/Obsidian/blob/main/addons/SaveManager.lua
-]]
 
 local cloneref = (cloneref or clonereference or function(instance) return instance end)
 local HttpService = cloneref(game:GetService("HttpService"))
