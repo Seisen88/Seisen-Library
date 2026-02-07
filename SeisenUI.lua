@@ -546,33 +546,24 @@ function Library:CreateSlider(parent, options)
         end
     }
     local sliding = false
-    bar.InputBegan:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
+    local sliding = false
+    local moveConnection
+    local releaseConnection
+
+    bar.InputBegan:Connect(function(input) 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
             if sliderObj._disabled then return end
             sliding = true
-            local clickPct = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-            local rawVal = min + (max - min) * clickPct
-            local clickVal = math.floor(rawVal / increment + 0.5) * increment
-            value = clickVal
-            sliderObj.Value = clickVal
-            valLabel.Text = formatValue(clickVal)
-            fill.Size = UDim2.new((clickVal - min) / (max - min), 0, 1, 0)
-            sliderKnob.Position = UDim2.new((clickVal - min) / (max - min), 0, 0.5, 0)
-            callback(clickVal)
-            local startPos = i.Position.X
-            local startValue = clickVal
-            local connection
-            connection = game:GetService("RunService").RenderStepped:Connect(function()
-                if not sliding then
-                    connection:Disconnect()
-                    return
-                end
-                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
-                local delta = mouseProxy.X - startPos
-                local currentBarWidth = bar.AbsoluteSize.X
-                local valueDelta = (delta / currentBarWidth) * (max - min)
-                local rawVal = math.clamp(startValue + valueDelta, min, max)
+            
+            local function updateSlider(inputObject)
+                local barAbsPos = bar.AbsolutePosition.X
+                local barAbsSize = bar.AbsoluteSize.X
+                local inputPos = inputObject.Position.X
+                
+                local clickPct = math.clamp((inputPos - barAbsPos) / barAbsSize, 0, 1)
+                local rawVal = min + (max - min) * clickPct
                 local newVal = math.floor(rawVal / increment + 0.5) * increment
+                
                 if newVal ~= value then
                     value = newVal
                     sliderObj.Value = newVal
@@ -581,13 +572,23 @@ function Library:CreateSlider(parent, options)
                     sliderKnob.Position = UDim2.new((newVal - min) / (max - min), 0, 0.5, 0)
                     callback(newVal)
                 end
+            end
+
+            updateSlider(input)
+
+            if moveConnection then moveConnection:Disconnect() end
+            moveConnection = UserInputService.InputChanged:Connect(function(inputChanged)
+                if inputChanged.UserInputType == Enum.UserInputType.MouseMovement or inputChanged.UserInputType == Enum.UserInputType.Touch then
+                    updateSlider(inputChanged)
+                end
             end)
-            local releaseConnection
-            releaseConnection = UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+            if releaseConnection then releaseConnection:Disconnect() end
+            releaseConnection = UserInputService.InputEnded:Connect(function(inputEnded)
+                if inputEnded.UserInputType == Enum.UserInputType.MouseButton1 or inputEnded.UserInputType == Enum.UserInputType.Touch then
                     sliding = false
-                    connection:Disconnect()
-                    releaseConnection:Disconnect()
+                    if moveConnection then moveConnection:Disconnect() moveConnection = nil end
+                    if releaseConnection then releaseConnection:Disconnect() releaseConnection = nil end
                 end
             end)
         end 
