@@ -2664,8 +2664,7 @@ function Library:CreateWindow(options)
             end
         })
 
-        -- UI Settings Section
-        UIGroup:AddToggle({
+        PlayerGroup:AddToggle({
             Name = "Auto Hide UI",
             Default = false,
             Flag = "BuiltIn_AutoHideUI",
@@ -2679,6 +2678,7 @@ function Library:CreateWindow(options)
             end
         })
 
+        -- UI Settings Section
         -- Script Information Section
         UIGroup:AddLabel({ Text = "Script by: Seisen" })
         UIGroup:AddLabel({ Text = "Game: Blue Heater" })
@@ -2688,141 +2688,6 @@ function Library:CreateWindow(options)
                 setclipboard("https://discord.gg/F4sAf6z8Ph")
             end
         })
-
-        -- Player Controls Section (Added to UIGroup)
-        UIGroup:AddLabel({ Text = "Player Controls" })
-        
-        -- WalkSpeed
-        local walkSpeedEnabled = false
-        local walkSpeedValue = 16
-        UIGroup:AddToggle({
-            Name = "Toggle WalkSpeed",
-            Default = false,
-            Flag = "BuiltIn_WalkSpeedToggle",
-            Callback = function(v)
-                walkSpeedEnabled = v
-                if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    LocalPlayer.Character.Humanoid.WalkSpeed = 16
-                end
-            end
-        })
-
-        UIGroup:AddSlider({
-            Name = "Walk Speed",
-            Min = 16,
-            Max = 300,
-            Default = 16,
-            Increment = 1,
-            Flag = "BuiltIn_WalkSpeed",
-            Callback = function(v)
-                walkSpeedValue = v
-                if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    LocalPlayer.Character.Humanoid.WalkSpeed = v
-                end
-            end
-        })
-
-        -- WalkSpeed Loop
-        task.spawn(function()
-            local RunService = game:GetService("RunService")
-            while true do
-                task.wait(0.5)
-                if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                     if LocalPlayer.Character.Humanoid.WalkSpeed ~= walkSpeedValue then
-                        LocalPlayer.Character.Humanoid.WalkSpeed = walkSpeedValue
-                     end
-                end
-            end
-        end)
-
-        -- Fly
-        local flyEnabled = false
-        local flySpeed = 50
-        local flyBodyGyro, flyBodyVelocity
-        
-        UIGroup:AddToggle({
-            Name = "Fly",
-            Default = false,
-            Flag = "BuiltIn_Fly",
-            Keybind = Enum.KeyCode.F3,
-            Callback = function(v)
-                flyEnabled = v
-                if v then
-                    local char = LocalPlayer.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        local hrp = char.HumanoidRootPart
-                        flyBodyGyro = Instance.new("BodyGyro", hrp)
-                        flyBodyGyro.P = 9e4
-                        flyBodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-                        flyBodyGyro.cframe = hrp.CFrame
-                        
-                        flyBodyVelocity = Instance.new("BodyVelocity", hrp)
-                        flyBodyVelocity.velocity = Vector3.zero
-                        flyBodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
-                    end
-                else
-                    if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
-                    if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
-                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                        LocalPlayer.Character.Humanoid.PlatformStand = false
-                    end
-                end
-            end
-        })
-
-        UIGroup:AddSlider({
-            Name = "Fly Speed",
-            Min = 10,
-            Max = 200,
-            Default = 50,
-            Increment = 5,
-            Flag = "BuiltIn_FlySpeed",
-            Callback = function(v)
-                flySpeed = v
-            end
-        })
-
-        -- Fly Loop
-        task.spawn(function()
-            local RunService = game:GetService("RunService")
-            RunService.RenderStepped:Connect(function()
-                if flyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local hrp = LocalPlayer.Character.HumanoidRootPart
-                    local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
-                    local cam = workspace.CurrentCamera
-                    
-                    if flyBodyGyro and flyBodyVelocity and hum then
-                        hum.PlatformStand = true
-                        flyBodyGyro.cframe = cam.CFrame
-                        
-                        local moveDir = Vector3.new()
-                        local controls = require(LocalPlayer:WaitForChild("PlayerScripts").PlayerModule:WaitForChild("ControlModule"))
-                        local activeController = controls:GetActiveController()
-                        local moveVector = activeController and activeController:GetMoveVector() or Vector3.zero
-                        
-                        if moveVector.Magnitude > 0 then
-                            moveDir = cam.CFrame:VectorToWorldSpace(Vector3.new(moveVector.X, 0, moveVector.Z)) -- Fly relative to camera
-                            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                                moveDir = moveDir + Vector3.new(0, 1, 0)
-                            end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-                                moveDir = moveDir - Vector3.new(0, 1, 0)
-                            end
-                        else
-                             -- Vertical control even without movement
-                            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                                moveDir = moveDir + Vector3.new(0, 1, 0)
-                            end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-                                moveDir = moveDir - Vector3.new(0, 1, 0)
-                            end
-                        end
-
-                        flyBodyVelocity.velocity = moveDir * flySpeed
-                    end
-                end
-            end)
-        end)
 
 
 
