@@ -2542,6 +2542,27 @@ function Library:CreateWindow(options)
             end
         })
 
+        PlayerGroup:AddToggle({
+            Name = "Toggle WalkSpeed",
+            Default = false,
+            Flag = "BuiltIn_WalkSpeedToggle",
+            Callback = function(v)
+                if v then
+                    pcall(function()
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                            LocalPlayer.Character.Humanoid.WalkSpeed = getgenv().SeisenWalkSpeed or 16
+                        end
+                    end)
+                else
+                    pcall(function()
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                        end
+                    end)
+                end
+            end
+        })
+
         PlayerGroup:AddSlider({
             Name = "JumpPower",
             Min = 50,
@@ -2559,10 +2580,12 @@ function Library:CreateWindow(options)
 
         local flying = false
         local flyVel
+        local flySpeed = 50
         PlayerGroup:AddToggle({
             Name = "Fly",
             Default = false,
             Flag = "BuiltIn_Fly",
+            Keybind = Enum.KeyCode.F3,
             Callback = function(v)
                 flying = v
                 if flying then
@@ -2584,7 +2607,7 @@ function Library:CreateWindow(options)
                                 if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
                                 if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
                                 
-                                flyVel.Velocity = dir * (LocalPlayer.Character.Humanoid.WalkSpeed * 2.5)
+                                flyVel.Velocity = dir * flySpeed
                                 task.wait()
                             end
                             if flyVel then flyVel:Destroy() end
@@ -2593,6 +2616,18 @@ function Library:CreateWindow(options)
                 else
                     if flyVel then flyVel:Destroy() end
                 end
+            end
+        })
+
+        PlayerGroup:AddSlider({
+            Name = "Fly Speed",
+            Min = 10,
+            Max = 200,
+            Default = 50,
+            Increment = 5,
+            Flag = "BuiltIn_FlySpeed",
+            Callback = function(v)
+                flySpeed = v
             end
         })
 
