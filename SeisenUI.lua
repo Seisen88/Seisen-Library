@@ -2689,13 +2689,13 @@ function Library:CreateWindow(options)
             end
         })
 
-        -- Player Controls Section
-        local PlayerControlGroup = UiSettings:AddLeftSection("Player Controls")
+        -- Player Controls Section (Added to UIGroup)
+        UIGroup:AddLabel({ Text = "Player Controls" })
         
         -- WalkSpeed
         local walkSpeedEnabled = false
         local walkSpeedValue = 16
-        PlayerControlGroup:AddToggle({
+        UIGroup:AddToggle({
             Name = "Toggle WalkSpeed",
             Default = false,
             Flag = "BuiltIn_WalkSpeedToggle",
@@ -2707,7 +2707,7 @@ function Library:CreateWindow(options)
             end
         })
 
-        PlayerControlGroup:AddSlider({
+        UIGroup:AddSlider({
             Name = "Walk Speed",
             Min = 16,
             Max = 300,
@@ -2740,7 +2740,7 @@ function Library:CreateWindow(options)
         local flySpeed = 50
         local flyBodyGyro, flyBodyVelocity
         
-        PlayerControlGroup:AddToggle({
+        UIGroup:AddToggle({
             Name = "Fly",
             Default = false,
             Flag = "BuiltIn_Fly",
@@ -2770,7 +2770,7 @@ function Library:CreateWindow(options)
             end
         })
 
-        PlayerControlGroup:AddSlider({
+        UIGroup:AddSlider({
             Name = "Fly Speed",
             Min = 10,
             Max = 200,
