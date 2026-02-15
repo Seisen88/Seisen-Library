@@ -547,7 +547,7 @@ function Library:CreateSlider(parent, options)
     }
     local sliding = false
     bar.InputBegan:Connect(function(i) 
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then 
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
             if sliderObj._disabled then return end
             sliding = true
             local clickPct = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
@@ -584,7 +584,7 @@ function Library:CreateSlider(parent, options)
             end)
             local releaseConnection
             releaseConnection = UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     sliding = false
                     connection:Disconnect()
                     releaseConnection:Disconnect()
