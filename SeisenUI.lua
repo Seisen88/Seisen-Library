@@ -2493,6 +2493,60 @@ function Library:CreateWindow(options)
         local PlayerGroup = SettingsTab:AddLeftSection("Player Settings", "user")
         local UIGroup = SettingsTab:AddRightSection("UI Settings", "monitor")
         
+        getgenv().SeisenWalkSpeed = 16
+        getgenv().SeisenWalkSpeedEnabled = false
+
+        PlayerGroup:AddToggle({
+            Name = "Toggle WalkSpeed",
+            Default = false,
+            Flag = "BuiltIn_WalkSpeedToggle",
+            Callback = function(v)
+                getgenv().SeisenWalkSpeedEnabled = v
+                
+                pcall(function()
+                    if v then
+                        -- Enable walkspeed
+                        local function enforceWalkSpeed(char)
+                            local hum = char:WaitForChild("Humanoid", 1)
+                            if hum and getgenv().SeisenWalkSpeedEnabled then
+                                hum.WalkSpeed = getgenv().SeisenWalkSpeed
+                            end
+                        end
+
+                        if LocalPlayer.Character then 
+                            enforceWalkSpeed(LocalPlayer.Character) 
+                        end
+                        
+                        if not getgenv().SeisenCharacterAdded then
+                            getgenv().SeisenCharacterAdded = LocalPlayer.CharacterAdded:Connect(function(char)
+                                task.delay(0.5, function() 
+                                    if getgenv().SeisenWalkSpeedEnabled then
+                                        enforceWalkSpeed(char) 
+                                    end
+                                end)
+                            end)
+                        end
+
+                        if not getgenv().SeisenWalkSpeedConnection then
+                            getgenv().SeisenWalkSpeedConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                                if getgenv().SeisenWalkSpeedEnabled and LocalPlayer.Character then
+                                    local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+                                    if hum and hum.WalkSpeed ~= getgenv().SeisenWalkSpeed then
+                                        hum.WalkSpeed = getgenv().SeisenWalkSpeed
+                                    end
+                                end
+                            end)
+                        end
+                    else
+                        -- Disable walkspeed - reset to default
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                        end
+                    end
+                end)
+            end
+        })
+
         PlayerGroup:AddSlider({
             Name = "WalkSpeed",
             Min = 16,
@@ -2500,63 +2554,12 @@ function Library:CreateWindow(options)
             Default = 16,
             Flag = "BuiltIn_WalkSpeed",
             Callback = function(v)
-                pcall(function()
-                    getgenv().SeisenWalkSpeed = v
-                    
-                    local function enforceWalkSpeed(char)
-                        local hum = char:WaitForChild("Humanoid", 1)
-                        if hum then
-                            hum.WalkSpeed = v
-                            
-                            -- Clean up old connection if exists (though we use a unique name in getgenv for the main loop, signal is per humanoid)
-                            local signalName = "SeisenWalkSpeedSignal_" .. hum:GetDebugId()
-                            if getgenv()[signalName] then getgenv()[signalName]:Disconnect() end
-                            
-                            getgenv()[signalName] = hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-                                if hum.WalkSpeed ~= getgenv().SeisenWalkSpeed then
-                                    hum.WalkSpeed = getgenv().SeisenWalkSpeed
-                                end
-                            end)
-                        end
-                    end
-
-                    if LocalPlayer.Character then enforceWalkSpeed(LocalPlayer.Character) end
-                    
-                    if not getgenv().SeisenCharacterAdded then
-                        getgenv().SeisenCharacterAdded = LocalPlayer.CharacterAdded:Connect(function(char)
-                            task.delay(0.5, function() enforceWalkSpeed(char) end)
-                        end)
-                    end
-
-                    if not getgenv().SeisenWalkSpeedConnection then
-                        getgenv().SeisenWalkSpeedConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                            if LocalPlayer.Character then
-                                local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
-                                if hum and hum.WalkSpeed ~= getgenv().SeisenWalkSpeed then
-                                    hum.WalkSpeed = getgenv().SeisenWalkSpeed
-                                end
-                            end
-                        end)
-                    end
-                end)
-            end
-        })
-
-        PlayerGroup:AddToggle({
-            Name = "Toggle WalkSpeed",
-            Default = false,
-            Flag = "BuiltIn_WalkSpeedToggle",
-            Callback = function(v)
-                if v then
+                getgenv().SeisenWalkSpeed = v
+                -- Only apply if toggle is enabled
+                if getgenv().SeisenWalkSpeedEnabled then
                     pcall(function()
                         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                            LocalPlayer.Character.Humanoid.WalkSpeed = getgenv().SeisenWalkSpeed or 16
-                        end
-                    end)
-                else
-                    pcall(function()
-                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                            LocalPlayer.Character.Humanoid.WalkSpeed = v
                         end
                     end)
                 end
@@ -2716,7 +2719,20 @@ function Library:CreateWindow(options)
         -- UI Settings Section
         -- Script Information Section
         UIGroup:AddLabel({ Text = "Script by: Seisen" })
-        UIGroup:AddLabel({ Text = "Game: Blue Heater" })
+        
+        -- Get current game name dynamically
+        local gameName = "Unknown Game"
+        pcall(function()
+            local MarketplaceService = game:GetService("MarketplaceService")
+            local success, info = pcall(function()
+                return MarketplaceService:GetProductInfo(game.PlaceId)
+            end)
+            if success and info then
+                gameName = info.Name
+            end
+        end)
+        
+        UIGroup:AddLabel({ Text = "Game: " .. gameName })
         UIGroup:AddButton({
             Name = "Join Discord",
             Callback = function()
