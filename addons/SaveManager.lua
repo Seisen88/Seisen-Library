@@ -95,17 +95,17 @@ local SaveManager = {} do
     function SaveManager:CheckSubFolder(createFolder)
         if typeof(self.SubFolder) ~= "string" or self.SubFolder == "" then return false end
         if createFolder == true then
-            if not isfolder(self.Folder .. "/settings/" .. self.SubFolder) then
-                makefolder(self.Folder .. "/settings/" .. self.SubFolder)
+            if not isfolder(self.Folder .. "/Saved/" .. self.SubFolder) then
+                makefolder(self.Folder .. "/Saved/" .. self.SubFolder)
             end
         end
         return true
     end
 
     function SaveManager:BuildFolderTree()
-        local paths = {self.Folder, self.Folder .. "/themes", self.Folder .. "/settings"}
+        local paths = {self.Folder, self.Folder .. "/Themes", self.Folder .. "/Saved"}
         if self:CheckSubFolder(false) then
-            table.insert(paths, self.Folder .. "/settings/" .. self.SubFolder)
+            table.insert(paths, self.Folder .. "/Saved/" .. self.SubFolder)
         end
         for _, path in ipairs(paths) do
             if not isfolder(path) then
@@ -118,9 +118,9 @@ local SaveManager = {} do
         if not name then return false, "no config file is selected" end
         self:BuildFolderTree()
 
-        local fullPath = self.Folder .. "/settings/" .. name .. ".json"
+        local fullPath = self.Folder .. "/Saved/" .. name .. ".json"
         if self:CheckSubFolder(true) then
-            fullPath = self.Folder .. "/settings/" .. self.SubFolder .. "/" .. name .. ".json"
+            fullPath = self.Folder .. "/Saved/" .. self.SubFolder .. "/" .. name .. ".json"
         end
 
         local data = { objects = {} }
@@ -148,9 +148,9 @@ local SaveManager = {} do
         if not name then return false, "no config file is selected" end
         self:BuildFolderTree()
 
-        local file = self.Folder .. "/settings/" .. name .. ".json"
+        local file = self.Folder .. "/Saved/" .. name .. ".json"
         if self:CheckSubFolder(true) then
-            file = self.Folder .. "/settings/" .. self.SubFolder .. "/" .. name .. ".json"
+            file = self.Folder .. "/Saved/" .. self.SubFolder .. "/" .. name .. ".json"
         end
 
         if not isfile(file) then return false, "invalid file" end
@@ -170,9 +170,9 @@ local SaveManager = {} do
 
     function SaveManager:Delete(name)
         if not name then return false, "no config file is selected" end
-        local file = self.Folder .. "/settings/" .. name .. ".json"
+        local file = self.Folder .. "/Saved/" .. name .. ".json"
         if self:CheckSubFolder(true) then
-            file = self.Folder .. "/settings/" .. self.SubFolder .. "/" .. name .. ".json"
+            file = self.Folder .. "/Saved/" .. self.SubFolder .. "/" .. name .. ".json"
         end
         if not isfile(file) then return false, "invalid file" end
         local success = pcall(delfile, file)
@@ -183,9 +183,9 @@ local SaveManager = {} do
     function SaveManager:RefreshConfigList()
         self:BuildFolderTree()
         local list = {}
-        local folder = self.Folder .. "/settings"
+        local folder = self.Folder .. "/Saved"
         if self:CheckSubFolder(true) then
-            folder = self.Folder .. "/settings/" .. self.SubFolder
+            folder = self.Folder .. "/Saved/" .. self.SubFolder
         end
         
         local success, files = pcall(listfiles, folder)
@@ -202,9 +202,9 @@ local SaveManager = {} do
 
     function SaveManager:GetAutoloadConfig()
         self:BuildFolderTree()
-        local path = self.Folder .. "/settings/autoload.txt"
+        local path = self.Folder .. "/Saved/autoload.txt"
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/settings/" .. self.SubFolder .. "/autoload.txt"
+            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
         end
         if isfile(path) then
             local success, name = pcall(readfile, path)
@@ -215,9 +215,9 @@ local SaveManager = {} do
 
     function SaveManager:SaveAutoloadConfig(name)
         self:BuildFolderTree()
-        local path = self.Folder .. "/settings/autoload.txt"
+        local path = self.Folder .. "/Saved/autoload.txt"
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/settings/" .. self.SubFolder .. "/autoload.txt"
+            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
         end
         local success = pcall(writefile, path, name)
         if not success then return false, "write file error" end
@@ -226,9 +226,9 @@ local SaveManager = {} do
 
     function SaveManager:DeleteAutoLoadConfig()
         self:BuildFolderTree()
-        local path = self.Folder .. "/settings/autoload.txt"
+        local path = self.Folder .. "/Saved/autoload.txt"
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/settings/" .. self.SubFolder .. "/autoload.txt"
+            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
         end
         local success = pcall(delfile, path)
         if not success then return false, "delete file error" end

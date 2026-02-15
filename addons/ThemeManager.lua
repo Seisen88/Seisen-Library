@@ -162,7 +162,7 @@ local ThemeManager = {} do
     end
 
     function ThemeManager:BuildFolderTree()
-        local paths = {self.Folder, self.Folder .. "/themes"}
+        local paths = {self.Folder, self.Folder .. "/Themes"}
         for _, path in ipairs(paths) do
             if not isfolder(path) then
                 pcall(makefolder, path)
@@ -202,11 +202,11 @@ local ThemeManager = {} do
 
     function ThemeManager:SaveDefault(theme)
         self:BuildFolderTree()
-        pcall(writefile, self.Folder .. "/themes/default.txt", theme)
+        pcall(writefile, self.Folder .. "/Themes/default.txt", theme)
     end
 
     function ThemeManager:LoadDefault()
-        local path = self.Folder .. "/themes/default.txt"
+        local path = self.Folder .. "/Themes/default.txt"
         if isfile and isfile(path) then
             local success, content = pcall(readfile, path)
             if success and self.BuiltInThemes[content] then
@@ -259,7 +259,7 @@ local ThemeManager = {} do
         section:AddButton({
             Name = "Reset to Default",
             Callback = function()
-                pcall(delfile, self.Folder .. "/themes/default.txt")
+                pcall(delfile, self.Folder .. "/Themes/default.txt")
                 self:ApplyTheme("Default")
                 if self.Library.Options.ThemeManager_ThemeList then
                     self.Library.Options.ThemeManager_ThemeList:SetValue("Default")
