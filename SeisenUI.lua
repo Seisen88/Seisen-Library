@@ -2497,7 +2497,7 @@ function Library:CreateWindow(options)
         getgenv().SeisenWalkSpeedEnabled = false
 
         PlayerGroup:AddToggle({
-            Name = "Toggle WalkSpeed",
+            Name = "WalkSpeed",
             Default = false,
             Flag = "BuiltIn_WalkSpeedToggle",
             Callback = function(v)
@@ -2554,15 +2554,9 @@ function Library:CreateWindow(options)
             Default = 16,
             Flag = "BuiltIn_WalkSpeed",
             Callback = function(v)
+                -- Only store the value, don't apply directly
+                -- The toggle's Heartbeat connection will handle application
                 getgenv().SeisenWalkSpeed = v
-                -- Only apply if toggle is enabled
-                if getgenv().SeisenWalkSpeedEnabled then
-                    pcall(function()
-                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                            LocalPlayer.Character.Humanoid.WalkSpeed = v
-                        end
-                    end)
-                end
             end
         })
 
