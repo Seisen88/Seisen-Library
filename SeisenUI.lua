@@ -2567,6 +2567,7 @@ function Library:CreateWindow(options)
             end
         })
 
+        PlayerGroup:AddDivider()
         PlayerGroup:AddSlider({
             Name = "JumpPower",
             Min = 50,
@@ -2581,7 +2582,7 @@ function Library:CreateWindow(options)
                 end)
             end
         })
-
+        PlayerGroup:AddDivider()
         local flying = false
         local flyVel
         local flySpeed = 50
@@ -2634,7 +2635,7 @@ function Library:CreateWindow(options)
                 flySpeed = v
             end
         })
-
+        PlayerGroup:AddDivider()
         local antiAfk = false
         PlayerGroup:AddToggle({
             Name = "Anti-AFK",
@@ -2648,7 +2649,7 @@ function Library:CreateWindow(options)
                         while antiAfk do
                             VirtualUser:CaptureController()
                             VirtualUser:ClickButton2(Vector2.zero)
-                            task.wait(60)
+                            task.wait(30)
                         end
                     end)
                 end
