@@ -972,12 +972,63 @@ function Library:Toggle()
         self.ScreenGui.Enabled = not self.ScreenGui.Enabled
     end
 end
+
 function Library:Unload()
+    -- Call the UnloadCallback first (for user cleanup like stopping loops)
+    if self.UnloadCallback then
+        pcall(self.UnloadCallback)
+    end
+    
+    -- Cancel any running tooltip thread
+    if self.TooltipThread then
+        pcall(function() task.cancel(self.TooltipThread) end)
+        self.TooltipThread = nil
+    end
+    
+    -- Disconnect tooltip connection
+    if TooltipConnection then
+        pcall(function() TooltipConnection:Disconnect() end)
+        TooltipConnection = nil
+    end
+    
+    -- Destroy tooltip frame
+    if TooltipFrame then
+        pcall(function() TooltipFrame:Destroy() end)
+        TooltipFrame = nil
+        TooltipLabel = nil
+    end
+    
+    -- Close all open dropdowns
+    pcall(function()
+        for _, dropdown in ipairs(self.OpenDropdowns) do
+            if dropdown.Close then
+                pcall(dropdown.Close)
+            end
+        end
+    end)
+    
+    -- Clear all tables
+    self.Toggles = {}
+    self.Options = {}
+    self.Labels = {}
+    self.Flags = {}
+    self.Registry = {}
+    self.OpenDropdowns = {}
+    
+    -- Destroy the main ScreenGui
     if self.ScreenGui then
-        self.ScreenGui:Destroy()
+        pcall(function() self.ScreenGui:Destroy() end)
         self.ScreenGui = nil
     end
+    
+    -- Clear references
+    self.MainWindow = nil
+    self.Widget = nil
+    self.MainScale = nil
+    
+    print("Seisen UI fully unloaded and cleaned up")
 end
+
 local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     local tabbox = Create("Frame", {
         Name = name or "Tabbox",
@@ -2753,11 +2804,58 @@ function Library:OnUnload(callback)
 end
 
 function Library:Unload()
+    -- Call the UnloadCallback first (for user cleanup like stopping loops)
     if self.UnloadCallback then
-        self.UnloadCallback()
+        pcall(self.UnloadCallback)
     end
+    
+    -- Cancel any running tooltip thread
+    if self.TooltipThread then
+        pcall(function() task.cancel(self.TooltipThread) end)
+        self.TooltipThread = nil
+    end
+    
+    -- Disconnect tooltip connection
+    if TooltipConnection then
+        pcall(function() TooltipConnection:Disconnect() end)
+        TooltipConnection = nil
+    end
+    
+    -- Destroy tooltip frame
+    if TooltipFrame then
+        pcall(function() TooltipFrame:Destroy() end)
+        TooltipFrame = nil
+        TooltipLabel = nil
+    end
+    
+    -- Close all open dropdowns
+    pcall(function()
+        for _, dropdown in ipairs(self.OpenDropdowns) do
+            if dropdown.Close then
+                pcall(dropdown.Close)
+            end
+        end
+    end)
+    
+    -- Clear all tables
+    self.Toggles = {}
+    self.Options = {}
+    self.Labels = {}
+    self.Flags = {}
+    self.Registry = {}
+    self.OpenDropdowns = {}
+    
+    -- Destroy the main ScreenGui
     if self.ScreenGui then
-        self.ScreenGui:Destroy()
+        pcall(function() self.ScreenGui:Destroy() end)
+        self.ScreenGui = nil
     end
+    
+    -- Clear references
+    self.MainWindow = nil
+    self.Widget = nil
+    self.MainScale = nil
+    
+    print("Seisen UI fully unloaded and cleaned up")
 end
 return Library
