@@ -979,6 +979,17 @@ function Library:Unload()
         pcall(self.UnloadCallback)
     end
     
+    -- Turn off all toggles to trigger their cleanup callbacks
+    pcall(function()
+        for flag, toggle in pairs(self.Toggles) do
+            if toggle.SetValue and toggle._state then
+                pcall(function()
+                    toggle:SetValue(false)
+                end)
+            end
+        end
+    end)
+    
     -- Cancel any running tooltip thread
     if self.TooltipThread then
         pcall(function() task.cancel(self.TooltipThread) end)
@@ -2808,6 +2819,17 @@ function Library:Unload()
     if self.UnloadCallback then
         pcall(self.UnloadCallback)
     end
+    
+    -- Turn off all toggles to trigger their cleanup callbacks
+    pcall(function()
+        for flag, toggle in pairs(self.Toggles) do
+            if toggle.SetValue and toggle._state then
+                pcall(function()
+                    toggle:SetValue(false)
+                end)
+            end
+        end
+    end)
     
     -- Cancel any running tooltip thread
     if self.TooltipThread then
