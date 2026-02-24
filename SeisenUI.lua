@@ -1239,7 +1239,6 @@ function Library:CreateWindow(options)
     mainScale.Parent = main
     self.MainScale = mainScale
     
-    TweenService:Create(mainScale, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale}):Play()
     self:RegisterElement(main, "Background")
     local sizeLabel = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 14),
@@ -1495,13 +1494,16 @@ function Library:CreateWindow(options)
     
     local loadingScreen = Create("Frame", {
         Name = "LoadingScreen",
-        Size = UDim2.new(1, 0, 1, 0),
+        Size = UDim2.fromOffset(320, 80),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundColor3 = theme.Background,
         BorderSizePixel = 0,
-        Parent = main,
-        ZIndex = 1000
+        Parent = gui,
+        ZIndex = 1100
     }, {
-        Create("UICorner", {CornerRadius = UDim.new(0, 8)})
+        Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        Create("UIStroke", {Color = theme.Border, Thickness = 1})
     })
     
     local loadingLabel = Create("TextLabel", {
@@ -1511,9 +1513,9 @@ function Library:CreateWindow(options)
         Text = "",
         TextColor3 = theme.Accent,
         Font = Enum.Font.GothamBold,
-        TextSize = 24,
+        TextSize = 20,
         Parent = loadingScreen,
-        ZIndex = 1001
+        ZIndex = 1101
     })
 
     local widget = Create("Frame", {
@@ -1534,6 +1536,8 @@ function Library:CreateWindow(options)
     local function playLoadingAnimation(onComplete)
         local fullText = options.Name or "Seisen Library"
         loadingLabel.Text = ""
+        main.Visible = false
+        widget.Visible = false
         
         task.spawn(function()
             -- Typewriter effect
@@ -1546,11 +1550,12 @@ function Library:CreateWindow(options)
             
             -- Fade out loading screen
             Tween(loadingLabel, {TextTransparency = 1}, 0.5)
+            Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
             local fadeOut = TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1})
             fadeOut:Play()
             
             fadeOut.Completed:Wait()
-            loadingScreen.Visible = false
+            loadingScreen:Destroy()
             onComplete()
         end)
     end
@@ -1560,24 +1565,8 @@ function Library:CreateWindow(options)
         if visible then
             main.Visible = true
             widget.Visible = false
-            
-            if isFirstLoad then
-                isFirstLoad = false
-                -- Start with mainScale at 0 so the whole UI pops up first, but hide content behind loading screen
-                loadingScreen.Visible = true
-                loadingScreen.BackgroundTransparency = 0
-                loadingLabel.TextTransparency = 0
-                
-                currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
-                currentToggleTween:Play()
-                
-                playLoadingAnimation(function()
-                    -- Do nothing here, UI is already scaled up and loading screen is hidden now
-                end)
-            else
-                currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
-                currentToggleTween:Play()
-            end
+            currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
+            currentToggleTween:Play()
         else
             Library:CloseAllDropdowns()
             currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Scale = 0})
@@ -1593,6 +1582,11 @@ function Library:CreateWindow(options)
             end)
         end
     end
+
+    playLoadingAnimation(function()
+        main.Visible = true
+        TweenService:Create(mainScale, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale}):Play()
+    end)
     function Library:Toggle(visible)
         if visible == nil then
             visible = not main.Visible
