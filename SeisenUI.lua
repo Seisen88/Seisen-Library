@@ -165,7 +165,7 @@ function Library:CreateTooltipFrame()
         BackgroundTransparency = 1,
         Text = "",
         TextColor3 = Color3.fromRGB(220, 220, 220),
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Center,
         TextYAlignment = Enum.TextYAlignment.Center,
@@ -184,7 +184,7 @@ function Library:ShowTooltip(text)
     if not TooltipFrame or not text or text == "" then return end
     TooltipLabel.Text = text
     local TextService = game:GetService("TextService")
-    local size = TextService:GetTextSize(text, 11, Enum.Font.Ubuntu, Vector2.new(280, 1000))
+    local size = TextService:GetTextSize(text, 11, Enum.Font.Gotham, Vector2.new(280, 1000))
     TooltipFrame.Size = UDim2.new(0, math.min(size.X + 24, 300), 0, size.Y + 20)
     TooltipFrame.Visible = true
     local mousePos = UserInputService:GetMouseLocation()
@@ -270,7 +270,7 @@ function Library:CreateLabel(parent, options)
         BackgroundTransparency = 1,
         Text = text,
         TextColor3 = self.Theme.TextDim,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -296,7 +296,7 @@ function Library:CreateButton(parent, options)
         BackgroundColor3 = self.Theme.Element,
         Text = btnName,
         TextColor3 = isRisky and Color3.fromRGB(255, 100, 80) or self.Theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         AutoButtonColor = false,
         Parent = parent
@@ -371,7 +371,7 @@ function Library:CreateToggle(parent, options)
         BackgroundTransparency = 1,
         Text = toggleName,
         TextColor3 = self.Theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -408,7 +408,7 @@ function Library:CreateToggle(parent, options)
         BackgroundColor3 = self.Theme.Element,
         Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE",
         TextColor3 = self.Theme.TextDim,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 10,
         AutoButtonColor = false,
         ZIndex = 2,
@@ -484,7 +484,7 @@ function Library:CreateSlider(parent, options)
         BackgroundTransparency = 1,
         Text = sliderName,
         TextColor3 = self.Theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = slider
@@ -498,7 +498,7 @@ function Library:CreateSlider(parent, options)
         BackgroundTransparency = 1,
         Text = formatValue(value),
         TextColor3 = self.Theme.TextDim,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Right,
         Parent = slider
@@ -613,7 +613,7 @@ function Library:CreateKeybind(parent, options)
         BackgroundTransparency = 1,
         Text = keybindName,
         TextColor3 = self.Theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = keybind
@@ -624,7 +624,7 @@ function Library:CreateKeybind(parent, options)
         BackgroundColor3 = self.Theme.Element,
         Text = tostring(currentKey.Name),
         TextColor3 = self.Theme.TextDim,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.GothamBold,
         TextSize = 12,
         Parent = keybind
     }, {
@@ -708,7 +708,7 @@ function Library:CreateDropdown(parent, options)
         BackgroundTransparency = 1,
         Text = dropName,
         TextColor3 = self.Theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = drop
@@ -729,7 +729,7 @@ function Library:CreateDropdown(parent, options)
         BackgroundTransparency = 1,
         Text = getDisplayVal(),
         TextColor3 = self.Theme.TextDim,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -886,7 +886,7 @@ function Library:CreateDropdown(parent, options)
                 BackgroundTransparency = 1,
                 Text = tostring(opt),
                 TextColor3 = isActive and self.Theme.Accent or self.Theme.TextDim,
-                Font = Enum.Font.Ubuntu,
+                Font = Enum.Font.Gotham,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = list,
@@ -1097,7 +1097,7 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
             BackgroundTransparency = 0.5,
             Text = tabName,
             TextColor3 = theme.TextDim,
-            Font = Enum.Font.Ubuntu,
+            Font = Enum.Font.GothamMedium,
             TextSize = 11,
             AutoButtonColor = false,
             Parent = tabHeader
@@ -1343,7 +1343,7 @@ function Library:CreateWindow(options)
         PlaceholderText = "Search",
         PlaceholderColor3 = theme.TextMuted,
         TextColor3 = theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = searchContainer
@@ -1409,7 +1409,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = "UI Library by Seisen",
         TextColor3 = theme.TextMuted,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 9,
         Parent = sidebar
     })
@@ -1455,7 +1455,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = LocalPlayer.DisplayName,
         TextColor3 = theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.GothamBold,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -1468,7 +1468,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = "@" .. LocalPlayer.Name,
         TextColor3 = theme.TextMuted,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -1498,7 +1498,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = "",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.GothamBold,
         TextSize = 28,
         Parent = gui,
         ZIndex = 1200
@@ -1526,7 +1526,7 @@ function Library:CreateWindow(options)
         Text = options.SubTitle or "V1.0.0",
         TextColor3 = theme.TextMuted,
         TextTransparency = 1,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Right,
         TextYAlignment = Enum.TextYAlignment.Center,
@@ -1542,7 +1542,7 @@ function Library:CreateWindow(options)
         Text = "Loading...",
         TextColor3 = Color3.fromRGB(240, 240, 240),
         TextTransparency = 1,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.GothamBold,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = loadingScreen,
@@ -1557,7 +1557,7 @@ function Library:CreateWindow(options)
         Text = "by " .. (options.Author or LocalPlayer.Name),
         TextColor3 = theme.TextDim,
         TextTransparency = 1,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = loadingScreen,
@@ -1572,7 +1572,7 @@ function Library:CreateWindow(options)
         Text = options.Name or "Seisen Library",
         TextColor3 = theme.TextMuted,
         TextTransparency = 1,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Right,
         TextYAlignment = Enum.TextYAlignment.Bottom,
@@ -1713,7 +1713,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = options.Name or "Seisen Library",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.GothamBold,
         TextSize = 14,
         TextStrokeTransparency = 0.5,
         Parent = widget
@@ -1724,7 +1724,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = "60 fps\n50 ms",
         TextColor3 = Color3.fromRGB(200, 200, 200),
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.Gotham,
         TextSize = 12,
         TextStrokeTransparency = 0.5,
         Parent = widget
@@ -1760,7 +1760,7 @@ function Library:CreateWindow(options)
         end),
         RichText = true,
         TextColor3 = theme.Text,
-        Font = Enum.Font.Ubuntu,
+        Font = Enum.Font.GothamBold,
         TextSize = 18,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = header
@@ -1790,7 +1790,7 @@ function Library:CreateWindow(options)
                  BackgroundColor3 = color,
                  Text = text,
                  TextColor3 = Color3.new(0,0,0),
-                 Font = Enum.Font.Ubuntu,
+                 Font = Enum.Font.GothamBold,
                  TextSize = 13,
                  Parent = badgeContainer,
                  LayoutOrder = layoutOrder
@@ -1914,7 +1914,7 @@ function Library:CreateWindow(options)
             BackgroundTransparency = 1,
             Text = nTitle,
             TextColor3 = theme.Text,
-            Font = Enum.Font.Ubuntu,
+            Font = Enum.Font.GothamBold,
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = notifyFrame
@@ -1926,7 +1926,7 @@ function Library:CreateWindow(options)
             BackgroundTransparency = 1,
             Text = nContent,
             TextColor3 = theme.TextMuted,
-            Font = Enum.Font.Ubuntu,
+            Font = Enum.Font.Gotham,
             TextSize = 12,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextWrapped = true,
@@ -1992,7 +1992,7 @@ function Library:CreateWindow(options)
             BackgroundTransparency = 1,
             Text = sectionName:upper(),
             TextColor3 = theme.TextMuted,
-            Font = Enum.Font.Ubuntu,
+            Font = Enum.Font.GothamBold,
             TextSize = 10,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = tabList
@@ -2056,7 +2056,7 @@ function Library:CreateWindow(options)
             BackgroundTransparency = 1,
             Text = tabName,
             TextColor3 = theme.TextDim,
-            Font = Enum.Font.Ubuntu,
+            Font = Enum.Font.Gotham,
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextTruncate = Enum.TextTruncate.AtEnd,
@@ -2191,7 +2191,7 @@ function Library:CreateWindow(options)
                 BackgroundTransparency = 1,
                 Text = sectionName,
                 TextColor3 = theme.Text,
-                Font = Enum.Font.Ubuntu,
+                Font = Enum.Font.GothamBold,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = section
@@ -2240,7 +2240,7 @@ function Library:CreateWindow(options)
                     BackgroundTransparency = 1,
                     Text = boxName,
                     TextColor3 = theme.Text,
-                    Font = Enum.Font.Ubuntu,
+                    Font = Enum.Font.Gotham,
                     TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = box
@@ -2253,7 +2253,7 @@ function Library:CreateWindow(options)
                     PlaceholderText = placeholder,
                     TextColor3 = theme.Text,
                     PlaceholderColor3 = theme.TextMuted,
-                    Font = Enum.Font.Ubuntu,
+                    Font = Enum.Font.Gotham,
                     TextSize = 11,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     ClearTextOnFocus = false,
@@ -2334,7 +2334,7 @@ function Library:CreateWindow(options)
                     BackgroundTransparency = 1,
                     Text = checkName,
                     TextColor3 = theme.Text,
-                    Font = Enum.Font.Ubuntu,
+                    Font = Enum.Font.Gotham,
                     TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = check
@@ -2373,7 +2373,7 @@ function Library:CreateWindow(options)
                     BackgroundTransparency = 1,
                     Text = colorName,
                     TextColor3 = theme.Text,
-                    Font = Enum.Font.Ubuntu,
+                    Font = Enum.Font.Gotham,
                     TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = picker
@@ -2483,7 +2483,7 @@ function Library:CreateWindow(options)
                         BackgroundTransparency = 1,
                         Text = "— " .. text .. " —",
                         TextColor3 = theme.TextMuted,
-                        Font = Enum.Font.Ubuntu,
+                        Font = Enum.Font.Gotham,
                         TextSize = 10,
                         Parent = divider
                     })
@@ -2543,7 +2543,7 @@ function Library:CreateWindow(options)
                         BackgroundTransparency = 0.5,
                         Text = name,
                         TextColor3 = theme.TextDim,
-                        Font = Enum.Font.Ubuntu,
+                        Font = Enum.Font.Gotham,
                         TextSize = 11,
                         AutoButtonColor = false,
                         Parent = tabHeader
