@@ -1494,7 +1494,7 @@ function Library:CreateWindow(options)
     
     local loadingScreen = Create("Frame", {
         Name = "LoadingScreen",
-        Size = UDim2.fromOffset(320, 80),
+        Size = UDim2.fromOffset(360, 100),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundColor3 = theme.Background,
@@ -1505,15 +1505,43 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
         Create("UIStroke", {Color = theme.Border, Thickness = 1})
     })
+
+    local loadingTopText = Create("TextLabel", {
+        Name = "TopText",
+        Size = UDim2.new(1, -15, 0, 25),
+        BackgroundTransparency = 1,
+        Text = options.SubTitle or "V1.0.0",
+        TextColor3 = theme.TextMuted,
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        Parent = loadingScreen,
+        ZIndex = 1101
+    })
     
     local loadingLabel = Create("TextLabel", {
         Name = "LoadingText",
-        Size = UDim2.new(1, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 30),
+        Position = UDim2.new(0, 0, 0.5, -15),
         BackgroundTransparency = 1,
         Text = "",
-        TextColor3 = theme.Accent,
+        TextColor3 = Color3.fromRGB(240, 240, 240),
         Font = Enum.Font.GothamBold,
-        TextSize = 20,
+        TextSize = 18,
+        Parent = loadingScreen,
+        ZIndex = 1101
+    })
+
+    local loadingSubLabel = Create("TextLabel", {
+        Name = "LoadingSubText",
+        Size = UDim2.new(1, 0, 0, 15),
+        Position = UDim2.new(0, 0, 0.65, 0),
+        BackgroundTransparency = 1,
+        Text = "Checking assets...",
+        TextColor3 = theme.TextDim,
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
         Parent = loadingScreen,
         ZIndex = 1101
     })
@@ -1549,7 +1577,9 @@ function Library:CreateWindow(options)
             task.wait(0.5)
             
             -- Fade out loading screen
+            Tween(loadingTopText, {TextTransparency = 1}, 0.5)
             Tween(loadingLabel, {TextTransparency = 1}, 0.5)
+            Tween(loadingSubLabel, {TextTransparency = 1}, 0.5)
             Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
             local fadeOut = TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1})
             fadeOut:Play()
