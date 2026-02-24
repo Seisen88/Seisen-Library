@@ -1523,7 +1523,7 @@ function Library:CreateWindow(options)
         Name = "TopText",
         Size = UDim2.new(1, -15, 0, 25),
         BackgroundTransparency = 1,
-        Text = options.SubTitle or "V1.0.0",
+        Text = options.SubTitle or options.Name or "V1.0.0",
         TextColor3 = theme.TextMuted,
         TextTransparency = 1,
         Font = Enum.Font.Gotham,
@@ -1569,7 +1569,7 @@ function Library:CreateWindow(options)
         Size = UDim2.new(1, -15, 0, 15),
         Position = UDim2.new(0, 0, 1, -25),
         BackgroundTransparency = 1,
-        Text = options.Name or "Seisen Library",
+        Text = "Seisen Library",
         TextColor3 = theme.TextMuted,
         TextTransparency = 1,
         Font = Enum.Font.Gotham,
@@ -1596,7 +1596,7 @@ function Library:CreateWindow(options)
     local isFirstLoad = true
     
     local function playLoadingAnimation(onComplete)
-        local fullText = options.Name or "Seisen Library"
+        local fullText = "Seisen Library"
         splashText.Text = ""
         main.Visible = false
         widget.Visible = false
