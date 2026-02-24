@@ -1492,6 +1492,30 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Parent = content,
     })
+    
+    local loadingScreen = Create("Frame", {
+        Name = "LoadingScreen",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = theme.Background,
+        BorderSizePixel = 0,
+        Parent = main,
+        ZIndex = 1000
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 8)})
+    })
+    
+    local loadingLabel = Create("TextLabel", {
+        Name = "LoadingText",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        TextColor3 = theme.Accent,
+        Font = Enum.Font.GothamBold,
+        TextSize = 24,
+        Parent = loadingScreen,
+        ZIndex = 1001
+    })
+
     local widget = Create("Frame", {
         Size = UDim2.new(0, 120, 0, 60),
         Position = UDim2.new(0.1, 0, 0.1, 0),
@@ -1504,13 +1528,56 @@ function Library:CreateWindow(options)
     widgetScale.Scale = targetScale
     widgetScale.Parent = widget
     local currentToggleTween
+    
+    local isFirstLoad = true
+    
+    local function playLoadingAnimation(onComplete)
+        local fullText = options.Name or "Seisen Library"
+        loadingLabel.Text = ""
+        
+        task.spawn(function()
+            -- Typewriter effect
+            for i = 1, #fullText do
+                loadingLabel.Text = string.sub(fullText, 1, i)
+                task.wait(0.05)
+            end
+            
+            task.wait(0.5)
+            
+            -- Fade out loading screen
+            Tween(loadingLabel, {TextTransparency = 1}, 0.5)
+            local fadeOut = TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+            fadeOut:Play()
+            
+            fadeOut.Completed:Wait()
+            loadingScreen.Visible = false
+            onComplete()
+        end)
+    end
+    
     local function toggleWindow(visible)
         if currentToggleTween then currentToggleTween:Cancel() end
         if visible then
             main.Visible = true
             widget.Visible = false
-            currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
-            currentToggleTween:Play()
+            
+            if isFirstLoad then
+                isFirstLoad = false
+                -- Start with mainScale at 0 so the whole UI pops up first, but hide content behind loading screen
+                loadingScreen.Visible = true
+                loadingScreen.BackgroundTransparency = 0
+                loadingLabel.TextTransparency = 0
+                
+                currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
+                currentToggleTween:Play()
+                
+                playLoadingAnimation(function()
+                    -- Do nothing here, UI is already scaled up and loading screen is hidden now
+                end)
+            else
+                currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
+                currentToggleTween:Play()
+            end
         else
             Library:CloseAllDropdowns()
             currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Scale = 0})
