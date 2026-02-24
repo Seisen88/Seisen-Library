@@ -1492,18 +1492,31 @@ function Library:CreateWindow(options)
         Parent = content,
     })
     
+    local splashText = Create("TextLabel", {
+        Name = "SplashText",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 28,
+        Parent = gui,
+        ZIndex = 1200
+    })
+
     local loadingScreen = Create("Frame", {
         Name = "LoadingScreen",
         Size = UDim2.fromOffset(360, 100),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundColor3 = theme.Background,
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Parent = gui,
         ZIndex = 1100
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-        Create("UIStroke", {Color = theme.Border, Thickness = 1})
+        Create("UIStroke", {Color = theme.Border, Thickness = 1, Transparency = 1})
     })
 
     local loadingTopText = Create("TextLabel", {
@@ -1512,6 +1525,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = options.SubTitle or "V1.0.0",
         TextColor3 = theme.TextMuted,
+        TextTransparency = 1,
         Font = Enum.Font.Gotham,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Right,
@@ -1522,26 +1536,46 @@ function Library:CreateWindow(options)
     
     local loadingLabel = Create("TextLabel", {
         Name = "LoadingText",
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0.5, -15),
+        Size = UDim2.new(1, -40, 0, 30),
+        Position = UDim2.new(0, 20, 0.5, -15),
         BackgroundTransparency = 1,
-        Text = "",
+        Text = "Loading...",
         TextColor3 = Color3.fromRGB(240, 240, 240),
+        TextTransparency = 1,
         Font = Enum.Font.GothamBold,
-        TextSize = 18,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left,
         Parent = loadingScreen,
         ZIndex = 1101
     })
 
     local loadingSubLabel = Create("TextLabel", {
         Name = "LoadingSubText",
-        Size = UDim2.new(1, 0, 0, 15),
-        Position = UDim2.new(0, 0, 0.65, 0),
+        Size = UDim2.new(1, -40, 0, 15),
+        Position = UDim2.new(0, 20, 0.65, 0),
         BackgroundTransparency = 1,
-        Text = "Checking assets...",
+        Text = "by " .. (options.Author or LocalPlayer.Name),
         TextColor3 = theme.TextDim,
+        TextTransparency = 1,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = loadingScreen,
+        ZIndex = 1101
+    })
+    
+    local loadingWatermark = Create("TextLabel", {
+        Name = "LoadingWatermark",
+        Size = UDim2.new(1, -15, 0, 15),
+        Position = UDim2.new(0, 0, 1, -25),
+        BackgroundTransparency = 1,
+        Text = options.Name or "Seisen UI",
+        TextColor3 = theme.TextMuted,
+        TextTransparency = 1,
         Font = Enum.Font.Gotham,
         TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        TextYAlignment = Enum.TextYAlignment.Bottom,
         Parent = loadingScreen,
         ZIndex = 1101
     })
@@ -1563,29 +1597,48 @@ function Library:CreateWindow(options)
     
     local function playLoadingAnimation(onComplete)
         local fullText = options.Name or "Seisen Library"
-        loadingLabel.Text = ""
+        splashText.Text = ""
         main.Visible = false
         widget.Visible = false
         
         task.spawn(function()
-            -- Typewriter effect
+            -- Phase 1: Typewriter effect on splash text
             for i = 1, #fullText do
-                loadingLabel.Text = string.sub(fullText, 1, i)
+                splashText.Text = string.sub(fullText, 1, i)
                 task.wait(0.05)
             end
             
             task.wait(0.5)
             
-            -- Fade out loading screen
+            -- Fade out splash text
+            local fadeSplash = TweenService:Create(splashText, TweenInfo.new(0.5), {TextTransparency = 1})
+            fadeSplash:Play()
+            fadeSplash.Completed:Wait()
+            splashText:Destroy()
+            
+            -- Phase 2: Fade in loading screen frame
+            Tween(loadingScreen, {BackgroundTransparency = 0}, 0.5)
+            Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 0}, 0.5)
+            Tween(loadingTopText, {TextTransparency = 0}, 0.5)
+            Tween(loadingLabel, {TextTransparency = 0}, 0.5)
+            Tween(loadingSubLabel, {TextTransparency = 0}, 0.5)
+            Tween(loadingWatermark, {TextTransparency = 0}, 0.5)
+            
+            task.wait(1.5)
+            
+            -- Phase 3: Fade out loading screen frame
             Tween(loadingTopText, {TextTransparency = 1}, 0.5)
             Tween(loadingLabel, {TextTransparency = 1}, 0.5)
             Tween(loadingSubLabel, {TextTransparency = 1}, 0.5)
+            Tween(loadingWatermark, {TextTransparency = 1}, 0.5)
             Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
             local fadeOut = TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1})
             fadeOut:Play()
             
             fadeOut.Completed:Wait()
             loadingScreen:Destroy()
+            
+            -- Phase 4: Open main UI
             onComplete()
         end)
     end
