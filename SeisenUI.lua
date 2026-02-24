@@ -1498,7 +1498,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1,
         Text = "",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
+        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Italic),
         TextSize = 28,
         Parent = gui,
         ZIndex = 1200
