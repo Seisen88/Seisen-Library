@@ -1235,9 +1235,11 @@ function Library:CreateWindow(options)
         Create("UICorner", {CornerRadius = UDim.new(0, 8)})
     })
     local mainScale = Instance.new("UIScale")
-    mainScale.Scale = targetScale
+    mainScale.Scale = 0
     mainScale.Parent = main
     self.MainScale = mainScale
+    
+    TweenService:Create(mainScale, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale}):Play()
     self:RegisterElement(main, "Background")
     local sizeLabel = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 14),
@@ -1501,11 +1503,27 @@ function Library:CreateWindow(options)
     local widgetScale = Instance.new("UIScale")
     widgetScale.Scale = targetScale
     widgetScale.Parent = widget
+    local currentToggleTween
     local function toggleWindow(visible)
-        main.Visible = visible
-        widget.Visible = not visible
-        if not visible then
+        if currentToggleTween then currentToggleTween:Cancel() end
+        if visible then
+            main.Visible = true
+            widget.Visible = false
+            currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Scale = targetScale})
+            currentToggleTween:Play()
+        else
             Library:CloseAllDropdowns()
+            currentToggleTween = TweenService:Create(mainScale, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Scale = 0})
+            currentToggleTween:Play()
+            
+            local c
+            c = currentToggleTween.Completed:Connect(function(playbackState)
+                c:Disconnect()
+                if playbackState == Enum.PlaybackState.Completed then
+                    main.Visible = false
+                    widget.Visible = true
+                end
+            end)
         end
     end
     function Library:Toggle(visible)
