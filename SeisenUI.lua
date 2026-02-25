@@ -1601,59 +1601,57 @@ function Library:CreateWindow(options)
         main.Visible = false
         widget.Visible = false
         
-        task.spawn(function()
-            -- Phase 1: Wait for Seisen Library splash text
-            for i = 1, #fullText do
-                splashText.Text = string.sub(fullText, 1, i)
-                task.wait(0.06)
-            end
-            
-            task.wait(1) -- Hold the text
-            
-            -- Fade out splash text
-            local fadeSplash = TweenService:Create(splashText, TweenInfo.new(0.6), {TextTransparency = 1})
-            fadeSplash:Play()
-            fadeSplash.Completed:Wait()
-            splashText:Destroy()
-            
-            task.wait(0.2) -- Brief pause between sequences
-            
-            -- Phase 2: Proceed with the loading card
-            Tween(loadingScreen, {BackgroundTransparency = 0}, 0.5)
-            Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 0}, 0.5)
-            Tween(loadingTopText, {TextTransparency = 0}, 0.5)
-            Tween(loadingLabel, {TextTransparency = 0}, 0.5)
-            Tween(loadingSubLabel, {TextTransparency = 0}, 0.5)
-            Tween(loadingWatermark, {TextTransparency = 0}, 0.5)
-            
-            -- Simulate card loading process
-            task.wait(0.5)
-            loadingLabel.Text = "Loading Assets..."
-            task.wait(0.6)
-            loadingLabel.Text = "Initializing UI..."
-            task.wait(0.6)
-            loadingLabel.Text = "Almost Ready..."
-            task.wait(0.6)
-            loadingLabel.Text = "Complete!"
-            task.wait(0.5)
-            
-            -- Phase 3: Fade out loading card
-            Tween(loadingTopText, {TextTransparency = 1}, 0.5)
-            Tween(loadingLabel, {TextTransparency = 1}, 0.5)
-            Tween(loadingSubLabel, {TextTransparency = 1}, 0.5)
-            Tween(loadingWatermark, {TextTransparency = 1}, 0.5)
-            Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
-            local fadeOut = TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1})
-            fadeOut:Play()
-            
-            fadeOut.Completed:Wait()
-            loadingScreen:Destroy()
-            
-            task.wait(0.2) -- Final pause before executing window
-            
-            -- Phase 4: Execute the library window
-            onComplete()
-        end)
+        -- Phase 1: Wait for Seisen Library splash text
+        for i = 1, #fullText do
+            splashText.Text = string.sub(fullText, 1, i)
+            task.wait(0.06)
+        end
+        
+        task.wait(1) -- Hold the text
+        
+        -- Fade out splash text
+        local fadeSplash = TweenService:Create(splashText, TweenInfo.new(0.6), {TextTransparency = 1})
+        fadeSplash:Play()
+        fadeSplash.Completed:Wait()
+        splashText:Destroy()
+        
+        task.wait(0.2) -- Brief pause between sequences
+        
+        -- Phase 2: Proceed with the loading card
+        Tween(loadingScreen, {BackgroundTransparency = 0}, 0.5)
+        Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 0}, 0.5)
+        Tween(loadingTopText, {TextTransparency = 0}, 0.5)
+        Tween(loadingLabel, {TextTransparency = 0}, 0.5)
+        Tween(loadingSubLabel, {TextTransparency = 0}, 0.5)
+        Tween(loadingWatermark, {TextTransparency = 0}, 0.5)
+        
+        -- Simulate card loading process
+        task.wait(0.5)
+        loadingLabel.Text = "Loading Assets..."
+        task.wait(0.6)
+        loadingLabel.Text = "Initializing UI..."
+        task.wait(0.6)
+        loadingLabel.Text = "Almost Ready..."
+        task.wait(0.6)
+        loadingLabel.Text = "Complete!"
+        task.wait(0.5)
+        
+        -- Phase 3: Fade out loading card
+        Tween(loadingTopText, {TextTransparency = 1}, 0.5)
+        Tween(loadingLabel, {TextTransparency = 1}, 0.5)
+        Tween(loadingSubLabel, {TextTransparency = 1}, 0.5)
+        Tween(loadingWatermark, {TextTransparency = 1}, 0.5)
+        Tween(loadingScreen:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
+        local fadeOut = TweenService:Create(loadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+        fadeOut:Play()
+        
+        fadeOut.Completed:Wait()
+        loadingScreen:Destroy()
+        
+        task.wait(0.2) -- Final pause before executing window
+        
+        -- Phase 4: Execute the library window
+        onComplete()
     end
     
     local function toggleWindow(visible)
