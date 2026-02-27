@@ -238,6 +238,17 @@ local SaveManager = {} do
         return "none", "None"
     end
 
+    function SaveManager:GetAutoloadPaths()
+        local accountPath = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+        local normalPath = self.Folder .. "/Saved/autoload.txt"
+        
+        if self:CheckSubFolder(true) then
+            accountPath = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+            normalPath = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
+        end
+        return accountPath, normalPath
+    end
+
     function SaveManager:SaveAutoloadConfig(name, isAccount)
         self:BuildFolderTree()
         local path = isAccount and (self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt") or (self.Folder .. "/Saved/autoload.txt")
@@ -262,11 +273,29 @@ local SaveManager = {} do
     end
 
     function SaveManager:LoadAutoloadConfig()
-        local name = self:GetAutoloadConfig()
-        if name and name ~= "none" then
-            local success, err = self:Load(name)
-            if success then
-                print("[SaveManager] Auto loaded config:", name)
+        local accountPath, normalPath = self:GetAutoloadPaths()
+
+        -- Priority 1: Account Autoload
+        if isfile(accountPath) then
+            local success, name = pcall(readfile, accountPath)
+            if success and name ~= "" then
+                local loadSuccess, err = self:Load(name)
+                if loadSuccess then
+                    print("[SaveManager] Auto loaded Account config:", name)
+                    return
+                end
+                print("[SaveManager] Account autoload failed, falling back to Normal:", err)
+            end
+        end
+
+        -- Priority 2: Normal Autoload
+        if isfile(normalPath) then
+            local success, name = pcall(readfile, normalPath)
+            if success and name ~= "" then
+                local loadSuccess, err = self:Load(name)
+                if loadSuccess then
+                    print("[SaveManager] Auto loaded Normal config:", name)
+                end
             end
         end
     end
@@ -388,15 +417,30 @@ local SaveManager = {} do
         section:AddDivider()
 
         section:AddButton({
-            Name = "Set as Autoload",
+            Name = "Set as Normal Autoload",
             Callback = function()
                 local name = self.Library.Options.SaveManager_ConfigList and self.Library.Options.SaveManager_ConfigList.Value
                 local success, err = self:SaveAutoloadConfig(name, false)
                 if not success then
-                    Notify("Seisen Hub", "Failed to set autoload: " .. tostring(err), 5)
+                    Notify("Seisen Hub", "Failed to set normal autoload: " .. tostring(err), 5)
                     return
                 end
                 Notify("Seisen Hub", "Set normal autoload to: " .. name, 5)
+                UpdateList()
+            end
+        })
+
+        section:AddButton({
+            Name = "Set as Account Autoload",
+            Callback = function()
+                local name = self.Library.Options.SaveManager_ConfigList and self.Library.Options.SaveManager_ConfigList.Value
+                local success, err = self:SaveAutoloadConfig(name, true)
+                if not success then
+                    Notify("Seisen Hub", "Failed to set account autoload: " .. tostring(err), 5)
+                    return
+                end
+                Notify("Seisen Hub", "Set account autoload to: " .. name, 5)
+                UpdateList()
             end
         })
 
@@ -410,11 +454,12 @@ local SaveManager = {} do
                     return
                 end
                 Notify("Seisen Hub", "Reset all autoloads", 5)
+                UpdateList()
             end
         })
 
         local config, type = self:GetAutoloadConfig()
-        section:AddLabel({ Text = "Current: " .. config .. " (" .. type .. ")" })
+        section:AddLabel({ Text = "Autoload: " .. config .. " (" .. type .. ")" })
 
         self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_AccountExclusive", "SaveManager_ApplyAutoload" })
     end
