@@ -148,7 +148,7 @@ local SaveManager = {} do
         writefile(fullPath, encoded)
 
         if self.Library.Toggles.SaveManager_ApplyAutoload and self.Library.Toggles.SaveManager_ApplyAutoload.Value then
-            self:SaveAutoloadConfig(name)
+            self:SaveAutoloadConfig(name, true)
         end
 
         return true
@@ -216,34 +216,46 @@ local SaveManager = {} do
 
     function SaveManager:GetAutoloadConfig()
         self:BuildFolderTree()
-        local path = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+        
+        local accountPath = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+        local normalPath = self.Folder .. "/Saved/autoload.txt"
+        
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+            accountPath = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+            normalPath = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
         end
-        if isfile(path) then
-            local success, name = pcall(readfile, path)
-            if success and name ~= "" then return name end
+
+        if isfile(accountPath) then
+            local success, name = pcall(readfile, accountPath)
+            if success and name ~= "" then return name, "Account" end
         end
-        return "none"
+
+        if isfile(normalPath) then
+            local success, name = pcall(readfile, normalPath)
+            if success and name ~= "" then return name, "Normal" end
+        end
+
+        return "none", "None"
     end
 
-    function SaveManager:SaveAutoloadConfig(name)
+    function SaveManager:SaveAutoloadConfig(name, isAccount)
         self:BuildFolderTree()
-        local path = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+        local path = isAccount and (self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt") or (self.Folder .. "/Saved/autoload.txt")
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+            path = isAccount and (self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt") or (self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt")
         end
         local success = pcall(writefile, path, name)
         if not success then return false, "write file error" end
         return true, ""
     end
 
-    function SaveManager:DeleteAutoLoadConfig()
+    function SaveManager:DeleteAutoLoadConfig(isAccount)
         self:BuildFolderTree()
-        local path = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+        local path = isAccount and (self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt") or (self.Folder .. "/Saved/autoload.txt")
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
+            path = isAccount and (self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt") or (self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt")
         end
+        if not isfile(path) then return true end
         local success = pcall(delfile, path)
         if not success then return false, "delete file error" end
         return true, ""
@@ -379,28 +391,30 @@ local SaveManager = {} do
             Name = "Set as Autoload",
             Callback = function()
                 local name = self.Library.Options.SaveManager_ConfigList and self.Library.Options.SaveManager_ConfigList.Value
-                local success, err = self:SaveAutoloadConfig(name)
+                local success, err = self:SaveAutoloadConfig(name, false)
                 if not success then
                     Notify("Seisen Hub", "Failed to set autoload: " .. tostring(err), 5)
                     return
                 end
-                Notify("Seisen Hub", "Set autoload to: " .. name, 5)
+                Notify("Seisen Hub", "Set normal autoload to: " .. name, 5)
             end
         })
 
         section:AddButton({
-            Name = "Reset Autoload",
+            Name = "Reset Autoloads",
             Callback = function()
-                local success, err = self:DeleteAutoLoadConfig()
-                if not success then
-                    Notify("Seisen Hub", "Failed to reset autoload: " .. tostring(err), 5)
+                local s1, e1 = self:DeleteAutoLoadConfig(true)
+                local s2, e2 = self:DeleteAutoLoadConfig(false)
+                if not s1 or not s2 then
+                    Notify("Seisen Hub", "Failed to reset autoloads", 5)
                     return
                 end
-                Notify("Seisen Hub", "Reset autoload", 5)
+                Notify("Seisen Hub", "Reset all autoloads", 5)
             end
         })
 
-        section:AddLabel({ Text = "Current autoload: " .. self:GetAutoloadConfig() })
+        local config, type = self:GetAutoloadConfig()
+        section:AddLabel({ Text = "Current: " .. config .. " (" .. type .. ")" })
 
         self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_AccountExclusive", "SaveManager_ApplyAutoload" })
     end
