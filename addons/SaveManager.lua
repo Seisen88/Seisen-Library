@@ -146,6 +146,11 @@ local SaveManager = {} do
         if not success then return false, "failed to encode data" end
 
         writefile(fullPath, encoded)
+
+        if self.Library.Toggles.SaveManager_ApplyAutoload and self.Library.Toggles.SaveManager_ApplyAutoload.Value then
+            self:SaveAutoloadConfig(name)
+        end
+
         return true
     end
 
@@ -279,6 +284,12 @@ local SaveManager = {} do
         section:AddToggle({
             Name = "Account Exclusive",
             Flag = "SaveManager_AccountExclusive",
+            Default = true,
+        })
+
+        section:AddToggle({
+            Name = "Account Autoload",
+            Flag = "SaveManager_ApplyAutoload",
             Default = false,
         })
 
@@ -391,7 +402,7 @@ local SaveManager = {} do
 
         section:AddLabel({ Text = "Current autoload: " .. self:GetAutoloadConfig() })
 
-        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_AccountExclusive" })
+        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_AccountExclusive", "SaveManager_ApplyAutoload" })
     end
 
     SaveManager:BuildFolderTree()
