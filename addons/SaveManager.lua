@@ -1,6 +1,7 @@
 
 local cloneref = (cloneref or clonereference or function(instance) return instance end)
 local HttpService = cloneref(game:GetService("HttpService"))
+local Players = cloneref(game:GetService("Players"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
 local SaveManager = {} do
@@ -123,7 +124,11 @@ local SaveManager = {} do
             fullPath = self.Folder .. "/Saved/" .. self.SubFolder .. "/" .. name .. ".json"
         end
 
-        local data = { objects = {} }
+        local data = { 
+            objects = {},
+            exclusive = self.Library.Toggles.SaveManager_AccountExclusive and self.Library.Toggles.SaveManager_AccountExclusive.Value or false,
+            userId = Players.LocalPlayer.UserId
+        }
 
         for idx, toggle in pairs(self.Library.Toggles) do
             if self.Ignore[idx] then continue end
@@ -157,6 +162,10 @@ local SaveManager = {} do
 
         local success, decoded = pcall(HttpService.JSONDecode, HttpService, readfile(file))
         if not success then return false, "decode error" end
+
+        if decoded.exclusive and decoded.userId ~= Players.LocalPlayer.UserId then
+            return false, "This config is exclusive to another account"
+        end
 
         for _, option in pairs(decoded.objects) do
             if not option.type then continue end
@@ -265,6 +274,12 @@ local SaveManager = {} do
             Flag = "SaveManager_ConfigName",
             Placeholder = "Enter config name...",
             Callback = function() end
+        })
+
+        section:AddToggle({
+            Name = "Account Exclusive",
+            Flag = "SaveManager_AccountExclusive",
+            Default = false,
         })
 
         local function UpdateList()
@@ -376,7 +391,7 @@ local SaveManager = {} do
 
         section:AddLabel({ Text = "Current autoload: " .. self:GetAutoloadConfig() })
 
-        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
+        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_AccountExclusive" })
     end
 
     SaveManager:BuildFolderTree()
