@@ -211,9 +211,9 @@ local SaveManager = {} do
 
     function SaveManager:GetAutoloadConfig()
         self:BuildFolderTree()
-        local path = self.Folder .. "/Saved/autoload.txt"
+        local path = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
+            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
         end
         if isfile(path) then
             local success, name = pcall(readfile, path)
@@ -224,9 +224,9 @@ local SaveManager = {} do
 
     function SaveManager:SaveAutoloadConfig(name)
         self:BuildFolderTree()
-        local path = self.Folder .. "/Saved/autoload.txt"
+        local path = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
+            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
         end
         local success = pcall(writefile, path, name)
         if not success then return false, "write file error" end
@@ -235,9 +235,9 @@ local SaveManager = {} do
 
     function SaveManager:DeleteAutoLoadConfig()
         self:BuildFolderTree()
-        local path = self.Folder .. "/Saved/autoload.txt"
+        local path = self.Folder .. "/Saved/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
         if self:CheckSubFolder(true) then
-            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload.txt"
+            path = self.Folder .. "/Saved/" .. self.SubFolder .. "/autoload_" .. Players.LocalPlayer.UserId .. ".txt"
         end
         local success = pcall(delfile, path)
         if not success then return false, "delete file error" end
