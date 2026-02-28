@@ -14,6 +14,7 @@ local Library = {
     Registry = {},
     OpenDropdowns = {},
     ScreenGui = nil,
+    NotificationContainer = nil,
     Icons = IconsLoaded and Icons or nil,
     Theme = {
         Background = Color3.fromRGB(15, 15, 18),
@@ -52,68 +53,11 @@ function Library:SetGameId(gameId)
     end
 
     if not authorized then
-        -- Try the full library Notify (only works if CreateWindow has already been called)
-        local notified = pcall(function()
-            Library:Notify({
-                Title = "Unauthorized Game",
-                Content = "This script won't work on this game.",
-                Duration = 5
-            })
-        end)
-
-        -- Fallback: standalone notification when CreateWindow hasn't been called yet
-        if not notified then
-            local guiParent = RunService:IsStudio() and LocalPlayer.PlayerGui or game.CoreGui
-            local sg = Instance.new("ScreenGui")
-            sg.Name = "SeisenGameLock"
-            sg.ResetOnSpawn = false
-            sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-            sg.Parent = guiParent
-
-            local bg = Instance.new("Frame")
-            bg.Size = UDim2.fromOffset(300, 64)
-            bg.Position = UDim2.new(1, 10, 1, -84)
-            bg.BackgroundColor3 = self.Theme.Background
-            bg.BorderSizePixel = 0
-            bg.Parent = sg
-            Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
-            local stroke = Instance.new("UIStroke")
-            stroke.Color = self.Theme.Border
-            stroke.Thickness = 1
-            stroke.Parent = bg
-            local pad = Instance.new("UIPadding")
-            pad.PaddingTop = UDim.new(0, 10); pad.PaddingBottom = UDim.new(0, 10)
-            pad.PaddingLeft = UDim.new(0, 12); pad.PaddingRight = UDim.new(0, 12)
-            pad.Parent = bg
-            local t = Instance.new("TextLabel")
-            t.Size = UDim2.new(1, 0, 0, 16); t.BackgroundTransparency = 1
-            t.Text = "Unauthorized Game"; t.TextColor3 = self.Theme.Accent
-            t.Font = Enum.Font.GothamBold; t.TextSize = 13
-            t.TextXAlignment = Enum.TextXAlignment.Left; t.Parent = bg
-            local m = Instance.new("TextLabel")
-            m.Size = UDim2.new(1, 0, 0, 14); m.Position = UDim2.fromOffset(0, 20)
-            m.BackgroundTransparency = 1; m.Text = "This script won't work on this game."
-            m.TextColor3 = self.Theme.TextDim; m.Font = Enum.Font.Gotham
-            m.TextSize = 12; m.TextXAlignment = Enum.TextXAlignment.Left; m.Parent = bg
-            local bar = Instance.new("Frame")
-            bar.Size = UDim2.new(1, 0, 0, 2); bar.Position = UDim2.new(0, 0, 1, -2)
-            bar.BackgroundColor3 = self.Theme.Accent; bar.BorderSizePixel = 0; bar.Parent = bg
-            Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
-
-            TweenService:Create(bg, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                Position = UDim2.new(1, -320, 1, -84)
-            }):Play()
-            TweenService:Create(bar, TweenInfo.new(5, Enum.EasingStyle.Linear), {
-                Size = UDim2.new(0, 0, 0, 2)
-            }):Play()
-            task.delay(5, function()
-                TweenService:Create(bg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-                    Position = UDim2.new(1, 10, 1, -84)
-                }):Play()
-                task.delay(0.35, function() pcall(function() sg:Destroy() end) end)
-            end)
-        end
-
+        Library:Notify({
+            Title = "Unauthorized Game",
+            Content = "This script won't work on this game.",
+            Duration = 5
+        })
         return false
     end
 
@@ -197,6 +141,122 @@ end
 local function Tween(obj, props, duration)
     TweenService:Create(obj, TweenInfo.new(duration or 0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
 end
+
+function Library:Notify(notifyOpts)
+    local nTitle    = notifyOpts.Title    or "Notification"
+    local nContent  = notifyOpts.Content  or ""
+    local nDuration = notifyOpts.Duration or 3
+    local nImage    = notifyOpts.Image    or "rbxassetid://10709791437"
+    local theme     = self.Theme
+
+    -- Create a standalone container if CreateWindow hasn't been called yet
+    if not self.NotificationContainer then
+        local guiParent = RunService:IsStudio() and LocalPlayer.PlayerGui or game.CoreGui
+        local sg = Instance.new("ScreenGui")
+        sg.Name = "SeisenNotify"
+        sg.ResetOnSpawn = false
+        sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        sg.Parent = guiParent
+        self.NotificationContainer = Create("Frame", {
+            Name = "NotificationContainer",
+            Size = UDim2.new(0, 300, 1, 0),
+            Position = UDim2.new(0.5, -150, 0, 10),
+            BackgroundTransparency = 1,
+            Parent = sg,
+            ZIndex = 500
+        }, {
+            Create("UIListLayout", {
+                Padding = UDim.new(0, 10),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                VerticalAlignment = Enum.VerticalAlignment.Top,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center
+            }),
+            Create("UIPadding", {PaddingTop = UDim.new(0, 10)})
+        })
+    end
+
+    local notifyFrame = Create("Frame", {
+        Size = UDim2.new(0, 280, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.XY,
+        BackgroundColor3 = theme.Background,
+        BackgroundTransparency = 1,
+        Parent = self.NotificationContainer,
+        BorderSizePixel = 0,
+        ClipsDescendants = true
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+        Create("UIPadding", {PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12)})
+    })
+    self:RegisterElement(notifyFrame, "Background")
+    self:RegisterElement(notifyFrame:FindFirstChild("UIStroke"), "Border", "Color")
+    local icon = Create("ImageLabel", {
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(0, 0, 0, 2),
+        BackgroundTransparency = 1,
+        ImageColor3 = theme.Accent,
+        Parent = notifyFrame
+    })
+    self:ApplyIcon(icon, nImage)
+    local titleLbl = Create("TextLabel", {
+        Size = UDim2.new(1, -30, 0, 14),
+        Position = UDim2.new(0, 30, 0, 0),
+        BackgroundTransparency = 1,
+        Text = nTitle,
+        TextColor3 = theme.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = notifyFrame
+    })
+    local contentLbl = Create("TextLabel", {
+        Size = UDim2.new(1, -30, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Position = UDim2.new(0, 30, 0, 18),
+        BackgroundTransparency = 1,
+        Text = nContent,
+        TextColor3 = theme.TextMuted,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextWrapped = true,
+        Parent = notifyFrame
+    })
+    local barBg = Create("Frame", {
+        Size = UDim2.new(1, 4, 0, 2),
+        Position = UDim2.new(0, -2, 1, 10),
+        BackgroundColor3 = theme.Border,
+        BorderSizePixel = 0,
+        Parent = notifyFrame
+    })
+    local bar = Create("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = theme.Accent,
+        BorderSizePixel = 0,
+        Parent = barBg
+    })
+    notifyFrame.BackgroundTransparency = 1
+    titleLbl.TextTransparency = 1
+    contentLbl.TextTransparency = 1
+    icon.ImageTransparency = 1
+    Tween(notifyFrame, {BackgroundTransparency = 0.1}, 0.3)
+    Tween(titleLbl,    {TextTransparency = 0},        0.3)
+    Tween(contentLbl,  {TextTransparency = 0.2},      0.3)
+    Tween(icon,        {ImageTransparency = 0},        0.3)
+    Tween(bar, {Size = UDim2.new(1, 0, 1, 0)}, nDuration)
+    task.delay(nDuration, function()
+        Tween(notifyFrame, {BackgroundTransparency = 1}, 0.5)
+        Tween(titleLbl,    {TextTransparency = 1},       0.5)
+        Tween(contentLbl,  {TextTransparency = 1},       0.5)
+        Tween(icon,        {ImageTransparency = 1},      0.5)
+        Tween(bar,         {BackgroundTransparency = 1}, 0.5)
+        Tween(barBg,       {BackgroundTransparency = 1}, 0.5)
+        Tween(notifyFrame:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
+        task.wait(0.5)
+        notifyFrame:Destroy()
+    end)
+end
+
 local function MakeDraggable(handle, frame, onClick)
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1920,6 +1980,7 @@ function Library:CreateWindow(options)
         }),
         Create("UIPadding", {PaddingTop = UDim.new(0, 10)})
     })
+    Library.NotificationContainer = notificationContainer
     pages = Create("Folder", {Name = "Pages", Parent = content})
     MakeDraggable(sidebar, main)
     MakeDraggable(header, main)
@@ -1978,93 +2039,6 @@ function Library:CreateWindow(options)
             end)
         end
     end)
-    function Library:Notify(notifyOpts)
-        local nTitle = notifyOpts.Title or "Notification"
-        local nContent = notifyOpts.Content or "Content"
-        local nDuration = notifyOpts.Duration or 3
-        local nImage = notifyOpts.Image or "rbxassetid://10709791437"
-        local notifyFrame = Create("Frame", {
-            Size = UDim2.new(0, 280, 0, 0), 
-            AutomaticSize = Enum.AutomaticSize.XY, 
-            BackgroundColor3 = theme.Background,
-            BackgroundTransparency = 1,
-            Parent = notificationContainer,
-            BorderSizePixel = 0,
-            ClipsDescendants = true
-        }, {
-             Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-             Create("UIStroke", {Color = theme.Border, Thickness = 1}),
-             Create("UIPadding", {PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12)})
-        })
-        Library:RegisterElement(notifyFrame, "Background")
-        Library:RegisterElement(notifyFrame:FindFirstChild("UIStroke"), "Border", "Color")
-        local icon = Create("ImageLabel", {
-            Size = UDim2.new(0, 20, 0, 20),
-            Position = UDim2.new(0, 0, 0, 2),
-            BackgroundTransparency = 1,
-            ImageColor3 = theme.Accent,
-            Parent = notifyFrame
-        })
-        Library:ApplyIcon(icon, nImage)
-        local title = Create("TextLabel", {
-            Size = UDim2.new(1, -30, 0, 14),
-            Position = UDim2.new(0, 30, 0, 0),
-            BackgroundTransparency = 1,
-            Text = nTitle,
-            TextColor3 = theme.Text,
-            Font = Enum.Font.GothamBold,
-            TextSize = 13,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = notifyFrame
-        })
-        local content = Create("TextLabel", {
-            Size = UDim2.new(1, -30, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            Position = UDim2.new(0, 30, 0, 18),
-            BackgroundTransparency = 1,
-            Text = nContent,
-            TextColor3 = theme.TextMuted,
-            Font = Enum.Font.Gotham,
-            TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextWrapped = true,
-            Parent = notifyFrame
-        })
-        local barBg = Create("Frame", {
-            Size = UDim2.new(1, 4, 0, 2),
-            Position = UDim2.new(0, -2, 1, 10),
-            BackgroundColor3 = theme.Border,
-            BorderSizePixel = 0,
-            Parent = notifyFrame
-        })
-        local bar = Create("Frame", {
-            Size = UDim2.new(0, 0, 1, 0),
-            BackgroundColor3 = theme.Accent,
-            BorderSizePixel = 0,
-            Parent = barBg
-        })
-        notifyFrame.Size = UDim2.new(0, 280, 0, 0) 
-        notifyFrame.BackgroundTransparency = 1
-        title.TextTransparency = 1
-        content.TextTransparency = 1
-        icon.ImageTransparency = 1
-        Tween(notifyFrame, {BackgroundTransparency = 0.1}, 0.3)
-        Tween(title, {TextTransparency = 0}, 0.3)
-        Tween(content, {TextTransparency = 0.2}, 0.3)
-        Tween(icon, {ImageTransparency = 0}, 0.3)
-        Tween(bar, {Size = UDim2.new(1, 0, 1, 0)}, nDuration)
-        task.delay(nDuration, function()
-             Tween(notifyFrame, {BackgroundTransparency = 1}, 0.5)
-             Tween(title, {TextTransparency = 1}, 0.5)
-             Tween(content, {TextTransparency = 1}, 0.5)
-             Tween(icon, {ImageTransparency = 1}, 0.5)
-             Tween(bar, {BackgroundTransparency = 1}, 0.5)
-             Tween(barBg, {BackgroundTransparency = 1}, 0.5)
-             Tween(notifyFrame:FindFirstChild("UIStroke"), {Transparency = 1}, 0.5)
-             task.wait(0.5)
-             notifyFrame:Destroy()
-        end)
-    end
     if options.ToggleKeybind then
         Library.ToggleKeybind = options.ToggleKeybind
         Library.KeybindEnabled = true -- Initialize as enabled
