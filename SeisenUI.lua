@@ -33,6 +33,39 @@ local Library = {
     },
     ToggleKeybind = nil
 }
+
+-- Game ID lock: call Library:SetGameId(id) or Library:SetGameId({id1, id2})
+-- to restrict the script to specific PlaceId(s). Shows a notification and halts execution if unauthorized.
+function Library:SetGameId(gameId)
+    local currentId = game.PlaceId
+    local authorized = false
+
+    if type(gameId) == "table" then
+        for _, id in ipairs(gameId) do
+            if currentId == id then
+                authorized = true
+                break
+            end
+        end
+    else
+        authorized = (currentId == gameId)
+    end
+
+    if not authorized then
+        pcall(function()
+            Library:Notify({
+                Title = "Unauthorized Game",
+                Content = "This script won't work on this game.",
+                Duration = 5
+            })
+        end)
+
+        error("[SeisenUI] Unauthorized game. Current PlaceId: " .. tostring(currentId), 2)
+    end
+
+    return true
+end
+
 function Library:RegisterElement(element, themeProperty, targetProperty)
     table.insert(self.Registry, {
         Element = element,
