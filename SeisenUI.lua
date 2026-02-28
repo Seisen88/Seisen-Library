@@ -35,9 +35,9 @@ local Library = {
 }
 
 -- Game ID lock: call Library:SetGameId(id) or Library:SetGameId({id1, id2})
--- to restrict the script to specific PlaceId(s). Shows a notification and halts execution if unauthorized.
+-- Checks game.GameId (Universe ID). Shows a notification and halts execution if unauthorized.
 function Library:SetGameId(gameId)
-    local currentId = game.PlaceId
+    local currentId = game.GameId
     local authorized = false
 
     if type(gameId) == "table" then
@@ -60,7 +60,7 @@ function Library:SetGameId(gameId)
             })
         end)
 
-        error("[SeisenUI] Unauthorized game. Current PlaceId: " .. tostring(currentId), 2)
+        error("[SeisenUI] Unauthorized game. Current GameId: " .. tostring(currentId), 2)
     end
 
     return true
