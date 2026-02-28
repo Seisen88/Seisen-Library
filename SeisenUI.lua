@@ -52,15 +52,12 @@ function Library:SetGameId(gameId)
     end
 
     if not authorized then
-        pcall(function()
-            Library:Notify({
-                Title = "Unauthorized Game",
-                Content = "This script won't work on this game.",
-                Duration = 5
-            })
-        end)
-
-        task.wait(math.huge) -- silently halt execution without a console error
+        Library:Notify({
+            Title = "Unauthorized Game",
+            Content = "This script won't work on this game.",
+            Duration = 5
+        })
+        return false
     end
 
     return true
