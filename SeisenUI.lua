@@ -52,14 +52,68 @@ function Library:SetGameId(gameId)
     end
 
     if not authorized then
-        -- Notify uses a container created by CreateWindow; pcall guards if called before it
-        pcall(function()
+        -- Try the full library Notify (only works if CreateWindow has already been called)
+        local notified = pcall(function()
             Library:Notify({
                 Title = "Unauthorized Game",
                 Content = "This script won't work on this game.",
                 Duration = 5
             })
         end)
+
+        -- Fallback: standalone notification when CreateWindow hasn't been called yet
+        if not notified then
+            local guiParent = RunService:IsStudio() and LocalPlayer.PlayerGui or game.CoreGui
+            local sg = Instance.new("ScreenGui")
+            sg.Name = "SeisenGameLock"
+            sg.ResetOnSpawn = false
+            sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            sg.Parent = guiParent
+
+            local bg = Instance.new("Frame")
+            bg.Size = UDim2.fromOffset(300, 64)
+            bg.Position = UDim2.new(1, 10, 1, -84)
+            bg.BackgroundColor3 = self.Theme.Background
+            bg.BorderSizePixel = 0
+            bg.Parent = sg
+            Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = self.Theme.Border
+            stroke.Thickness = 1
+            stroke.Parent = bg
+            local pad = Instance.new("UIPadding")
+            pad.PaddingTop = UDim.new(0, 10); pad.PaddingBottom = UDim.new(0, 10)
+            pad.PaddingLeft = UDim.new(0, 12); pad.PaddingRight = UDim.new(0, 12)
+            pad.Parent = bg
+            local t = Instance.new("TextLabel")
+            t.Size = UDim2.new(1, 0, 0, 16); t.BackgroundTransparency = 1
+            t.Text = "Unauthorized Game"; t.TextColor3 = self.Theme.Accent
+            t.Font = Enum.Font.GothamBold; t.TextSize = 13
+            t.TextXAlignment = Enum.TextXAlignment.Left; t.Parent = bg
+            local m = Instance.new("TextLabel")
+            m.Size = UDim2.new(1, 0, 0, 14); m.Position = UDim2.fromOffset(0, 20)
+            m.BackgroundTransparency = 1; m.Text = "This script won't work on this game."
+            m.TextColor3 = self.Theme.TextDim; m.Font = Enum.Font.Gotham
+            m.TextSize = 12; m.TextXAlignment = Enum.TextXAlignment.Left; m.Parent = bg
+            local bar = Instance.new("Frame")
+            bar.Size = UDim2.new(1, 0, 0, 2); bar.Position = UDim2.new(0, 0, 1, -2)
+            bar.BackgroundColor3 = self.Theme.Accent; bar.BorderSizePixel = 0; bar.Parent = bg
+            Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
+
+            TweenService:Create(bg, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Position = UDim2.new(1, -320, 1, -84)
+            }):Play()
+            TweenService:Create(bar, TweenInfo.new(5, Enum.EasingStyle.Linear), {
+                Size = UDim2.new(0, 0, 0, 2)
+            }):Play()
+            task.delay(5, function()
+                TweenService:Create(bg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+                    Position = UDim2.new(1, 10, 1, -84)
+                }):Play()
+                task.delay(0.35, function() pcall(function() sg:Destroy() end) end)
+            end)
+        end
+
         return false
     end
 
