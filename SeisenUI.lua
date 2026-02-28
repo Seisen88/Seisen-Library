@@ -52,11 +52,14 @@ function Library:SetGameId(gameId)
     end
 
     if not authorized then
-        Library:Notify({
-            Title = "Unauthorized Game",
-            Content = "This script won't work on this game.",
-            Duration = 5
-        })
+        -- Notify uses a container created by CreateWindow; pcall guards if called before it
+        pcall(function()
+            Library:Notify({
+                Title = "Unauthorized Game",
+                Content = "This script won't work on this game.",
+                Duration = 5
+            })
+        end)
         return false
     end
 
