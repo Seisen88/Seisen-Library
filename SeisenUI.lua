@@ -60,7 +60,7 @@ function Library:SetGameId(gameId)
             })
         end)
 
-        error("[SeisenUI] Unauthorized game. Current GameId: " .. tostring(currentId), 2)
+        task.wait(math.huge) -- silently halt execution without a console error
     end
 
     return true
@@ -267,7 +267,7 @@ function Library:ApplyCommonProperties(element, options, elementObj)
             local currentTooltip = elementObj._disabled and elementObj._disabledTooltip or elementObj._tooltip
             if not currentTooltip then return end
             if Library.TooltipThread then task.cancel(Library.TooltipThread) end
-            Library.TooltipThread = task.delay(1.5, function()
+            Library.TooltipThread = task.delay(0.2, function()
                 Library:ShowTooltip(currentTooltip)
             end)
         end)
