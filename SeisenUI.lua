@@ -1058,29 +1058,60 @@ function Library:CreateDropdown(parent, options)
         end
         populate()
     end
+    -- Full-screen invisible blocker: sits behind the list, above everything else.
+    -- Clicking the list/options → list's higher ZIndex wins, blocker never fires.
+    -- Clicking anywhere outside → blocker fires → close.
+    local blocker = Create("TextButton", {
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 98,   -- list is ZIndex 1100, blocker is just below; covers all regular UI
+        Visible = false,
+        Parent = self.ScreenGui,
+    })
+
+    local function closeDropdown()
+        isOpen = false
+        list.Visible = false
+        blocker.Visible = false
+        list.Parent = selectBtn
+        if posConnection then posConnection:Disconnect() posConnection = nil end
+        Tween(arrow, {Rotation = 0})
+        for i = #self.OpenDropdowns, 1, -1 do
+            local d = self.OpenDropdowns[i]
+            if d and d._selectBtn == selectBtn then
+                table.remove(self.OpenDropdowns, i)
+                break
+            end
+        end
+    end
+
+    blocker.MouseButton1Click:Connect(function()
+        closeDropdown()
+    end)
+
     selectBtn.MouseButton1Click:Connect(function()
         if not isOpen then
             self:CloseAllDropdowns()
         end
         isOpen = not isOpen
-        
+
         if isOpen then
+            blocker.Visible = true
             list.Parent = self.ScreenGui
             list.Visible = true
             updateListPosition()
             posConnection = game:GetService("RunService").RenderStepped:Connect(updateListPosition)
-            
+
             table.insert(self.OpenDropdowns, {
                 _selectBtn = selectBtn,
                 Close = function()
-                    isOpen = false
-                    list.Visible = false
-                    list.Parent = selectBtn
-                    if posConnection then posConnection:Disconnect() posConnection = nil end
-                    Tween(arrow, {Rotation = 0})
+                    closeDropdown()
                 end
             })
         else
+            blocker.Visible = false
             list.Visible = false
             list.Parent = selectBtn
             if posConnection then posConnection:Disconnect() posConnection = nil end
@@ -1088,56 +1119,10 @@ function Library:CreateDropdown(parent, options)
 
         Tween(arrow, {Rotation = isOpen and 180 or 0})
     end)
-    
-    local inputCloseConn
-    inputCloseConn = UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-        if not isOpen then return end
-
-        -- Defer so that MouseButton1Click on any option fires first.
-        -- If an option was clicked: single-select SetValue sets isOpen=false (early-out below),
-        -- multi-select SetValue leaves isOpen=true but _mouseOverList is restored by then.
-        task.defer(function()
-            if not isOpen then return end  -- already closed by SetValue
-
-            local mousePos = UserInputService:GetMouseLocation()
-
-            -- Re-check hover using AbsolutePosition now that the frame has settled
-            local sbPos  = selectBtn.AbsolutePosition
-            local sbSize = selectBtn.AbsoluteSize
-            if mousePos.X >= sbPos.X and mousePos.X <= sbPos.X + sbSize.X and
-               mousePos.Y >= sbPos.Y and mousePos.Y <= sbPos.Y + sbSize.Y then
-                return
-            end
-            if list.Visible then
-                local lPos  = list.AbsolutePosition
-                local lSize = list.AbsoluteSize
-                if mousePos.X >= lPos.X and mousePos.X <= lPos.X + lSize.X and
-                   mousePos.Y >= lPos.Y and mousePos.Y <= lPos.Y + lSize.Y then
-                    return
-                end
-            end
-
-            -- Clicked outside — close
-            isOpen = false
-            list.Visible = false
-            list.Parent = selectBtn
-            if posConnection then posConnection:Disconnect() posConnection = nil end
-            Tween(arrow, {Rotation = 0})
-
-            for i = #self.OpenDropdowns, 1, -1 do
-                local d = self.OpenDropdowns[i]
-                if d and d._selectBtn == selectBtn then
-                    table.remove(self.OpenDropdowns, i)
-                    break
-                end
-            end
-        end)
-    end)
 
     selectBtn.Destroying:Connect(function()
-        if inputCloseConn then inputCloseConn:Disconnect() inputCloseConn = nil end
         if posConnection then posConnection:Disconnect() end
+        if blocker and blocker.Parent then blocker:Destroy() end
         list:Destroy()
     end)
     table.insert(self.Registry, {
