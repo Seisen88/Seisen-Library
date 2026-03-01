@@ -1089,38 +1089,50 @@ function Library:CreateDropdown(parent, options)
         Tween(arrow, {Rotation = isOpen and 180 or 0})
     end)
     
-    -- Track whether the cursor is currently over the button or the open list.
-    -- This is more reliable than GetGuiObjectsAtPosition (which skips transparent elements)
-    -- and more reliable than manual AbsolutePosition math (which breaks with UIScale).
-    local _mouseOverBtn  = false
-    local _mouseOverList = false
-    selectBtn.MouseEnter:Connect(function() _mouseOverBtn  = true  end)
-    selectBtn.MouseLeave:Connect(function() _mouseOverBtn  = false end)
-    list.MouseEnter:Connect(function()      _mouseOverList = true  end)
-    list.MouseLeave:Connect(function()      _mouseOverList = false end)
-
     local inputCloseConn
     inputCloseConn = UserInputService.InputBegan:Connect(function(input)
         if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
         if not isOpen then return end
-        -- Click was on the button (toggle handled by MouseButton1Click) or inside the list
-        if _mouseOverBtn or _mouseOverList then return end
 
-        -- Click landed outside — close this dropdown
-        isOpen = false
-        list.Visible = false
-        list.Parent = selectBtn
-        if posConnection then posConnection:Disconnect() posConnection = nil end
-        Tween(arrow, {Rotation = 0})
+        -- Defer so that MouseButton1Click on any option fires first.
+        -- If an option was clicked: single-select SetValue sets isOpen=false (early-out below),
+        -- multi-select SetValue leaves isOpen=true but _mouseOverList is restored by then.
+        task.defer(function()
+            if not isOpen then return end  -- already closed by SetValue
 
-        -- Remove from Library.OpenDropdowns
-        for i = #self.OpenDropdowns, 1, -1 do
-            local d = self.OpenDropdowns[i]
-            if d and d._selectBtn == selectBtn then
-                table.remove(self.OpenDropdowns, i)
-                break
+            local mousePos = UserInputService:GetMouseLocation()
+
+            -- Re-check hover using AbsolutePosition now that the frame has settled
+            local sbPos  = selectBtn.AbsolutePosition
+            local sbSize = selectBtn.AbsoluteSize
+            if mousePos.X >= sbPos.X and mousePos.X <= sbPos.X + sbSize.X and
+               mousePos.Y >= sbPos.Y and mousePos.Y <= sbPos.Y + sbSize.Y then
+                return
             end
-        end
+            if list.Visible then
+                local lPos  = list.AbsolutePosition
+                local lSize = list.AbsoluteSize
+                if mousePos.X >= lPos.X and mousePos.X <= lPos.X + lSize.X and
+                   mousePos.Y >= lPos.Y and mousePos.Y <= lPos.Y + lSize.Y then
+                    return
+                end
+            end
+
+            -- Clicked outside — close
+            isOpen = false
+            list.Visible = false
+            list.Parent = selectBtn
+            if posConnection then posConnection:Disconnect() posConnection = nil end
+            Tween(arrow, {Rotation = 0})
+
+            for i = #self.OpenDropdowns, 1, -1 do
+                local d = self.OpenDropdowns[i]
+                if d and d._selectBtn == selectBtn then
+                    table.remove(self.OpenDropdowns, i)
+                    break
+                end
+            end
+        end)
     end)
 
     selectBtn.Destroying:Connect(function()
