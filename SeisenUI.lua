@@ -3003,8 +3003,9 @@ function Library:CreateWindow(options)
         -- FPS Boost
         local fpsBoostEnabled = false
         local originalSettings = {}
-        local savedEffects = {}   -- { [obj] = { type="effect", enabled=bool } }
-        local savedMeshes  = {}   -- { [obj] = originalRenderFidelity }
+        local savedEffects   = {}   -- { [obj] = originalEnabled }
+        local savedMeshes    = {}   -- { [obj] = originalRenderFidelity }
+        local savedMaterials = {}   -- { [obj] = originalMaterial }
         PlayerGroup:AddToggle({
             Name = "FPS Boost",
             Default = false,
@@ -3023,9 +3024,10 @@ function Library:CreateWindow(options)
                     Lighting.FogEnd = 100000
                     Lighting.Brightness = 1
                     
-                    -- Save and disable effects / degrade mesh fidelity
-                    savedEffects = {}
-                    savedMeshes  = {}
+                    -- Save and optimise workspace objects
+                    savedEffects   = {}
+                    savedMeshes    = {}
+                    savedMaterials = {}
                     for _, obj in pairs(workspace:GetDescendants()) do
                         pcall(function()
                             if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
@@ -3034,6 +3036,10 @@ function Library:CreateWindow(options)
                             elseif obj:IsA("MeshPart") then
                                 savedMeshes[obj] = obj.RenderFidelity
                                 obj.RenderFidelity = Enum.RenderFidelity.Performance
+                            end
+                            if obj:IsA("BasePart") then
+                                savedMaterials[obj] = obj.Material
+                                obj.Material = Enum.Material.SmoothPlastic
                             end
                         end)
                     end
@@ -3051,9 +3057,7 @@ function Library:CreateWindow(options)
                     -- Restore effects
                     for obj, wasEnabled in pairs(savedEffects) do
                         pcall(function()
-                            if obj and obj.Parent then
-                                obj.Enabled = wasEnabled
-                            end
+                            if obj and obj.Parent then obj.Enabled = wasEnabled end
                         end)
                     end
                     savedEffects = {}
@@ -3061,12 +3065,18 @@ function Library:CreateWindow(options)
                     -- Restore mesh fidelity
                     for obj, fidelity in pairs(savedMeshes) do
                         pcall(function()
-                            if obj and obj.Parent then
-                                obj.RenderFidelity = fidelity
-                            end
+                            if obj and obj.Parent then obj.RenderFidelity = fidelity end
                         end)
                     end
                     savedMeshes = {}
+
+                    -- Restore materials
+                    for obj, mat in pairs(savedMaterials) do
+                        pcall(function()
+                            if obj and obj.Parent then obj.Material = mat end
+                        end)
+                    end
+                    savedMaterials = {}
                 end
             end
         })
