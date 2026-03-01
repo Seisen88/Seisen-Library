@@ -2833,7 +2833,7 @@ function Library:CreateWindow(options)
     WindowFuncs.AddTab = WindowFuncs.CreateTab
 
     if options.ConfigSettings then
-        local SettingsTab = WindowFuncs:CreateTab({ Name = "Settings", Icon = "settings", LayoutOrder = 9999 })
+        local SettingsTab = WindowFuncs:CreateTab({ Name = "Player Settings", Icon = "settings", LayoutOrder = 9999 })
         local PlayerGroup = SettingsTab:AddLeftSection("Player Settings", "user")
         local UIGroup = SettingsTab:AddRightSection("UI Settings", "monitor")
         
@@ -3039,7 +3039,6 @@ function Library:CreateWindow(options)
                             end
                             if obj:IsA("BasePart") then
                                 savedMaterials[obj] = obj.Material
-                                obj.Material = Enum.Material.SmoothPlastic
                             end
                         end)
                     end
@@ -3122,6 +3121,8 @@ function Library:CreateWindow(options)
 
 
     end
+    -- Reset so the first user-defined tab (not the built-in Settings tab) activates by default
+    firstTab = true
     return WindowFuncs
 end
 
