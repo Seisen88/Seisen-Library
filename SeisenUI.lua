@@ -1095,26 +1095,17 @@ function Library:CreateDropdown(parent, options)
         if not isOpen then return end
 
         local mousePos = UserInputService:GetMouseLocation()
+        local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
+        local objectsAtPos = playerGui:GetGuiObjectsAtPosition(mousePos.X, mousePos.Y)
 
-        -- If clicking on the selectBtn itself, let MouseButton1Click handle toggle
-        local sbPos  = selectBtn.AbsolutePosition
-        local sbSize = selectBtn.AbsoluteSize
-        if mousePos.X >= sbPos.X and mousePos.X <= sbPos.X + sbSize.X and
-           mousePos.Y >= sbPos.Y and mousePos.Y <= sbPos.Y + sbSize.Y then
-            return
+        for _, obj in ipairs(objectsAtPos) do
+            -- Click was on the button itself or anything inside it (arrow, label, etc.)
+            if obj == selectBtn or obj:IsDescendantOf(selectBtn) then return end
+            -- Click was on the open list or any option inside it
+            if obj == list or obj:IsDescendantOf(list) then return end
         end
 
-        -- If clicking inside the open list, let option buttons handle it
-        if list.Visible then
-            local lPos  = list.AbsolutePosition
-            local lSize = list.AbsoluteSize
-            if mousePos.X >= lPos.X and mousePos.X <= lPos.X + lSize.X and
-               mousePos.Y >= lPos.Y and mousePos.Y <= lPos.Y + lSize.Y then
-                return
-            end
-        end
-
-        -- Click was outside — close this dropdown
+        -- Click landed outside both — close this dropdown
         isOpen = false
         list.Visible = false
         list.Parent = selectBtn
