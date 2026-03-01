@@ -3003,6 +3003,8 @@ function Library:CreateWindow(options)
         -- FPS Boost
         local fpsBoostEnabled = false
         local originalSettings = {}
+        local savedEffects = {}   -- { [obj] = { type="effect", enabled=bool } }
+        local savedMeshes  = {}   -- { [obj] = originalRenderFidelity }
         PlayerGroup:AddToggle({
             Name = "FPS Boost",
             Default = false,
@@ -3013,37 +3015,58 @@ function Library:CreateWindow(options)
                 local Lighting = game:GetService("Lighting")
                 
                 if fpsBoostEnabled then
-                    -- Save original settings
+                    -- Save and apply Lighting settings
                     originalSettings.GlobalShadows = Lighting.GlobalShadows
                     originalSettings.FogEnd = Lighting.FogEnd
                     originalSettings.Brightness = Lighting.Brightness
-                    
-                    -- Apply optimizations
                     Lighting.GlobalShadows = false
                     Lighting.FogEnd = 100000
                     Lighting.Brightness = 1
                     
-                    -- Optimize workspace
+                    -- Save and disable effects / degrade mesh fidelity
+                    savedEffects = {}
+                    savedMeshes  = {}
                     for _, obj in pairs(workspace:GetDescendants()) do
                         pcall(function()
                             if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+                                savedEffects[obj] = obj.Enabled
                                 obj.Enabled = false
                             elseif obj:IsA("MeshPart") then
+                                savedMeshes[obj] = obj.RenderFidelity
                                 obj.RenderFidelity = Enum.RenderFidelity.Performance
                             end
                         end)
                     end
                     
-                    -- Set quality
                     settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
                 else
-                    -- Restore original settings
+                    -- Restore Lighting
                     if originalSettings.GlobalShadows ~= nil then
                         Lighting.GlobalShadows = originalSettings.GlobalShadows
                         Lighting.FogEnd = originalSettings.FogEnd
                         Lighting.Brightness = originalSettings.Brightness
                     end
                     settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+
+                    -- Restore effects
+                    for obj, wasEnabled in pairs(savedEffects) do
+                        pcall(function()
+                            if obj and obj.Parent then
+                                obj.Enabled = wasEnabled
+                            end
+                        end)
+                    end
+                    savedEffects = {}
+
+                    -- Restore mesh fidelity
+                    for obj, fidelity in pairs(savedMeshes) do
+                        pcall(function()
+                            if obj and obj.Parent then
+                                obj.RenderFidelity = fidelity
+                            end
+                        end)
+                    end
+                    savedMeshes = {}
                 end
             end
         })
