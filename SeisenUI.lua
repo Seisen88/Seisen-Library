@@ -1089,23 +1089,24 @@ function Library:CreateDropdown(parent, options)
         Tween(arrow, {Rotation = isOpen and 180 or 0})
     end)
     
+    -- Track whether the cursor is currently over the button or the open list.
+    -- This is more reliable than GetGuiObjectsAtPosition (which skips transparent elements)
+    -- and more reliable than manual AbsolutePosition math (which breaks with UIScale).
+    local _mouseOverBtn  = false
+    local _mouseOverList = false
+    selectBtn.MouseEnter:Connect(function() _mouseOverBtn  = true  end)
+    selectBtn.MouseLeave:Connect(function() _mouseOverBtn  = false end)
+    list.MouseEnter:Connect(function()      _mouseOverList = true  end)
+    list.MouseLeave:Connect(function()      _mouseOverList = false end)
+
     local inputCloseConn
     inputCloseConn = UserInputService.InputBegan:Connect(function(input)
         if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
         if not isOpen then return end
+        -- Click was on the button (toggle handled by MouseButton1Click) or inside the list
+        if _mouseOverBtn or _mouseOverList then return end
 
-        local mousePos = UserInputService:GetMouseLocation()
-        local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
-        local objectsAtPos = playerGui:GetGuiObjectsAtPosition(mousePos.X, mousePos.Y)
-
-        for _, obj in ipairs(objectsAtPos) do
-            -- Click was on the button itself or anything inside it (arrow, label, etc.)
-            if obj == selectBtn or obj:IsDescendantOf(selectBtn) then return end
-            -- Click was on the open list or any option inside it
-            if obj == list or obj:IsDescendantOf(list) then return end
-        end
-
-        -- Click landed outside both — close this dropdown
+        -- Click landed outside — close this dropdown
         isOpen = false
         list.Visible = false
         list.Parent = selectBtn
