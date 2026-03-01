@@ -1070,13 +1070,16 @@ function Library:CreateDropdown(parent, options)
             updateListPosition()
             posConnection = game:GetService("RunService").RenderStepped:Connect(updateListPosition)
             
-            table.insert(self.OpenDropdowns, {Close = function() 
-                isOpen = false
-                list.Visible = false
-                list.Parent = selectBtn
-                if posConnection then posConnection:Disconnect() posConnection = nil end
-                Tween(arrow, {Rotation = 0})
-            end})
+            table.insert(self.OpenDropdowns, {
+                _selectBtn = selectBtn,
+                Close = function()
+                    isOpen = false
+                    list.Visible = false
+                    list.Parent = selectBtn
+                    if posConnection then posConnection:Disconnect() posConnection = nil end
+                    Tween(arrow, {Rotation = 0})
+                end
+            })
         else
             list.Visible = false
             list.Parent = selectBtn
@@ -1086,7 +1089,50 @@ function Library:CreateDropdown(parent, options)
         Tween(arrow, {Rotation = isOpen and 180 or 0})
     end)
     
+    local inputCloseConn
+    inputCloseConn = UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+        if not isOpen then return end
+
+        local mousePos = UserInputService:GetMouseLocation()
+
+        -- If clicking on the selectBtn itself, let MouseButton1Click handle toggle
+        local sbPos  = selectBtn.AbsolutePosition
+        local sbSize = selectBtn.AbsoluteSize
+        if mousePos.X >= sbPos.X and mousePos.X <= sbPos.X + sbSize.X and
+           mousePos.Y >= sbPos.Y and mousePos.Y <= sbPos.Y + sbSize.Y then
+            return
+        end
+
+        -- If clicking inside the open list, let option buttons handle it
+        if list.Visible then
+            local lPos  = list.AbsolutePosition
+            local lSize = list.AbsoluteSize
+            if mousePos.X >= lPos.X and mousePos.X <= lPos.X + lSize.X and
+               mousePos.Y >= lPos.Y and mousePos.Y <= lPos.Y + lSize.Y then
+                return
+            end
+        end
+
+        -- Click was outside — close this dropdown
+        isOpen = false
+        list.Visible = false
+        list.Parent = selectBtn
+        if posConnection then posConnection:Disconnect() posConnection = nil end
+        Tween(arrow, {Rotation = 0})
+
+        -- Remove from Library.OpenDropdowns
+        for i = #self.OpenDropdowns, 1, -1 do
+            local d = self.OpenDropdowns[i]
+            if d and d._selectBtn == selectBtn then
+                table.remove(self.OpenDropdowns, i)
+                break
+            end
+        end
+    end)
+
     selectBtn.Destroying:Connect(function()
+        if inputCloseConn then inputCloseConn:Disconnect() inputCloseConn = nil end
         if posConnection then posConnection:Disconnect() end
         list:Destroy()
     end)
@@ -1129,10 +1175,23 @@ function Library:Unload()
     -- Turn off all toggles to trigger their cleanup callbacks
     pcall(function()
         for flag, toggle in pairs(self.Toggles) do
-            if toggle.SetValue and toggle._state then
+            if toggle.SetValue and toggle.Value then
                 pcall(function()
                     toggle:SetValue(false)
                 end)
+            end
+        end
+    end)
+
+    -- Reset player stats that sliders may have changed but have no toggle
+    pcall(function()
+        local char = LocalPlayer and LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed = 16
+                hum.UseJumpPower = true
+                hum.JumpPower = 50
             end
         end
     end)
@@ -3057,10 +3116,23 @@ function Library:Unload()
     -- Turn off all toggles to trigger their cleanup callbacks
     pcall(function()
         for flag, toggle in pairs(self.Toggles) do
-            if toggle.SetValue and toggle._state then
+            if toggle.SetValue and toggle.Value then
                 pcall(function()
                     toggle:SetValue(false)
                 end)
+            end
+        end
+    end)
+
+    -- Reset player stats that sliders may have changed but have no toggle
+    pcall(function()
+        local char = LocalPlayer and LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed = 16
+                hum.UseJumpPower = true
+                hum.JumpPower = 50
             end
         end
     end)
