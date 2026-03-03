@@ -16,6 +16,8 @@ local Library = {
     ScreenGui = nil,
     NotificationContainer = nil,
     Icons = IconsLoaded and Icons or nil,
+    KeybindFrame = nil,
+    KeybindRows = {},
     Theme = {
         Background = Color3.fromRGB(15, 15, 18),
         Sidebar = Color3.fromRGB(12, 12, 14),
@@ -34,6 +36,78 @@ local Library = {
     },
     ToggleKeybind = nil
 }
+
+-- Registers a single row in the floating Keybinds panel.
+-- getKeyFn()   → current Enum.KeyCode
+-- isToggle     → whether to show an ON/OFF badge
+-- getValueFn() → current toggle boolean (only used when isToggle=true)
+function Library:RegisterKeybindRow(name, getKeyFn, isToggle, getValueFn)
+    if not self.KeybindFrame then return end
+    local container = self.KeybindFrame:FindFirstChildWhichIsA("ScrollingFrame")
+    if not container then return end
+
+    local row = Create("Frame", {
+        Size = UDim2.new(1, -8, 0, 20),
+        BackgroundTransparency = 1,
+    })
+
+    local keyBadge = Create("TextLabel", {
+        Size = UDim2.new(0, 48, 1, 0),
+        BackgroundColor3 = self.Theme.Element,
+        Text = "NONE",
+        TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.GothamBold,
+        TextSize = 10,
+        BorderSizePixel = 0,
+        Parent = row,
+    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+
+    local nameLabel = Create("TextLabel", {
+        Size = UDim2.new(1, isToggle and -88 or -54, 1, 0),
+        Position = UDim2.new(0, 54, 0, 0),
+        BackgroundTransparency = 1,
+        Text = name,
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        Parent = row,
+    })
+
+    local stateLabel
+    if isToggle then
+        stateLabel = Create("TextLabel", {
+            Size = UDim2.new(0, 30, 1, 0),
+            Position = UDim2.new(1, -30, 0, 0),
+            BackgroundTransparency = 1,
+            Text = "OFF",
+            TextColor3 = self.Theme.TextMuted,
+            Font = Enum.Font.GothamBold,
+            TextSize = 10,
+            Parent = row,
+        })
+    end
+
+    local function update()
+        local key = getKeyFn()
+        local hasKey = key and key ~= Enum.KeyCode.Unknown
+        row.Visible = hasKey
+        if hasKey then
+            keyBadge.Text = key.Name:upper():sub(1, 6)
+        end
+        if isToggle and stateLabel then
+            local on = getValueFn and getValueFn()
+            stateLabel.Text = on and "ON" or "OFF"
+            stateLabel.TextColor3 = on and self.Theme.Accent or self.Theme.TextMuted
+        end
+    end
+
+    update()
+    row.Parent = container
+    table.insert(self.KeybindRows, {update = update, row = row})
+    return update
+end
 
 -- Game ID lock: call Library:SetGameId(id) or Library:SetGameId({id1, id2})
 -- Checks game.GameId (Universe ID). Shows a notification and halts execution if unauthorized.
@@ -580,11 +654,15 @@ function Library:CreateToggle(parent, options)
             Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
             Tween(indicator, {BackgroundColor3 = val and self.Theme.Accent or self.Theme.ToggleOff})
             callback(val)
+            -- refresh keybind row state badge
+            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
         end,
         SetKeybind = function(s, key)
             keybind = key or Enum.KeyCode.Unknown
             s.Keybind = keybind
             keybindBtn.Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE"
+            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+            if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         end,
     }
     local switchBtn = Create("TextButton", {
@@ -605,6 +683,8 @@ function Library:CreateToggle(parent, options)
             toggleObj.Keybind = input.KeyCode
             keybindBtn.Text = input.KeyCode.Name:upper()
             listening = false
+            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+            if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then
             if not toggleObj._disabled then
                 toggleObj:SetValue(not state)
@@ -613,6 +693,16 @@ function Library:CreateToggle(parent, options)
     end)
     self:ApplyCommonProperties(toggle, options, toggleObj)
     if flag then self.Toggles[flag] = toggleObj end
+    -- Register a row in the keybind panel for this toggle
+    local displayName = flag or toggleName
+    local kbUpdate = self:RegisterKeybindRow(
+        displayName,
+        function() return toggleObj.Keybind end,
+        true,
+        function() return toggleObj.Value end
+    )
+    toggleObj._kbUpdate = kbUpdate
+    if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
     if default then callback(true) end
     return toggleObj
 end
@@ -827,6 +917,23 @@ function Library:CreateKeybind(parent, options)
     
     self:ApplyCommonProperties(keybind, options, keybindObj)
     if flag then self.Options[flag] = keybindObj end
+    -- Register a row in the keybind panel for this standalone keybind
+    local displayName = flag or keybindName
+    local kbUpdate = self:RegisterKeybindRow(
+        displayName,
+        function() return keybindObj.Value end,
+        false,
+        nil
+    )
+    keybindObj._kbUpdate = kbUpdate
+    if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
+    -- Keep panel up-to-date when user changes the key
+    local _origSetValue = keybindObj.SetValue
+    keybindObj.SetValue = function(s, key)
+        _origSetValue(s, key)
+        if kbUpdate then pcall(kbUpdate) end
+        if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
+    end
     return keybindObj
 end
 function Library:CreateDropdown(parent, options)
@@ -1410,6 +1517,102 @@ function Library:CreateWindow(options)
         ResetOnSpawn = false
     })
     self.ScreenGui = gui
+
+    -- Floating Keybinds Panel
+    do
+        local kFrame = Create("Frame", {
+            Name = "KeybindsPanel",
+            Size = UDim2.fromOffset(200, 240),
+            Position = UDim2.new(1, -216, 0.5, -120),
+            BackgroundColor3 = self.Theme.Sidebar,
+            BorderSizePixel = 0,
+            Visible = false,
+            ZIndex = 100,
+            Parent = gui,
+        }, {
+            Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        })
+        local kStroke = Instance.new("UIStroke")
+        kStroke.Color = self.Theme.Border
+        kStroke.Thickness = 1
+        kStroke.Parent = kFrame
+        self:RegisterElement(kFrame, "Sidebar")
+        self:RegisterElement(kStroke, "Border", "Color")
+
+        -- Title bar / drag handle
+        local kTitle = Create("TextLabel", {
+            Size = UDim2.new(1, -12, 0, 28),
+            Position = UDim2.new(0, 12, 0, 0),
+            BackgroundTransparency = 1,
+            Text = "Keybinds",
+            TextColor3 = self.Theme.Text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 101,
+            Parent = kFrame,
+        })
+        self:RegisterElement(kTitle, "Text", "TextColor3")
+
+        local kDivider = Create("Frame", {
+            Size = UDim2.new(1, -16, 0, 1),
+            Position = UDim2.new(0, 8, 0, 28),
+            BackgroundColor3 = self.Theme.Border,
+            BorderSizePixel = 0,
+            ZIndex = 101,
+            Parent = kFrame,
+        })
+        self:RegisterElement(kDivider, "Border")
+
+        local kEmptyLabel = Create("TextLabel", {
+            Name = "EmptyHint",
+            Size = UDim2.new(1, -16, 0, 18),
+            Position = UDim2.new(0, 8, 0, 37),
+            BackgroundTransparency = 1,
+            Text = "No keybinds assigned.",
+            TextColor3 = self.Theme.TextMuted,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 101,
+            Parent = kFrame,
+        })
+        self:RegisterElement(kEmptyLabel, "TextMuted", "TextColor3")
+
+        local kScroll = Create("ScrollingFrame", {
+            Name = "Rows",
+            Size = UDim2.new(1, -8, 1, -38),
+            Position = UDim2.new(0, 4, 0, 34),
+            BackgroundTransparency = 1,
+            ScrollBarThickness = 2,
+            ScrollBarImageColor3 = self.Theme.Border,
+            CanvasSize = UDim2.fromScale(0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            BorderSizePixel = 0,
+            ZIndex = 101,
+            Parent = kFrame,
+        }, {
+            Create("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}),
+            Create("UIPadding", {PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4)}),
+        })
+
+        -- Empty-hint visibility: hide when any row is visible
+        local function refreshEmptyHint()
+            local any = false
+            for _, entry in ipairs(self.KeybindRows) do
+                if entry.row.Visible then any = true break end
+            end
+            kEmptyLabel.Visible = not any
+        end
+        self._refreshKeybindEmptyHint = refreshEmptyHint
+
+        -- Make draggable
+        MakeDraggable(kFrame, kFrame)
+
+        self.KeybindFrame = kFrame
+        self._kEmptyLabel = kEmptyLabel
+    end
+
     local viewport = workspace.CurrentCamera.ViewportSize
     local isSmallScreen = viewport.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
     local initialWidth = 680
@@ -3125,51 +3328,17 @@ function Library:CreateWindow(options)
             end
         })
 
-        -- Active Keybinds Section
-        local KeybindsGroup = SettingsTab:AddRightSection("Active Keybinds", "keyboard")
-        local keybindLabels = {}
-        local keybindStatusLabel = KeybindsGroup:AddLabel({ Text = "Press Refresh to load keybinds." })
-
-        KeybindsGroup:AddButton({
-            Name = "Refresh Keybinds",
-            Callback = function()
-                -- Destroy previously generated labels
-                for _, lbl in ipairs(keybindLabels) do
-                    if lbl and lbl.Instance and lbl.Instance.Parent then
-                        lbl.Instance:Destroy()
-                    end
-                end
-                keybindLabels = {}
-
-                local list = {}
-
-                -- Collect keybinds from Toggles
-                for flag, toggle in pairs(Library.Toggles) do
-                    local ignoreFlags = {
-                        BuiltIn_WalkSpeedToggle = true, BuiltIn_Fly = true,
-                        BuiltIn_AntiAFK = true, BuiltIn_FPSBoost = true,
-                        BuiltIn_AutoHideUI = true, SaveManager_AccountExclusive = true,
-                        SaveManager_ApplyAutoload = true,
-                    }
-                    if not ignoreFlags[flag] and toggle.Keybind and toggle.Keybind ~= Enum.KeyCode.Unknown then
-                        table.insert(list, { name = flag, key = toggle.Keybind.Name })
-                    end
-                end
-
-                -- Collect standalone Keybind elements
-                for flag, option in pairs(Library.Options) do
-                    if option.Type == "Keybind" and option.Value and option.Value ~= Enum.KeyCode.Unknown then
-                        table.insert(list, { name = flag, key = option.Value.Name })
-                    end
-                end
-
-                if #list == 0 then
-                    keybindStatusLabel:SetText("No active keybinds assigned.")
-                else
-                    keybindStatusLabel:SetText("Active keybinds (" .. #list .. "):")
-                    for _, entry in ipairs(list) do
-                        local lbl = KeybindsGroup:AddLabel({ Text = entry.name .. "  →  " .. entry.key })
-                        table.insert(keybindLabels, lbl)
+        -- Keybinds panel toggle
+        UIGroup:AddToggle({
+            Name = "Show Keybinds Panel",
+            Default = false,
+            Flag = "BuiltIn_ShowKeybinds",
+            Tooltip = "Show/hide the floating keybinds list",
+            Callback = function(v)
+                if Library.KeybindFrame then
+                    Library.KeybindFrame.Visible = v
+                    if v and Library._refreshKeybindEmptyHint then
+                        Library._refreshKeybindEmptyHint()
                     end
                 end
             end
