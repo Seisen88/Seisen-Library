@@ -46,12 +46,19 @@ function Library:RegisterKeybindRow(name, getKeyFn, isToggle, getValueFn)
     local container = self.KeybindFrame:FindFirstChildWhichIsA("ScrollingFrame")
     if not container then return end
 
-    local row = Create("Frame", {
+    local function newInst(class, props)
+        local inst = Instance.new(class)
+        for k, v in pairs(props) do inst[k] = v end
+        return inst
+    end
+
+    local row = newInst("Frame", {
         Size = UDim2.new(1, -8, 0, 20),
         BackgroundTransparency = 1,
+        BorderSizePixel = 0,
     })
 
-    local keyBadge = Create("TextLabel", {
+    local keyBadge = newInst("TextLabel", {
         Size = UDim2.new(0, 48, 1, 0),
         BackgroundColor3 = self.Theme.Element,
         Text = "NONE",
@@ -60,12 +67,14 @@ function Library:RegisterKeybindRow(name, getKeyFn, isToggle, getValueFn)
         TextSize = 10,
         BorderSizePixel = 0,
         Parent = row,
-    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+    })
+    newInst("UICorner", {CornerRadius = UDim.new(0, 4), Parent = keyBadge})
 
-    local nameLabel = Create("TextLabel", {
+    local nameLabel = newInst("TextLabel", {
         Size = UDim2.new(1, isToggle and -88 or -54, 1, 0),
         Position = UDim2.new(0, 54, 0, 0),
         BackgroundTransparency = 1,
+        BorderSizePixel = 0,
         Text = name,
         TextColor3 = self.Theme.Text,
         Font = Enum.Font.Gotham,
@@ -77,10 +86,11 @@ function Library:RegisterKeybindRow(name, getKeyFn, isToggle, getValueFn)
 
     local stateLabel
     if isToggle then
-        stateLabel = Create("TextLabel", {
+        stateLabel = newInst("TextLabel", {
             Size = UDim2.new(0, 30, 1, 0),
             Position = UDim2.new(1, -30, 0, 0),
             BackgroundTransparency = 1,
+            BorderSizePixel = 0,
             Text = "OFF",
             TextColor3 = self.Theme.TextMuted,
             Font = Enum.Font.GothamBold,
