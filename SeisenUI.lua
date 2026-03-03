@@ -2408,15 +2408,21 @@ function Library:CreateWindow(options)
             Size = UDim2.new(1, -20, 1, -55),
             Position = UDim2.new(0, 10, 0, 50),
             BackgroundTransparency = 1,
-            ScrollBarThickness = 2,
+            ScrollBarThickness = isSmallScreen and 4 or 2,
             ScrollBarImageColor3 = theme.Accent,
+            ScrollingDirection = Enum.ScrollingDirection.Y,
             Visible = false,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
+            CanvasSize = UDim2.fromScale(0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
             Parent = pages
         })
+        local leftColSize = isSmallScreen and UDim2.new(1, -10, 0, 0) or UDim2.new(0.5, -5, 0, 0)
+        local rightColSize = isSmallScreen and UDim2.new(0, 0, 0, 0) or UDim2.new(0.5, -5, 0, 0)
+        local rightColPos  = isSmallScreen and UDim2.new(0, 0, 0, 0) or UDim2.new(0.5, 5, 0, 0)
         local leftCol = Create("Frame", {
             Name = "Left",
-            Size = UDim2.new(0.5, -5, 1, 0),
+            Size = leftColSize,
+            AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
             Parent = page
         }, {
@@ -2424,24 +2430,14 @@ function Library:CreateWindow(options)
         })
         local rightCol = Create("Frame", {
             Name = "Right",
-            Size = UDim2.new(0.5, -5, 1, 0),
-            Position = UDim2.new(0.5, 5, 0, 0),
+            Size = rightColSize,
+            Position = rightColPos,
+            AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
             Parent = page
         }, {
             Create("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder})
         })
-        local updateThread
-        local function updateCanvas()
-            if updateThread then task.cancel(updateThread) end
-            updateThread = task.defer(function()
-                local leftH = leftCol:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
-                local rightH = rightCol:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y
-                page.CanvasSize = UDim2.new(0, 0, 0, math.max(leftH, rightH) + 10)
-            end)
-        end
-        leftCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-        rightCol:FindFirstChildOfClass("UIListLayout"):GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
         local function activate()
             if activeTab == tabBtn then return end
             for _, t in pairs(tabList:GetChildren()) do
@@ -2494,7 +2490,7 @@ function Library:CreateWindow(options)
                 side = sectionOptions.Side or "Left"
                 sectionIconName = sectionOptions.Icon
             end
-            local parent = (side == "Right") and rightCol or leftCol
+            local parent = (not isSmallScreen and side == "Right") and rightCol or leftCol
             local section = Create("Frame", {
                 Name = sectionName,
                 Size = UDim2.new(1, 0, 0, 0),
