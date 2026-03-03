@@ -3125,7 +3125,55 @@ function Library:CreateWindow(options)
             end
         })
 
+        -- Active Keybinds Section
+        local KeybindsGroup = SettingsTab:AddRightSection("Active Keybinds", "keyboard")
+        local keybindLabels = {}
+        local keybindStatusLabel = KeybindsGroup:AddLabel({ Text = "Press Refresh to load keybinds." })
 
+        KeybindsGroup:AddButton({
+            Name = "Refresh Keybinds",
+            Callback = function()
+                -- Destroy previously generated labels
+                for _, lbl in ipairs(keybindLabels) do
+                    if lbl and lbl.Instance and lbl.Instance.Parent then
+                        lbl.Instance:Destroy()
+                    end
+                end
+                keybindLabels = {}
+
+                local list = {}
+
+                -- Collect keybinds from Toggles
+                for flag, toggle in pairs(Library.Toggles) do
+                    local ignoreFlags = {
+                        BuiltIn_WalkSpeedToggle = true, BuiltIn_Fly = true,
+                        BuiltIn_AntiAFK = true, BuiltIn_FPSBoost = true,
+                        BuiltIn_AutoHideUI = true, SaveManager_AccountExclusive = true,
+                        SaveManager_ApplyAutoload = true,
+                    }
+                    if not ignoreFlags[flag] and toggle.Keybind and toggle.Keybind ~= Enum.KeyCode.Unknown then
+                        table.insert(list, { name = flag, key = toggle.Keybind.Name })
+                    end
+                end
+
+                -- Collect standalone Keybind elements
+                for flag, option in pairs(Library.Options) do
+                    if option.Type == "Keybind" and option.Value and option.Value ~= Enum.KeyCode.Unknown then
+                        table.insert(list, { name = flag, key = option.Value.Name })
+                    end
+                end
+
+                if #list == 0 then
+                    keybindStatusLabel:SetText("No active keybinds assigned.")
+                else
+                    keybindStatusLabel:SetText("Active keybinds (" .. #list .. "):")
+                    for _, entry in ipairs(list) do
+                        local lbl = KeybindsGroup:AddLabel({ Text = entry.name .. "  →  " .. entry.key })
+                        table.insert(keybindLabels, lbl)
+                    end
+                end
+            end
+        })
 
     end
     -- Reset so the first user-defined tab (not the built-in Settings tab) activates by default
