@@ -571,6 +571,7 @@ function Library:CreateToggle(parent, options)
     })
     local toggleObj = {
         Value = state,
+        Keybind = keybind,
         Type = "Toggle",
         SetValue = function(s, val)
             state = val
@@ -579,7 +580,12 @@ function Library:CreateToggle(parent, options)
             Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
             Tween(indicator, {BackgroundColor3 = val and self.Theme.Accent or self.Theme.ToggleOff})
             callback(val)
-        end
+        end,
+        SetKeybind = function(s, key)
+            keybind = key or Enum.KeyCode.Unknown
+            s.Keybind = keybind
+            keybindBtn.Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE"
+        end,
     }
     local switchBtn = Create("TextButton", {
         Size = UDim2.new(1, 0, 1, 0),
@@ -596,6 +602,7 @@ function Library:CreateToggle(parent, options)
     UserInputService.InputBegan:Connect(function(input, processed)
         if listening and input.UserInputType == Enum.UserInputType.Keyboard then
             keybind = input.KeyCode
+            toggleObj.Keybind = input.KeyCode
             keybindBtn.Text = input.KeyCode.Name:upper()
             listening = false
         elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then

@@ -12,12 +12,33 @@ local SaveManager = {} do
     SaveManager.Parser = {
         Toggle = {
             Save = function(idx, object)
-                return { type = "Toggle", idx = idx, value = object.Value }
+                local keybindName = nil
+                if object.Keybind and object.Keybind ~= Enum.KeyCode.Unknown then
+                    keybindName = object.Keybind.Name
+                end
+                return { type = "Toggle", idx = idx, value = object.Value, keybind = keybindName }
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Toggles[idx]
                 if object then
                     object:SetValue(data.value)
+                    if data.keybind and object.SetKeybind then
+                        local key = Enum.KeyCode[data.keybind]
+                        if key then object:SetKeybind(key) end
+                    end
+                end
+            end,
+        },
+        Keybind = {
+            Save = function(idx, object)
+                local keyName = (object.Value and object.Value ~= Enum.KeyCode.Unknown) and object.Value.Name or "Unknown"
+                return { type = "Keybind", idx = idx, value = keyName }
+            end,
+            Load = function(idx, data)
+                local object = SaveManager.Library.Options[idx]
+                if object and data.value then
+                    local key = Enum.KeyCode[data.value]
+                    if key then object:SetValue(key) end
                 end
             end,
         },
