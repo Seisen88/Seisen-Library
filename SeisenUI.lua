@@ -665,13 +665,13 @@ function Library:CreateToggle(parent, options)
             Tween(indicator, {BackgroundColor3 = val and self.Theme.Accent or self.Theme.ToggleOff})
             callback(val)
             -- refresh keybind row state badge
-            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+            if s._kbUpdate then pcall(s._kbUpdate) end
         end,
         SetKeybind = function(s, key)
             keybind = key or Enum.KeyCode.Unknown
             s.Keybind = keybind
             keybindBtn.Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE"
-            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+            if s._kbUpdate then pcall(s._kbUpdate) end
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         end,
     }
