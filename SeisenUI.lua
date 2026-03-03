@@ -1533,7 +1533,7 @@ function Library:CreateWindow(options)
         local kFrame = Create("Frame", {
             Name = "KeybindsPanel",
             Size = UDim2.fromOffset(200, 240),
-            Position = UDim2.new(1, -216, 0.5, -120),
+            Position = UDim2.new(0, 16, 0.5, -120),
             BackgroundColor3 = self.Theme.Sidebar,
             BorderSizePixel = 0,
             Visible = false,
