@@ -683,16 +683,20 @@ function Library:CreateToggle(parent, options)
     })
     switchBtn.MouseButton1Click:Connect(function() toggleObj:SetValue(not state) end)
     local listening = false
+    local lastKeybindClick = 0
     keybindBtn.MouseButton1Click:Connect(function()
-        if listening then
-            -- Second tap (mobile: no keyboard) = clear keybind to NONE
+        local now = tick()
+        if listening or (now - lastKeybindClick < 0.35) then
+            -- Double-click OR second tap while listening = clear keybind to NONE
             listening = false
+            lastKeybindClick = 0
             keybind = Enum.KeyCode.Unknown
             toggleObj.Keybind = Enum.KeyCode.Unknown
             keybindBtn.Text = "NONE"
             if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         else
+            lastKeybindClick = now
             listening = true
             keybindBtn.Text = "..."
         end
@@ -919,8 +923,19 @@ function Library:CreateKeybind(parent, options)
         end
     }
     
+    local lastKeyBtnClick = 0
     keyButton.MouseButton1Click:Connect(function()
-        if listening then return end
+        local now = tick()
+        if listening or (now - lastKeyBtnClick < 0.35) then
+            -- Double-click OR second tap while listening = clear keybind to NONE
+            listening = false
+            lastKeyBtnClick = 0
+            keybindObj:SetValue(Enum.KeyCode.Unknown)
+            keyButton.Text = "NONE"
+            keyButton.TextColor3 = self.Theme.TextDim
+            return
+        end
+        lastKeyBtnClick = now
         listening = true
         keyButton.Text = "..."
         keyButton.TextColor3 = self.Theme.Accent
