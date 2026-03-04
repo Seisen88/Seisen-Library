@@ -633,9 +633,10 @@ function Library:CreateToggle(parent, options)
         Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
         Create("UIStroke", {Color = Color3.new(0,0,0), Transparency = 0.9, Thickness = 1})
     })
+    -- Layout from right edge: [switchBg -36..0] [clearBtn -55..-39] [keybindBtn -100..-60]
     local keybindBtn = Create("TextButton", {
         Size = UDim2.new(0, 40, 0, 16),
-        Position = UDim2.new(1, -85, 0.5, -8),
+        Position = UDim2.new(1, -100, 0.5, -8),
         BackgroundColor3 = self.Theme.Element,
         Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE",
         TextColor3 = self.Theme.TextDim,
@@ -645,10 +646,10 @@ function Library:CreateToggle(parent, options)
         ZIndex = 2,
         Parent = toggle
     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
-    -- ✕ clear button: appears next to keybindBtn when a key is set
+    -- ✕ clear button: sits between keybindBtn and the toggle switch
     local clearBtn = Create("TextButton", {
         Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(1, -44, 0.5, -8),
+        Position = UDim2.new(1, -55, 0.5, -8),
         BackgroundColor3 = Color3.fromRGB(180, 60, 60),
         Text = "✕",
         TextColor3 = Color3.fromRGB(255, 255, 255),
