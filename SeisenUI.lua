@@ -684,15 +684,32 @@ function Library:CreateToggle(parent, options)
     switchBtn.MouseButton1Click:Connect(function() toggleObj:SetValue(not state) end)
     local listening = false
     keybindBtn.MouseButton1Click:Connect(function()
-        listening = true
-        keybindBtn.Text = "..."
+        if listening then
+            -- Second tap (mobile: no keyboard) = clear keybind to NONE
+            listening = false
+            keybind = Enum.KeyCode.Unknown
+            toggleObj.Keybind = Enum.KeyCode.Unknown
+            keybindBtn.Text = "NONE"
+            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+            if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
+        else
+            listening = true
+            keybindBtn.Text = "..."
+        end
     end)
     UserInputService.InputBegan:Connect(function(input, processed)
         if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-            keybind = input.KeyCode
-            toggleObj.Keybind = input.KeyCode
-            keybindBtn.Text = input.KeyCode.Name:upper()
             listening = false
+            if input.KeyCode == Enum.KeyCode.Backspace then
+                -- Backspace = clear the keybind (set to NONE)
+                keybind = Enum.KeyCode.Unknown
+                toggleObj.Keybind = Enum.KeyCode.Unknown
+                keybindBtn.Text = "NONE"
+            else
+                keybind = input.KeyCode
+                toggleObj.Keybind = input.KeyCode
+                keybindBtn.Text = input.KeyCode.Name:upper()
+            end
             if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then
