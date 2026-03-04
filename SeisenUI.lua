@@ -651,7 +651,7 @@ function Library:CreateToggle(parent, options)
         Size = UDim2.new(0, 16, 0, 16),
         Position = UDim2.new(1, -55, 0.5, -8),
         BackgroundColor3 = Color3.fromRGB(180, 60, 60),
-        Text = "✕",
+        Text = "X",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 9,
