@@ -635,7 +635,7 @@ function Library:CreateToggle(parent, options)
     })
     local keybindBtn = Create("TextButton", {
         Size = UDim2.new(0, 40, 0, 16),
-        Position = UDim2.new(1, -85, 0.5, -8), 
+        Position = UDim2.new(1, -85, 0.5, -8),
         BackgroundColor3 = self.Theme.Element,
         Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE",
         TextColor3 = self.Theme.TextDim,
@@ -643,6 +643,20 @@ function Library:CreateToggle(parent, options)
         TextSize = 10,
         AutoButtonColor = false,
         ZIndex = 2,
+        Parent = toggle
+    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+    -- ✕ clear button: appears next to keybindBtn when a key is set
+    local clearBtn = Create("TextButton", {
+        Size = UDim2.new(0, 16, 0, 16),
+        Position = UDim2.new(1, -44, 0.5, -8),
+        BackgroundColor3 = Color3.fromRGB(180, 60, 60),
+        Text = "✕",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 9,
+        AutoButtonColor = false,
+        ZIndex = 3,
+        Visible = (keybind ~= Enum.KeyCode.Unknown),
         Parent = toggle
     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
     self:RegisterElement(keybindBtn, "Element")
@@ -653,6 +667,9 @@ function Library:CreateToggle(parent, options)
             Tween(indicator, {BackgroundColor3 = state and tTheme.Accent or tTheme.ToggleOff})
         end
     })
+    local function updateClearBtn()
+        clearBtn.Visible = (keybind ~= Enum.KeyCode.Unknown)
+    end
     local toggleObj = {
         Value = state,
         Keybind = keybind,
@@ -664,13 +681,13 @@ function Library:CreateToggle(parent, options)
             Tween(knob, {Position = val and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
             Tween(indicator, {BackgroundColor3 = val and self.Theme.Accent or self.Theme.ToggleOff})
             callback(val)
-            -- refresh keybind row state badge
             if s._kbUpdate then pcall(s._kbUpdate) end
         end,
         SetKeybind = function(s, key)
             keybind = key or Enum.KeyCode.Unknown
             s.Keybind = keybind
             keybindBtn.Text = (keybind ~= Enum.KeyCode.Unknown) and keybind.Name:upper() or "NONE"
+            updateClearBtn()
             if s._kbUpdate then pcall(s._kbUpdate) end
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         end,
@@ -683,23 +700,20 @@ function Library:CreateToggle(parent, options)
     })
     switchBtn.MouseButton1Click:Connect(function() toggleObj:SetValue(not state) end)
     local listening = false
-    local lastKeybindClick = 0
+    -- Clicking the keybind button enters listening mode
     keybindBtn.MouseButton1Click:Connect(function()
-        local now = tick()
-        if listening or (now - lastKeybindClick < 0.35) then
-            -- Double-click OR second tap while listening = clear keybind to NONE
-            listening = false
-            lastKeybindClick = 0
-            keybind = Enum.KeyCode.Unknown
-            toggleObj.Keybind = Enum.KeyCode.Unknown
-            keybindBtn.Text = "NONE"
-            if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
-            if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
-        else
-            lastKeybindClick = now
-            listening = true
-            keybindBtn.Text = "..."
-        end
+        listening = true
+        keybindBtn.Text = "..."
+    end)
+    -- ✕ button: instantly clears the keybind (works on desktop + mobile)
+    clearBtn.MouseButton1Click:Connect(function()
+        listening = false
+        keybind = Enum.KeyCode.Unknown
+        toggleObj.Keybind = Enum.KeyCode.Unknown
+        keybindBtn.Text = "NONE"
+        updateClearBtn()
+        if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+        if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
     end)
     UserInputService.InputBegan:Connect(function(input, processed)
         if listening and input.UserInputType == Enum.UserInputType.Keyboard then
@@ -714,6 +728,7 @@ function Library:CreateToggle(parent, options)
                 toggleObj.Keybind = input.KeyCode
                 keybindBtn.Text = input.KeyCode.Name:upper()
             end
+            updateClearBtn()
             if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then
@@ -923,38 +938,56 @@ function Library:CreateKeybind(parent, options)
         end
     }
     
-    local lastKeyBtnClick = 0
+    local keybindClearBtn = Create("TextButton", {
+        Size = UDim2.new(0, 24, 0, 28),
+        Position = UDim2.new(1, -24, 0.5, -14),
+        BackgroundColor3 = Color3.fromRGB(180, 60, 60),
+        Text = "✕",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 11,
+        AutoButtonColor = false,
+        ZIndex = 3,
+        Visible = (currentKey ~= Enum.KeyCode.Unknown),
+        Parent = keybind
+    }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+    local function updateKeybindClearBtn()
+        keybindClearBtn.Visible = (currentKey ~= Enum.KeyCode.Unknown)
+    end
+    -- Patch SetValue to show "NONE" and update clear button visibility
+    local _baseSetValue = keybindObj.SetValue
+    keybindObj.SetValue = function(s, key)
+        currentKey = key
+        s.Value = key
+        keyButton.Text = (key ~= Enum.KeyCode.Unknown) and key.Name:upper() or "NONE"
+        updateKeybindClearBtn()
+        callback(key)
+    end
     keyButton.MouseButton1Click:Connect(function()
-        local now = tick()
-        if listening or (now - lastKeyBtnClick < 0.35) then
-            -- Double-click OR second tap while listening = clear keybind to NONE
-            listening = false
-            lastKeyBtnClick = 0
-            keybindObj:SetValue(Enum.KeyCode.Unknown)
-            keyButton.Text = "NONE"
-            keyButton.TextColor3 = self.Theme.TextDim
-            return
-        end
-        lastKeyBtnClick = now
+        if listening then return end
         listening = true
         keyButton.Text = "..."
         keyButton.TextColor3 = self.Theme.Accent
-        
         local connection
         connection = UserInputService.InputBegan:Connect(function(input, processed)
             if input.UserInputType == Enum.UserInputType.Keyboard then
                 connection:Disconnect()
                 listening = false
-                
                 local newKey = input.KeyCode
                 if newKey == Enum.KeyCode.Escape or newKey == Enum.KeyCode.Backspace then
                     newKey = Enum.KeyCode.Unknown
                 end
-                
                 keybindObj:SetValue(newKey)
                 keyButton.TextColor3 = self.Theme.TextDim
             end
         end)
+    end)
+    -- ✕ clear button: instantly clears on desktop + mobile
+    keybindClearBtn.MouseButton1Click:Connect(function()
+        listening = false
+        keybindObj:SetValue(Enum.KeyCode.Unknown)
+        keyButton.Text = "NONE"
+        keyButton.TextColor3 = self.Theme.TextDim
     end)
     
     self:ApplyCommonProperties(keybind, options, keybindObj)
