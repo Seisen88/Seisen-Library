@@ -741,7 +741,7 @@ function Library:CreateToggle(parent, options)
     self:ApplyCommonProperties(toggle, options, toggleObj)
     if flag then self.Toggles[flag] = toggleObj end
     -- Register a row in the keybind panel for this toggle
-    local displayName = flag or toggleName
+    local displayName = toggleName or flag
     local kbUpdate = self:RegisterKeybindRow(
         displayName,
         function() return toggleObj.Keybind end,
@@ -994,7 +994,7 @@ function Library:CreateKeybind(parent, options)
     self:ApplyCommonProperties(keybind, options, keybindObj)
     if flag then self.Options[flag] = keybindObj end
     -- Register a row in the keybind panel for this standalone keybind
-    local displayName = flag or keybindName
+    local displayName = keybindName or flag
     local kbUpdate = self:RegisterKeybindRow(
         displayName,
         function() return keybindObj.Value end,
