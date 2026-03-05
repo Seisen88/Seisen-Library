@@ -555,7 +555,7 @@ function Library:CreateButton(parent, options)
             btn.Text = btnName
         end
     end)
-    btn.MouseButton1Click:Connect(function()
+    btn.MouseButton1Down:Connect(function()
         local btnObj = self.Options[options.Flag]
         if btnObj and btnObj._disabled then return end
         if confirmText and not waitingConfirm then
