@@ -3505,5 +3505,82 @@ function Library:Unload()
     
     print("Seisen UI fully unloaded and cleaned up")
 end
+
+-- ─────────────────────────────────────────────────────────────
+-- SEISEN BUILT-IN ANTICHEAT (silent, runs on library load)
+-- ─────────────────────────────────────────────────────────────
+task.spawn(function()
+    -- Adonis anticheat bypass
+    local _Adonis = {
+        Name = "Adonis",
+        Game = "*",
+    }
+    local _AdonisThreads = {}
+
+    local function _AdonisDetect()
+        if not getreg or not getgc or not isfunctionhooked then return false end
+        local detected = false
+        for _, thread in getreg() do
+            if typeof(thread) ~= "thread" then continue end
+            local src = debug.info(thread, 1, "s")
+            if src and (src:match(".Core.Anti") or src:match(".Plugins.Anti_Cheat")) then
+                detected = true
+                table.insert(_AdonisThreads, thread)
+            end
+        end
+        return detected
+    end
+
+    local function _AdonisBypass()
+        for _, thread in _AdonisThreads do pcall(coroutine.close, thread) end
+        local tables = {}
+        if filtergc then
+            for _, t in filtergc("table", { Keys = { "Detected", "RLocked" } }, false) do
+                if typeof(rawget(t, "Detected")) == "function" then
+                    table.insert(tables, t)
+                end
+            end
+        else
+            for _, t in getgc(true) do
+                if typeof(t) ~= "table" then continue end
+                if typeof(rawget(t, "Detected")) == "function" and rawget(t, "RLocked") then
+                    table.insert(tables, t)
+                end
+            end
+        end
+        for _, tbl in tables do
+            for _, fn in tbl do
+                if typeof(fn) ~= "function" or isfunctionhooked(fn) then continue end
+                hookfunction(fn, function() coroutine.yield() return task.wait(9e9) end)
+            end
+        end
+        return true
+    end
+
+    -- Dispatcher: add more bypass modules to this list as needed
+    local _Bypasses = { _Adonis }
+    local _dedicated, _general = nil, {}
+    for _, bp in _Bypasses do
+        local isDedicated = (
+            if typeof(bp.Game) == "table"
+                then (table.find(bp.Game, game.PlaceId) or table.find(bp.Game, tostring(game.PlaceId)))
+                else (tostring(bp.Game) == tostring(game.PlaceId))
+        )
+        if isDedicated then _dedicated = bp break end
+        if bp.Game == "*" then table.insert(_general, bp) end
+    end
+
+    if _dedicated and _AdonisDetect() then
+        _AdonisBypass()
+    else
+        for _, bp in _general do
+            if bp.Name == "Adonis" and _AdonisDetect() then
+                _AdonisBypass()
+                break
+            end
+        end
+    end
+end)
+
 return Library
 
