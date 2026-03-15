@@ -346,7 +346,7 @@ local SaveManager = {} do
         section:AddToggle({
             Name = "Account Exclusive",
             Flag = "SaveManager_AccountExclusive",
-            Default = true,
+            Default = false,
         })
 
         section:AddToggle({
