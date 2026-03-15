@@ -5,7 +5,7 @@ local Players = cloneref(game:GetService("Players"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
 local SaveManager = {} do
-    SaveManager.Folder = "SeisenSettings"
+    SaveManager.Folder = "Seisen Hub"
     SaveManager.SubFolder = ""
     SaveManager.Ignore = {}
     SaveManager.Library = nil
