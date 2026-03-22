@@ -231,6 +231,7 @@ function Library:Notify(notifyOpts)
     local nContent  = notifyOpts.Content  or ""
     local nDuration = notifyOpts.Duration or 3
     local nImage    = notifyOpts.Image    or "rbxassetid://10709791437"
+    local nColor    = notifyOpts.Color
     local theme     = self.Theme
 
     -- Create a standalone container if CreateWindow hasn't been called yet
@@ -269,16 +270,18 @@ function Library:Notify(notifyOpts)
         ClipsDescendants = true
     }, {
         Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-        Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+        Create("UIStroke", {Color = nColor or theme.Border, Thickness = 1}),
         Create("UIPadding", {PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12)})
     })
     self:RegisterElement(notifyFrame, "Background")
-    self:RegisterElement(notifyFrame:FindFirstChild("UIStroke"), "Border", "Color")
+    if not nColor then
+        self:RegisterElement(notifyFrame:FindFirstChild("UIStroke"), "Border", "Color")
+    end
     local icon = Create("ImageLabel", {
         Size = UDim2.new(0, 20, 0, 20),
         Position = UDim2.new(0, 0, 0, 2),
         BackgroundTransparency = 1,
-        ImageColor3 = theme.Accent,
+        ImageColor3 = nColor or theme.Accent,
         Parent = notifyFrame
     })
     self:ApplyIcon(icon, nImage)
@@ -287,7 +290,7 @@ function Library:Notify(notifyOpts)
         Position = UDim2.new(0, 30, 0, 0),
         BackgroundTransparency = 1,
         Text = nTitle,
-        TextColor3 = theme.Text,
+        TextColor3 = nColor or theme.Text,
         Font = Enum.Font.GothamBold,
         TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -315,7 +318,7 @@ function Library:Notify(notifyOpts)
     })
     local bar = Create("Frame", {
         Size = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = theme.Accent,
+        BackgroundColor3 = nColor or theme.Accent,
         BorderSizePixel = 0,
         Parent = barBg
     })
