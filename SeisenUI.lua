@@ -3286,68 +3286,61 @@ function Library:CreateWindow(options)
         })
         PlayerGroup:AddDivider()
         local antiAfk = false
-        local lastActivity = tick()
+        local antiAfkThreads = {}
         PlayerGroup:AddToggle({
             Name = "Anti-AFK",
             Default = false,
             Flag = "BuiltIn_AntiAFK",
             Callback = function(v)
                 antiAfk = v
-                if antiAfk then
-                    lastActivity = tick()
-                    -- Standard idle prevention (VirtualUser)
-                    task.spawn(function()
-                        local VirtualUser = game:GetService("VirtualUser")
-                        while antiAfk do
-                            pcall(function()
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.zero)
-                            end)
-                            task.wait(30)
-                        end
-                    end)
-                    -- Advanced Activity-based Fallback
-                    task.spawn(function()
-                        local connections = {}
-                        local function reset() lastActivity = tick() end
-                        table.insert(connections, UserInputService.InputBegan:Connect(reset))
-                        table.insert(connections, UserInputService.InputChanged:Connect(reset))
-                        
-                        while antiAfk do
-                            local char = LocalPlayer.Character
-                            local hum = char and char:FindFirstChildOfClass("Humanoid")
-                            if hum and hum.MoveDirection.Magnitude > 0 then
-                                lastActivity = tick()
-                            end
-                            
-                            if tick() - lastActivity > 900 then
-                                lastActivity = tick()
-                                -- Specialized fallback logic (e.g. Anime Ranger)
-                                pcall(function()
-                                    local isLobby = workspace:GetAttribute("IsLobby")
-                                    local repStorage = game:GetService("ReplicatedStorage")
-                                    local afkWorld = repStorage:FindFirstChild("Values") and repStorage.Values:FindFirstChild("AFKWorld")
-                                    
-                                    if afkWorld and afkWorld.Value == false then
-                                        local lobbyRemote = repStorage:FindFirstChild("Remote") and repStorage.Remote:FindFirstChild("Server") and repStorage.Remote.Server:FindFirstChild("Lobby")
-                                        if lobbyRemote then
-                                            if isLobby then
-                                                local teleport = lobbyRemote:FindFirstChild("AFKWorldTeleport")
-                                                if teleport then teleport:FireServer() end
-                                            else
-                                                local startMatch = lobbyRemote:FindFirstChild("StartNewMatch")
-                                                if startMatch then startMatch:FireServer() end
-                                            end
-                                        end
-                                    end
-                                end)
-                            end
-                            task.wait(1)
-                        end
-                        for _, c in ipairs(connections) do c:Disconnect() end
-                    end)
+
+                -- Stop any previously running threads
+                for _, conn in ipairs(antiAfkThreads) do
+                    pcall(function() conn:Disconnect() end)
                 end
-            end
+                antiAfkThreads = {}
+
+                if not antiAfk then return end
+
+                -- ── Thread 1: VirtualUser input simulation ──────────────────
+                -- Fires CaptureController + button presses every 60 s.
+                -- This resets game AFK systems that watch InputBegan/InputChanged.
+                task.spawn(function()
+                    local VirtualUser = game:GetService("VirtualUser")
+                    while antiAfk do
+                        pcall(function()
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.zero)
+                            -- Small mouse movement also fires InputChanged listeners
+                            VirtualUser:MoveMouse(Vector2.new(1, 0))
+                            task.wait(0.05)
+                            VirtualUser:MoveMouse(Vector2.new(-1, 0))
+                        end)
+                        task.wait(60)
+                    end
+                end)
+
+                -- ── Thread 2: Humanoid MoveDirection simulation ──────────────
+                -- Games like the one in question watch Humanoid.MoveDirection.
+                -- We briefly call Humanoid:MoveTo a nearby point so Magnitude > 0
+                -- for a tick, then let it settle. Safe — character barely moves.
+                task.spawn(function()
+                    while antiAfk do
+                        pcall(function()
+                            local char = LocalPlayer.Character
+                            local hum  = char and char:FindFirstChildOfClass("Humanoid")
+                            local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+                            if hum and hrp and hum:GetState() ~= Enum.HumanoidStateType.Dead then
+                                -- Step 1px in the forward direction then immediately stop
+                                local fwd = hrp.CFrame.LookVector
+                                hum:MoveTo(hrp.Position + fwd * 0.5)
+                                task.wait(0.1)
+                                hum:MoveTo(hrp.Position)  -- stop movement
+                            end
+                        end)
+                        task.wait(60)
+                    end
+                end)
         })
 
         -- FPS Boost
