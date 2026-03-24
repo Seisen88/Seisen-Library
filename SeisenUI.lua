@@ -3341,8 +3341,8 @@ function Library:CreateWindow(options)
                         task.wait(60)
                     end
                 end)
+            end
         })
-
         -- FPS Boost
         local fpsBoostEnabled = false
         local originalSettings = {}
