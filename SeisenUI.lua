@@ -855,14 +855,20 @@ function Library:CreateSlider(parent, options)
             callback(clickVal)
             local startPos = i.Position.X
             local startValue = clickVal
+            local lastX = startPos  -- updated by InputChanged for touch support
             local connection
+            local moveConn = UserInputService.InputChanged:Connect(function(mi)
+                if mi.UserInputType == Enum.UserInputType.MouseMovement or mi.UserInputType == Enum.UserInputType.Touch then
+                    lastX = mi.Position.X
+                end
+            end)
             connection = game:GetService("RunService").RenderStepped:Connect(function()
                 if not sliding then
                     connection:Disconnect()
+                    moveConn:Disconnect()
                     return
                 end
-                local mouseProxy = game:GetService("Players").LocalPlayer:GetMouse()
-                local delta = mouseProxy.X - startPos
+                local delta = lastX - startPos
                 local currentBarWidth = bar.AbsoluteSize.X
                 local valueDelta = (delta / currentBarWidth) * (max - min)
                 local rawVal = math.clamp(startValue + valueDelta, min, max)
@@ -881,6 +887,7 @@ function Library:CreateSlider(parent, options)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     sliding = false
                     connection:Disconnect()
+                    moveConn:Disconnect()
                     releaseConnection:Disconnect()
                 end
             end)
@@ -1113,20 +1120,14 @@ function Library:CreateDropdown(parent, options)
     local posConnection
     local function updateListPosition()
         if isOpen and selectBtn and selectBtn.Parent then
-            local scale = self.MainScale and self.MainScale.Scale or 1
-            listScale.Scale = scale
-            
+            -- AbsolutePosition/AbsoluteSize are already in screen pixels.
+            -- The list is parented to ScreenGui (no extra UIScale), so use them directly.
+            -- We DO NOT divide by the MainScale.Scale – that was the mobile bug.
             local absPos = selectBtn.AbsolutePosition
             local absSize = selectBtn.AbsoluteSize
-            
-
-
-
-
-
-            
-            list.Position = UDim2.fromOffset(absPos.X / scale, (absPos.Y + absSize.Y + 5) / scale)
-            list.Size = UDim2.new(0, absSize.X / scale, 0, math.min(#opts * 22 + 10, 150))
+            listScale.Scale = 1  -- list lives at root level; no inherited scale to compensate for
+            list.Position = UDim2.fromOffset(absPos.X, absPos.Y + absSize.Y + 5)
+            list.Size = UDim2.fromOffset(absSize.X, math.min(#opts * 22 + 10, 150))
         end
     end
     local dropObj = {
@@ -1754,32 +1755,38 @@ function Library:CreateWindow(options)
         Parent = sidebar
     })
     self:RegisterElement(sidebarCover, "Sidebar")
+    local btnSize    = isSmallScreen and 20 or 12  -- larger tap target on mobile
+    local iconSize   = isSmallScreen and 12 or 8
+    local iconOffset = isSmallScreen and -6 or -4
+    local ctrlHeight = isSmallScreen and 42 or 30
+    local ctrlPadTop = isSmallScreen and 13 or 10
+    local ctrlGap    = isSmallScreen and 10 or 8
     local controls = Create("Frame", {
         Name = "WindowControls",
-        Size = UDim2.new(1, 0, 0, 30),
+        Size = UDim2.new(1, 0, 0, ctrlHeight),
         BackgroundTransparency = 1,
         Parent = sidebar,
         LayoutOrder = 1
     }, {
-        Create("UIPadding", {PaddingLeft = UDim.new(0, 14), PaddingTop = UDim.new(0, 10)})
+        Create("UIPadding", {PaddingLeft = UDim.new(0, 14), PaddingTop = UDim.new(0, ctrlPadTop)})
     })
     local controlList = Create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 8),
+        Padding = UDim.new(0, ctrlGap),
         Parent = controls
     })
     local function createTrafficLight(color, callback, hoverIcon)
         local btn = Create("TextButton", {
-            Size = UDim2.new(0, 12, 0, 12),
+            Size = UDim2.new(0, btnSize, 0, btnSize),
             BackgroundColor3 = color,
             Text = "",
             AutoButtonColor = false,
             Parent = controls
         }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
         local icon = Create("ImageLabel", {
-            Size = UDim2.new(0, 8, 0, 8),
-            Position = UDim2.new(0.5, -4, 0.5, -4),
+            Size = UDim2.new(0, iconSize, 0, iconSize),
+            Position = UDim2.new(0.5, iconOffset, 0.5, iconOffset),
             BackgroundTransparency = 1,
             Image = hoverIcon,
             ImageTransparency = 1,
@@ -1792,6 +1799,19 @@ function Library:CreateWindow(options)
         btn.MouseLeave:Connect(function() 
             icon.ImageTransparency = 1 
         end)
+        -- On mobile also react to touch for the hover icon hint
+        if isSmallScreen then
+            btn.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.Touch then
+                    icon.ImageTransparency = 0.5
+                end
+            end)
+            btn.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.Touch then
+                    icon.ImageTransparency = 1
+                end
+            end)
+        end
         if callback then
             btn.MouseButton1Click:Connect(callback)
         end
