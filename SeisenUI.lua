@@ -34,7 +34,8 @@ local Library = {
         Toggle = Color3.fromRGB(0, 200, 100),
         ToggleOff = Color3.fromRGB(40, 40, 45)
     },
-    ToggleKeybind = nil
+    ToggleKeybind = nil,
+    IsMobile = false
 }
 
 -- Registers a single row in the floating Keybinds panel.
@@ -601,7 +602,7 @@ function Library:CreateToggle(parent, options)
         Parent = parent
     })
     local toggleLabel = Create("TextLabel", {
-        Size = isSmallScreen and UDim2.new(1, -45, 1, 0) or UDim2.new(1, -90, 1, 0),
+        Size = self.IsMobile and UDim2.new(1, -45, 1, 0) or UDim2.new(1, -90, 1, 0),
         BackgroundTransparency = 1,
         Text = toggleName,
         TextColor3 = self.Theme.Text,
@@ -646,7 +647,7 @@ function Library:CreateToggle(parent, options)
         Font = Enum.Font.Gotham,
         TextSize = 10,
         AutoButtonColor = false,
-        Visible = not isSmallScreen,
+        Visible = not self.IsMobile,
         ZIndex = 2,
         Parent = toggle
     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
@@ -661,7 +662,7 @@ function Library:CreateToggle(parent, options)
         TextSize = 9,
         AutoButtonColor = false,
         ZIndex = 3,
-        Visible = not isSmallScreen and (keybind ~= Enum.KeyCode.Unknown),
+        Visible = not self.IsMobile and (keybind ~= Enum.KeyCode.Unknown),
         Parent = toggle
     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
     self:RegisterElement(keybindBtn, "Element")
@@ -673,7 +674,7 @@ function Library:CreateToggle(parent, options)
         end
     })
     local function updateClearBtn()
-        if isSmallScreen then
+        if self.IsMobile then
             clearBtn.Visible = false
         else
             clearBtn.Visible = (keybind ~= Enum.KeyCode.Unknown)
@@ -1700,6 +1701,7 @@ function Library:CreateWindow(options)
 
     local viewport = workspace.CurrentCamera.ViewportSize
     local isSmallScreen = viewport.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
+    self.IsMobile = isSmallScreen
     local initialWidth = 680
     local initialHeight = 560
     local targetScale = 1
