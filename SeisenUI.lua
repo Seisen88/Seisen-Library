@@ -601,7 +601,7 @@ function Library:CreateToggle(parent, options)
         Parent = parent
     })
     local toggleLabel = Create("TextLabel", {
-        Size = UDim2.new(1, -90, 1, 0),
+        Size = isSmallScreen and UDim2.new(1, -45, 1, 0) or UDim2.new(1, -90, 1, 0),
         BackgroundTransparency = 1,
         Text = toggleName,
         TextColor3 = self.Theme.Text,
@@ -646,6 +646,7 @@ function Library:CreateToggle(parent, options)
         Font = Enum.Font.Gotham,
         TextSize = 10,
         AutoButtonColor = false,
+        Visible = not isSmallScreen,
         ZIndex = 2,
         Parent = toggle
     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
@@ -660,7 +661,7 @@ function Library:CreateToggle(parent, options)
         TextSize = 9,
         AutoButtonColor = false,
         ZIndex = 3,
-        Visible = (keybind ~= Enum.KeyCode.Unknown),
+        Visible = not isSmallScreen and (keybind ~= Enum.KeyCode.Unknown),
         Parent = toggle
     }, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
     self:RegisterElement(keybindBtn, "Element")
@@ -672,7 +673,11 @@ function Library:CreateToggle(parent, options)
         end
     })
     local function updateClearBtn()
-        clearBtn.Visible = (keybind ~= Enum.KeyCode.Unknown)
+        if isSmallScreen then
+            clearBtn.Visible = false
+        else
+            clearBtn.Visible = (keybind ~= Enum.KeyCode.Unknown)
+        end
     end
     local toggleObj = {
         Value = state,
