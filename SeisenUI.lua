@@ -3266,6 +3266,7 @@ function Library:CreateWindow(options)
         })
         PlayerGroup:AddDivider()
         local antiAfk = false
+        local lastActivity = tick()
         PlayerGroup:AddToggle({
             Name = "Anti-AFK",
             Default = false,
@@ -3273,13 +3274,57 @@ function Library:CreateWindow(options)
             Callback = function(v)
                 antiAfk = v
                 if antiAfk then
+                    lastActivity = tick()
+                    -- Standard idle prevention (VirtualUser)
                     task.spawn(function()
                         local VirtualUser = game:GetService("VirtualUser")
                         while antiAfk do
-                            VirtualUser:CaptureController()
-                            VirtualUser:ClickButton2(Vector2.zero)
+                            pcall(function()
+                                VirtualUser:CaptureController()
+                                VirtualUser:ClickButton2(Vector2.zero)
+                            end)
                             task.wait(30)
                         end
+                    end)
+                    -- Advanced Activity-based Fallback
+                    task.spawn(function()
+                        local connections = {}
+                        local function reset() lastActivity = tick() end
+                        table.insert(connections, UserInputService.InputBegan:Connect(reset))
+                        table.insert(connections, UserInputService.InputChanged:Connect(reset))
+                        
+                        while antiAfk do
+                            local char = LocalPlayer.Character
+                            local hum = char and char:FindFirstChildOfClass("Humanoid")
+                            if hum and hum.MoveDirection.Magnitude > 0 then
+                                lastActivity = tick()
+                            end
+                            
+                            if tick() - lastActivity > 900 then
+                                lastActivity = tick()
+                                -- Specialized fallback logic (e.g. Anime Ranger)
+                                pcall(function()
+                                    local isLobby = workspace:GetAttribute("IsLobby")
+                                    local repStorage = game:GetService("ReplicatedStorage")
+                                    local afkWorld = repStorage:FindFirstChild("Values") and repStorage.Values:FindFirstChild("AFKWorld")
+                                    
+                                    if afkWorld and afkWorld.Value == false then
+                                        local lobbyRemote = repStorage:FindFirstChild("Remote") and repStorage.Remote:FindFirstChild("Server") and repStorage.Remote.Server:FindFirstChild("Lobby")
+                                        if lobbyRemote then
+                                            if isLobby then
+                                                local teleport = lobbyRemote:FindFirstChild("AFKWorldTeleport")
+                                                if teleport then teleport:FireServer() end
+                                            else
+                                                local startMatch = lobbyRemote:FindFirstChild("StartNewMatch")
+                                                if startMatch then startMatch:FireServer() end
+                                            end
+                                        end
+                                    end
+                                end)
+                            end
+                            task.wait(1)
+                        end
+                        for _, c in ipairs(connections) do c:Disconnect() end
                     end)
                 end
             end
