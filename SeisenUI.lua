@@ -3477,10 +3477,51 @@ function Library:CreateWindow(options)
             end
         })
 
+        -- ── Expose built-in sections so scripts can inject their own elements ──
+        -- Usage from any script:
+        --   Library.PlayerSettings:AddToggle({ Name = "My Toggle", ... })
+        --   Library.UISettings:AddToggle({ Name = "My Toggle", ... })
+        --   Library:AddToPlayerSettings({ Name = "...", ... }, "Toggle")
+        Library.PlayerSettings  = PlayerGroup
+        Library.UISettings      = UIGroup
+        Library.SettingsTab     = SettingsTab
+
     end
     -- Reset so the first user-defined tab (not the built-in Settings tab) activates by default
     firstTab = true
     return WindowFuncs
+end
+
+-- ── Convenience wrappers ────────────────────────────────────────────────────
+-- Library:AddToPlayerSettings({ Name = "...", ... }, "Toggle"|"Slider"|etc.)
+-- Library:AddToUISettings({ Name = "...", ... }, "Toggle"|"Slider"|etc.)
+-- Supported types: Toggle, Slider, Button, Dropdown, Keybind, Label, Divider
+function Library:AddToPlayerSettings(opts, elementType)
+    if not self.PlayerSettings then
+        warn("[SeisenUI] AddToPlayerSettings called before CreateWindow or ConfigSettings is false.")
+        return
+    end
+    elementType = elementType or "Toggle"
+    local method = "Add" .. elementType
+    if self.PlayerSettings[method] then
+        return self.PlayerSettings[method](self.PlayerSettings, opts)
+    else
+        warn("[SeisenUI] Unknown element type: " .. tostring(elementType))
+    end
+end
+
+function Library:AddToUISettings(opts, elementType)
+    if not self.UISettings then
+        warn("[SeisenUI] AddToUISettings called before CreateWindow or ConfigSettings is false.")
+        return
+    end
+    elementType = elementType or "Toggle"
+    local method = "Add" .. elementType
+    if self.UISettings[method] then
+        return self.UISettings[method](self.UISettings, opts)
+    else
+        warn("[SeisenUI] Unknown element type: " .. tostring(elementType))
+    end
 end
 
 function Library:OnUnload(callback)
