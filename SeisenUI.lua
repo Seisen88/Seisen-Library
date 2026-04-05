@@ -3324,8 +3324,6 @@ function Library:CreateWindow(options)
         local savedEffects   = {}   -- { [obj] = originalEnabled }
         local savedMeshes    = {}   -- { [obj] = originalRenderFidelity }
         local savedMaterials = {}   -- { [obj] = originalMaterial }
-        local savedTextures  = {}
-        local savedDecals    = {}
         local fpsBoostConnection = nil
 
         PlayerGroup:AddToggle({
@@ -3349,23 +3347,12 @@ function Library:CreateWindow(options)
                                 savedMeshes[obj] = obj.RenderFidelity
                             end
                             obj.RenderFidelity = Enum.RenderFidelity.Performance
-                            
-                            if savedTextures[obj] == nil then
-                                savedTextures[obj] = obj.TextureID
-                            end
-                            obj.TextureID = ""
                         end
-                        if obj:IsA("BasePart") and not obj:IsA("Terrain") then
+                        if obj:IsA("BasePart") then
                             if savedMaterials[obj] == nil then
                                 savedMaterials[obj] = obj.Material
                             end
                             obj.Material = Enum.Material.SmoothPlastic
-                        end
-                        if obj:IsA("SurfaceAppearance") or obj:IsA("Decal") or obj:IsA("Texture") then
-                            if savedDecals[obj] == nil then
-                                savedDecals[obj] = obj.Parent
-                            end
-                            obj.Parent = nil
                         end
                     end)
                 end
@@ -3430,22 +3417,6 @@ function Library:CreateWindow(options)
                         end)
                     end
                     savedMaterials = {}
-                    
-                    -- Restore mesh textures
-                    for obj, tex in pairs(savedTextures) do
-                        pcall(function()
-                            if obj and obj.Parent then obj.TextureID = tex end
-                        end)
-                    end
-                    savedTextures = {}
-                    
-                    -- Restore Decals/Textures/SurfaceAppearances
-                    for obj, parent in pairs(savedDecals) do
-                        pcall(function()
-                            if obj then obj.Parent = parent end
-                        end)
-                    end
-                    savedDecals = {}
                 end
             end
         })
