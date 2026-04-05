@@ -3293,61 +3293,29 @@ function Library:CreateWindow(options)
         })
         PlayerGroup:AddDivider()
         local antiAfk = false
-        local antiAfkThreads = {}
+        local antiAfkConnection = nil
         PlayerGroup:AddToggle({
             Name = "Anti-AFK",
             Default = false,
             Flag = "BuiltIn_AntiAFK",
             Callback = function(v)
                 antiAfk = v
-
-                -- Stop any previously running threads
-                for _, conn in ipairs(antiAfkThreads) do
-                    pcall(function() conn:Disconnect() end)
-                end
-                antiAfkThreads = {}
-
-                if not antiAfk then return end
-
-                -- ── Thread 1: VirtualUser input simulation ──────────────────
-                -- Fires CaptureController + button presses every 60 s.
-                -- This resets game AFK systems that watch InputBegan/InputChanged.
-                task.spawn(function()
-                    local VirtualUser = game:GetService("VirtualUser")
-                    while antiAfk do
-                        pcall(function()
-                            VirtualUser:CaptureController()
-                            VirtualUser:ClickButton2(Vector2.zero)
-                            -- Small mouse movement also fires InputChanged listeners
-                            VirtualUser:MoveMouse(Vector2.new(1, 0))
-                            task.wait(0.05)
-                            VirtualUser:MoveMouse(Vector2.new(-1, 0))
-                        end)
-                        task.wait(60)
-                    end
-                end)
-
-                -- ── Thread 2: Humanoid MoveDirection simulation ──────────────
-                -- Games like the one in question watch Humanoid.MoveDirection.
-                -- We briefly call Humanoid:MoveTo a nearby point so Magnitude > 0
-                -- for a tick, then let it settle. Safe — character barely moves.
-                task.spawn(function()
-                    while antiAfk do
-                        pcall(function()
-                            local char = LocalPlayer.Character
-                            local hum  = char and char:FindFirstChildOfClass("Humanoid")
-                            local hrp  = char and char:FindFirstChild("HumanoidRootPart")
-                            if hum and hrp and hum:GetState() ~= Enum.HumanoidStateType.Dead then
-                                -- Step 1px in the forward direction then immediately stop
-                                local fwd = hrp.CFrame.LookVector
-                                hum:MoveTo(hrp.Position + fwd * 0.5)
-                                task.wait(0.1)
-                                hum:MoveTo(hrp.Position)  -- stop movement
+                if antiAfk then
+                    if not antiAfkConnection then
+                        local VirtualUser = game:GetService("VirtualUser")
+                        antiAfkConnection = LocalPlayer.Idled:Connect(function()
+                            if antiAfk then
+                                VirtualUser:CaptureController()
+                                VirtualUser:ClickButton2(Vector2.new())
                             end
                         end)
-                        task.wait(60)
                     end
-                end)
+                else
+                    if antiAfkConnection then
+                        antiAfkConnection:Disconnect()
+                        antiAfkConnection = nil
+                    end
+                end
             end
         })
         -- FPS Boost
@@ -3356,6 +3324,8 @@ function Library:CreateWindow(options)
         local savedEffects   = {}   -- { [obj] = originalEnabled }
         local savedMeshes    = {}   -- { [obj] = originalRenderFidelity }
         local savedMaterials = {}   -- { [obj] = originalMaterial }
+        local fpsBoostConnection = nil
+
         PlayerGroup:AddToggle({
             Name = "FPS Boost",
             Default = false,
@@ -3364,7 +3334,28 @@ function Library:CreateWindow(options)
             Callback = function(v)
                 fpsBoostEnabled = v
                 local Lighting = game:GetService("Lighting")
-                
+
+                local function processObject(obj)
+                    pcall(function()
+                        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+                            if savedEffects[obj] == nil then
+                                savedEffects[obj] = obj.Enabled
+                            end
+                            obj.Enabled = false
+                        elseif obj:IsA("MeshPart") then
+                            if savedMeshes[obj] == nil then
+                                savedMeshes[obj] = obj.RenderFidelity
+                            end
+                            obj.RenderFidelity = Enum.RenderFidelity.Performance
+                        end
+                        if obj:IsA("BasePart") then
+                            if savedMaterials[obj] == nil then
+                                savedMaterials[obj] = obj.Material
+                            end
+                        end
+                    end)
+                end
+
                 if fpsBoostEnabled then
                     -- Save and apply Lighting settings
                     originalSettings.GlobalShadows = Lighting.GlobalShadows
@@ -3374,27 +3365,26 @@ function Library:CreateWindow(options)
                     Lighting.FogEnd = 100000
                     Lighting.Brightness = 1
                     
-                    -- Save and optimise workspace objects
-                    savedEffects   = {}
-                    savedMeshes    = {}
-                    savedMaterials = {}
+                    -- Process existing workspace objects
                     for _, obj in pairs(workspace:GetDescendants()) do
-                        pcall(function()
-                            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-                                savedEffects[obj] = obj.Enabled
-                                obj.Enabled = false
-                            elseif obj:IsA("MeshPart") then
-                                savedMeshes[obj] = obj.RenderFidelity
-                                obj.RenderFidelity = Enum.RenderFidelity.Performance
-                            end
-                            if obj:IsA("BasePart") then
-                                savedMaterials[obj] = obj.Material
+                        processObject(obj)
+                    end
+                    
+                    if not fpsBoostConnection then
+                        fpsBoostConnection = workspace.DescendantAdded:Connect(function(obj)
+                            if fpsBoostEnabled then
+                                processObject(obj)
                             end
                         end)
                     end
                     
                     settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
                 else
+                    if fpsBoostConnection then
+                        fpsBoostConnection:Disconnect()
+                        fpsBoostConnection = nil
+                    end
+
                     -- Restore Lighting
                     if originalSettings.GlobalShadows ~= nil then
                         Lighting.GlobalShadows = originalSettings.GlobalShadows
