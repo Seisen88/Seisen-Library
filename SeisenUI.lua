@@ -3352,7 +3352,6 @@ function Library:CreateWindow(options)
                             if savedMaterials[obj] == nil then
                                 savedMaterials[obj] = obj.Material
                             end
-                            obj.Material = Enum.Material.SmoothPlastic
                         end
                     end)
                 end
