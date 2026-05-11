@@ -3188,16 +3188,19 @@ function Library:CreateWindow(options)
                             end)
                         end
                     else
-                        -- Disable walkspeed - disconnect and reset
+                        -- Disable walkspeed - disconnect and reset only if it was active
+                        local wasActive = false
                         if walkSpeedConnection then
                             walkSpeedConnection:Disconnect()
                             walkSpeedConnection = nil
+                            wasActive = true
                         end
                         if walkSpeedCharConnection then
                             walkSpeedCharConnection:Disconnect()
                             walkSpeedCharConnection = nil
+                            wasActive = true
                         end
-                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                        if wasActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                             LocalPlayer.Character.Humanoid.WalkSpeed = 16
                         end
                     end
@@ -3492,6 +3495,88 @@ function Library:CreateWindow(options)
         Library.UISettings      = UIGroup
         Library.SettingsTab     = SettingsTab
 
+    end
+    -- Optional: add a built-in Supported Games tab that lists continued (left)
+    -- and discontinued (right) games fetched from a remote gamelist.
+    -- Usage: Library:CreateWindow({ ..., SupportedGames = true })
+    if options.SupportedGames then
+        task.spawn(function()
+            local gamesUrl = "https://raw.githubusercontent.com/Ken-884/roblox/main/gamelist.lua"
+            local discUrl  = "https://raw.githubusercontent.com/Ken-884/roblox/main/discontinued.lua"
+            local ok, Games = pcall(function() return loadstring(game:HttpGet(gamesUrl))() end)
+            local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet(discUrl))() end)
+            Games = ok and Games or {}
+            Discontinued = ok2 and Discontinued or {}
+
+            -- Build two lists: continued (not discontinued) and discontinued (from Discontinued table)
+            local continuedList = {}
+            local discontinuedList = {}
+
+            for id, url in pairs(Games) do
+                if Discontinued and Discontinued[id] then
+                    table.insert(discontinuedList, {id = id, url = url})
+                else
+                    table.insert(continuedList, {id = id, url = url})
+                end
+            end
+            -- Include discontinued ids that are not present in Games (ensure overwrite/no-duplication)
+            for id, v in pairs(Discontinued or {}) do
+                if v and not Games[id] then
+                    table.insert(discontinuedList, {id = id, url = nil})
+                end
+            end
+
+            -- Create a tab to display lists
+            local okTab, tab = pcall(function()
+                return WindowFuncs:CreateTab({ Name = "Supported Games", Icon = "gamepad", LayoutOrder = -2 })
+            end)
+            if not okTab or not tab then return end
+
+            local left = tab:AddLeftSection("Continued", "check-circle")
+            local right = tab:AddRightSection("Discontinued", "x-circle")
+
+            left:AddLabel({ Text = "Continued / Supported games:" })
+            right:AddLabel({ Text = "Discontinued games:" })
+
+            local function friendlyNameFromUrl(url)
+                if not url then return nil end
+                local name = url:match("/Script/(.+)$") or url:match("/([^/]+)%.lua$")
+                if name then
+                    name = name:gsub("%%20", " ")
+                    return name
+                end
+                return url
+            end
+
+            for _, g in ipairs(continuedList) do
+                local display = friendlyNameFromUrl(g.url) or ("Game " .. tostring(g.id))
+                local lblText = display .. " [" .. tostring(g.id) .. "]"
+                left:AddButton({
+                    Name = lblText,
+                    Callback = function()
+                        if g.url then
+                            pcall(function()
+                                local s = game:HttpGet(g.url)
+                                loadstring(s)()
+                            end)
+                        else
+                            Library:Notify({ Title = "No Script", Content = "No URL available for " .. tostring(g.id) })
+                        end
+                    end
+                })
+            end
+
+            for _, g in ipairs(discontinuedList) do
+                local display = friendlyNameFromUrl(g.url) or ("Game " .. tostring(g.id))
+                local lblText = display .. " [" .. tostring(g.id) .. "]"
+                right:AddButton({
+                    Name = lblText,
+                    Callback = function()
+                        Library:Notify({ Title = "Discontinued", Content = tostring(g.id) .. " is discontinued." })
+                    end
+                })
+            end
+        end)
     end
     -- Reset so the first user-defined tab (not the built-in Settings tab) activates by default
     firstTab = true
