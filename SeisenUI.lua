@@ -3345,7 +3345,7 @@ function Library:CreateWindow(options)
                                 savedEffects[obj] = obj.Enabled
                             end
                             obj.Enabled = false
-                        elseif obj:IsA("MeshPart") then
+                        elseif obj:IsA("MeshPart") and obj.ClassName ~= "SolidModel" then
                             if savedMeshes[obj] == nil then
                                 savedMeshes[obj] = obj.RenderFidelity
                             end
