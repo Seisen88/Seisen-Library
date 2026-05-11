@@ -3585,7 +3585,7 @@ function Library:CreateWindow(options)
                 local row = Create("Frame", {
                     Size = UDim2.new(1, 0, 1, 0),
                     BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.35,
+                    BackgroundTransparency = 0.18,
                     BorderSizePixel = 0,
                     Active = true,
                 }, {
@@ -3597,7 +3597,7 @@ function Library:CreateWindow(options)
                 local baseColor = row.BackgroundColor3
                 local baseTransparency = row.BackgroundTransparency
                 local hoverColor = theme.ElementHover or theme.Element
-                local hoverTransparency = 0.15
+                local hoverTransparency = 0.08
 
                 row.MouseEnter:Connect(function()
                     Tween(row, {
@@ -3620,26 +3620,39 @@ function Library:CreateWindow(options)
                 end)
 
                 local thumb = Create("ImageLabel", {
-                    Size = UDim2.new(0, 30, 0, 30),
-                    Position = UDim2.new(0, 8, 0.5, -15),
+                    Size = UDim2.new(1, -4, 1, -4),
+                    Position = UDim2.new(0, 2, 0, 2),
                     BackgroundTransparency = 1,
                     Image = "rbxthumb://type=GameIcon&id=" .. tostring(gameId) .. "&w=150&h=150",
+                    ImageTransparency = 0.28,
                     ScaleType = Enum.ScaleType.Crop,
                     Parent = row
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 6)})
                 })
 
+                local overlay = Create("Frame", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundColor3 = Color3.new(0, 0, 0),
+                    BackgroundTransparency = 0.65,
+                    BorderSizePixel = 0,
+                    Parent = row,
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 6)})
+                })
+
                 local nameLabel = Create("TextLabel", {
-                    Size = UDim2.new(1, -48, 1, 0),
-                    Position = UDim2.new(0, 44, 0, 0),
+                    Size = UDim2.new(1, -20, 1, 0),
+                    Position = UDim2.new(0, 10, 0, 0),
                     BackgroundTransparency = 1,
                     Text = gameName,
-                    TextColor3 = isDiscontinued and Color3.fromRGB(255, 130, 130) or theme.Text,
-                    Font = Enum.Font.GothamMedium,
+                    TextColor3 = isDiscontinued and Color3.fromRGB(255, 180, 180) or Color3.fromRGB(255, 255, 255),
+                    Font = Enum.Font.GothamBold,
                     TextSize = 12,
-                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextXAlignment = Enum.TextXAlignment.Center,
+                    TextYAlignment = Enum.TextYAlignment.Center,
                     TextTruncate = Enum.TextTruncate.AtEnd,
+                    TextStrokeTransparency = 0.55,
                     Parent = row
                 })
 
