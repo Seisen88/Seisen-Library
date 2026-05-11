@@ -3508,23 +3508,66 @@ function Library:CreateWindow(options)
             Games = ok and Games or {}
             Discontinued = ok2 and Discontinued or {}
 
+            local GameNameMap = {
+                ["7882829745"] = "Anime Eternal",
+                ["8469926548"] = "Anime Fight",
+                ["9774981774"] = "Anime Re:Ranger X",
+                ["7074860883"] = "Arise Crossover",
+                ["111958650"] = "Arsenal",
+                ["8220767002"] = "Bee Garden",
+                ["5803093656"] = "Blue Heater 2",
+                ["7541395924"] = "Build an Island",
+                ["8066283370"] = "Build a Zoo",
+                ["8820222330"] = "Dig a Brainrot",
+                ["7468338447"] = "Dig to Earth",
+                ["7546582051"] = "Dungeon Heroes",
+                ["8328640632"] = "Farm It",
+                ["6701277882"] = "Fish It",
+                ["9509842868"] = "Garden Horizon",
+                ["5995470825"] = "Hypershot",
+                ["9529182643"] = "Levelbound",
+                ["8316902627"] = "Plant vs Brainrot",
+                ["8662243497"] = "Raft 101 Survival",
+                ["6867859535"] = "RE:XL",
+                ["7094518649"] = "Restaurant Tycoon 3",
+                ["9792947201"] = "Slime RNG",
+                ["9073775318"] = "Slime Seas",
+                ["9802644580"] = "Summon Heroes",
+                ["4093155512"] = "Swordburst 3",
+                ["7671049560"] = "The Forge"
+            }
+
             -- Build two lists: continued (not discontinued) and discontinued (from Discontinued table)
             local continuedList = {}
             local discontinuedList = {}
 
             for id, url in pairs(Games) do
+                local gameName = GameNameMap[tostring(id)] or tostring(id)
                 if Discontinued and Discontinued[id] then
-                    table.insert(discontinuedList, {id = id, url = url})
+                    table.insert(discontinuedList, {id = id, url = url, name = gameName})
                 else
-                    table.insert(continuedList, {id = id, url = url})
+                    table.insert(continuedList, {id = id, url = url, name = gameName})
                 end
             end
             -- Include discontinued ids that are not present in Games (ensure overwrite/no-duplication)
             for id, v in pairs(Discontinued or {}) do
                 if v and not Games[id] then
-                    table.insert(discontinuedList, {id = id, url = nil})
+                    table.insert(discontinuedList, {id = id, url = nil, name = GameNameMap[tostring(id)] or tostring(id)})
                 end
             end
+
+            table.sort(continuedList, function(a, b)
+                if a.name == b.name then
+                    return tostring(a.id) < tostring(b.id)
+                end
+                return a.name < b.name
+            end)
+            table.sort(discontinuedList, function(a, b)
+                if a.name == b.name then
+                    return tostring(a.id) < tostring(b.id)
+                end
+                return a.name < b.name
+            end)
 
             -- Create a tab to display lists
             local okTab, tab = pcall(function()
@@ -3535,45 +3578,60 @@ function Library:CreateWindow(options)
             local left = tab:AddLeftSection("Continued", "check-circle")
             local right = tab:AddRightSection("Discontinued", "x-circle")
 
-            left:AddLabel({ Text = "Continued / Supported games:" })
+            left:AddLabel({ Text = "Continued games:" })
             right:AddLabel({ Text = "Discontinued games:" })
 
-            local function friendlyNameFromUrl(url)
-                if not url then return nil end
-                local name = url:match("/Script/(.+)$") or url:match("/([^/]+)%.lua$")
-                if name then
-                    name = name:gsub("%%20", " ")
-                    return name
-                end
-                return url
+            local function createGameRow(gameName, gameId, isDiscontinued)
+                local row = Create("Frame", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundColor3 = theme.Element,
+                    BackgroundTransparency = 0.35,
+                    BorderSizePixel = 0,
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+                    Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+                })
+
+                local thumb = Create("ImageLabel", {
+                    Size = UDim2.new(0, 30, 0, 30),
+                    Position = UDim2.new(0, 8, 0.5, -15),
+                    BackgroundTransparency = 1,
+                    Image = "rbxthumb://type=GameIcon&id=" .. tostring(gameId) .. "&w=150&h=150",
+                    ScaleType = Enum.ScaleType.Crop,
+                    Parent = row
+                }, {
+                    Create("UICorner", {CornerRadius = UDim.new(0, 6)})
+                })
+
+                local nameLabel = Create("TextLabel", {
+                    Size = UDim2.new(1, -48, 1, 0),
+                    Position = UDim2.new(0, 44, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = gameName,
+                    TextColor3 = isDiscontinued and Color3.fromRGB(255, 130, 130) or theme.Text,
+                    Font = Enum.Font.GothamMedium,
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
+                    Parent = row
+                })
+
+                return row
             end
 
             for _, g in ipairs(continuedList) do
-                local display = friendlyNameFromUrl(g.url) or ("Game " .. tostring(g.id))
-                local lblText = display .. " [" .. tostring(g.id) .. "]"
-                left:AddButton({
-                    Name = lblText,
-                    Callback = function()
-                        if g.url then
-                            pcall(function()
-                                local s = game:HttpGet(g.url)
-                                loadstring(s)()
-                            end)
-                        else
-                            Library:Notify({ Title = "No Script", Content = "No URL available for " .. tostring(g.id) })
-                        end
-                    end
+                local row = createGameRow(g.name, g.id, false)
+                left:AddPassthrough({
+                    Element = row,
+                    Height = 42
                 })
             end
 
             for _, g in ipairs(discontinuedList) do
-                local display = friendlyNameFromUrl(g.url) or ("Game " .. tostring(g.id))
-                local lblText = display .. " [" .. tostring(g.id) .. "]"
-                right:AddButton({
-                    Name = lblText,
-                    Callback = function()
-                        Library:Notify({ Title = "Discontinued", Content = tostring(g.id) .. " is discontinued." })
-                    end
+                local row = createGameRow(g.name, g.id, true)
+                right:AddPassthrough({
+                    Element = row,
+                    Height = 42
                 })
             end
         end)
