@@ -3506,7 +3506,7 @@ function Library:CreateWindow(options)
         Games = ok and Games or {}
         Discontinued = ok2 and Discontinued or {}
 
-            local GameNameMap = {
+        local GameNameMap = {
                 ["7882829745"] = "Anime Eternal",
                 ["8469926548"] = "Anime Fight",
                 ["9774981774"] = "Anime Re:Ranger X",
@@ -3535,144 +3535,155 @@ function Library:CreateWindow(options)
                 ["7671049560"] = "The Forge"
             }
 
-            -- Build two lists: continued (not discontinued) and discontinued (from Discontinued table)
-            local continuedList = {}
-            local discontinuedList = {}
+        -- Build two lists: continued (not discontinued) and discontinued (from Discontinued table)
+        local continuedList = {}
+        local discontinuedList = {}
 
-            for id, url in pairs(Games) do
-                local gameName = GameNameMap[tostring(id)] or tostring(id)
-                if Discontinued and Discontinued[id] then
-                    table.insert(discontinuedList, {id = id, url = url, name = gameName})
-                else
-                    table.insert(continuedList, {id = id, url = url, name = gameName})
-                end
+        for id, url in pairs(Games) do
+            local gameName = GameNameMap[tostring(id)] or tostring(id)
+            if Discontinued and Discontinued[id] then
+                table.insert(discontinuedList, {id = id, url = url, name = gameName})
+            else
+                table.insert(continuedList, {id = id, url = url, name = gameName})
             end
-            -- Include discontinued ids that are not present in Games (ensure overwrite/no-duplication)
-            for id, v in pairs(Discontinued or {}) do
-                if v and not Games[id] then
-                    table.insert(discontinuedList, {id = id, url = nil, name = GameNameMap[tostring(id)] or tostring(id)})
-                end
+        end
+        -- Include discontinued ids that are not present in Games (ensure overwrite/no-duplication)
+        for id, v in pairs(Discontinued or {}) do
+            if v and not Games[id] then
+                table.insert(discontinuedList, {id = id, url = nil, name = GameNameMap[tostring(id)] or tostring(id)})
             end
+        end
 
-            table.sort(continuedList, function(a, b)
-                if a.name == b.name then
-                    return tostring(a.id) < tostring(b.id)
-                end
-                return a.name < b.name
-            end)
-            table.sort(discontinuedList, function(a, b)
-                if a.name == b.name then
-                    return tostring(a.id) < tostring(b.id)
-                end
-                return a.name < b.name
-            end)
-
-            -- Create a tab to display lists
-            local okTab, tab = pcall(function()
-                return WindowFuncs:CreateTab({ Name = "Supported Games", Icon = "gamepad", LayoutOrder = -2 })
-            end)
-            if not okTab or not tab then return end
-
-            local left = tab:AddLeftSection("Continued", "check-circle")
-            local right = tab:AddRightSection("Discontinued", "x-circle")
-
-            left:AddLabel({ Text = "Continued games:" })
-            right:AddLabel({ Text = "Discontinued games:" })
-
-            local function createGameRow(gameName, gameId, isDiscontinued)
-                local row = Create("Frame", {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.18,
-                    BorderSizePixel = 0,
-                    Active = true,
-                }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-                    Create("UIStroke", {Color = theme.Border, Thickness = 1}),
-                })
-
-                local rowStroke = row:FindFirstChildOfClass("UIStroke")
-                local baseColor = row.BackgroundColor3
-                local baseTransparency = row.BackgroundTransparency
-                local hoverColor = theme.ElementHover or theme.Element
-                local hoverTransparency = 0.08
-
-                row.MouseEnter:Connect(function()
-                    Tween(row, {
-                        BackgroundColor3 = hoverColor,
-                        BackgroundTransparency = hoverTransparency,
-                    }, 0.12)
-                    if rowStroke then
-                        Tween(rowStroke, { Transparency = 0.15 }, 0.12)
-                    end
-                end)
-
-                row.MouseLeave:Connect(function()
-                    Tween(row, {
-                        BackgroundColor3 = baseColor,
-                        BackgroundTransparency = baseTransparency,
-                    }, 0.12)
-                    if rowStroke then
-                        Tween(rowStroke, { Transparency = 0 }, 0.12)
-                    end
-                end)
-
-                local thumb = Create("ImageLabel", {
-                    Size = UDim2.new(1, -4, 1, -4),
-                    Position = UDim2.new(0, 2, 0, 2),
-                    BackgroundTransparency = 1,
-                    Image = "rbxthumb://type=GameIcon&id=" .. tostring(gameId) .. "&w=150&h=150",
-                    ImageTransparency = 0.28,
-                    ScaleType = Enum.ScaleType.Crop,
-                    Parent = row
-                }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 6)})
-                })
-
-                local overlay = Create("Frame", {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    BackgroundColor3 = Color3.new(0, 0, 0),
-                    BackgroundTransparency = 0.65,
-                    BorderSizePixel = 0,
-                    Parent = row,
-                }, {
-                    Create("UICorner", {CornerRadius = UDim.new(0, 6)})
-                })
-
-                local nameLabel = Create("TextLabel", {
-                    Size = UDim2.new(1, -20, 1, 0),
-                    Position = UDim2.new(0, 10, 0, 0),
-                    BackgroundTransparency = 1,
-                    Text = gameName,
-                    TextColor3 = isDiscontinued and Color3.fromRGB(255, 180, 180) or Color3.fromRGB(255, 255, 255),
-                    Font = Enum.Font.GothamBold,
-                    TextSize = 12,
-                    TextXAlignment = Enum.TextXAlignment.Center,
-                    TextYAlignment = Enum.TextYAlignment.Center,
-                    TextTruncate = Enum.TextTruncate.AtEnd,
-                    TextStrokeTransparency = 0.55,
-                    Parent = row
-                })
-
-                return row
+        table.sort(continuedList, function(a, b)
+            if a.name == b.name then
+                return tostring(a.id) < tostring(b.id)
             end
-
-            for _, g in ipairs(continuedList) do
-                local row = createGameRow(g.name, g.id, false)
-                left:AddPassthrough({
-                    Element = row,
-                    Height = 42
-                })
-            end
-
-            for _, g in ipairs(discontinuedList) do
-                local row = createGameRow(g.name, g.id, true)
-                right:AddPassthrough({
-                    Element = row,
-                    Height = 42
-                })
-            end
+            return a.name < b.name
         end)
+        table.sort(discontinuedList, function(a, b)
+            if a.name == b.name then
+                return tostring(a.id) < tostring(b.id)
+            end
+            return a.name < b.name
+        end)
+
+        -- Create a tab to display lists
+        local okTab, tab = pcall(function()
+            return WindowFuncs:CreateTab({ Name = "Supported Games", Icon = "gamepad", LayoutOrder = -2 })
+        end)
+        if not okTab or not tab then return end
+
+        local left = tab:AddLeftSection("Continued", "check-circle")
+        local right = tab:AddRightSection("Discontinued", "x-circle")
+
+        left:AddLabel({ Text = "Continued games:" })
+        right:AddLabel({ Text = "Discontinued games:" })
+
+        local function createGameRow(gameName, gameId, isDiscontinued)
+            local row = Create("Frame", {
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundColor3 = theme.Element,
+                BackgroundTransparency = 0.08,
+                BorderSizePixel = 0,
+                Active = true,
+                ClipsDescendants = true,
+            }, {
+                Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+                Create("UIStroke", {Color = theme.Border, Thickness = 1}),
+            })
+
+            local rowStroke = row:FindFirstChildOfClass("UIStroke")
+            local baseColor = row.BackgroundColor3
+            local baseTransparency = row.BackgroundTransparency
+            local hoverColor = theme.Accent or theme.ElementHover or theme.Element
+            local hoverTransparency = 0.01
+
+            local thumb = Create("ImageLabel", {
+                Name = "Thumb",
+                Size = UDim2.new(1, -4, 1, -4),
+                Position = UDim2.new(0, 2, 0, 2),
+                BackgroundTransparency = 1,
+                Image = "rbxthumb://type=GameIcon&id=" .. tostring(gameId) .. "&w=150&h=150",
+                ImageTransparency = 0.34,
+                ScaleType = Enum.ScaleType.Crop,
+                ZIndex = 1,
+                Parent = row
+            }, {
+                Create("UICorner", {CornerRadius = UDim.new(0, 6)})
+            })
+
+            local overlay = Create("Frame", {
+                Name = "HoverOverlay",
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundColor3 = hoverColor,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                ZIndex = 2,
+                Parent = row,
+            }, {
+                Create("UICorner", {CornerRadius = UDim.new(0, 6)})
+            })
+
+            local nameLabel = Create("TextLabel", {
+                Name = "GameName",
+                Size = UDim2.new(1, -18, 1, 0),
+                Position = UDim2.new(0, 9, 0, 0),
+                BackgroundTransparency = 1,
+                Text = gameName,
+                TextColor3 = isDiscontinued and Color3.fromRGB(255, 235, 235) or Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                TextYAlignment = Enum.TextYAlignment.Center,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextStrokeTransparency = 0.3,
+                ZIndex = 3,
+                Parent = row
+            })
+
+            row.MouseEnter:Connect(function()
+                Tween(row, {
+                    BackgroundColor3 = hoverColor,
+                    BackgroundTransparency = hoverTransparency,
+                }, 0.12)
+                Tween(overlay, { BackgroundTransparency = 0.4 }, 0.12)
+                Tween(thumb, { ImageTransparency = 0.12 }, 0.12)
+                if rowStroke then
+                    Tween(rowStroke, { Transparency = 0 }, 0.12)
+                end
+            end)
+
+            row.MouseLeave:Connect(function()
+                Tween(row, {
+                    BackgroundColor3 = baseColor,
+                    BackgroundTransparency = baseTransparency,
+                }, 0.12)
+                Tween(overlay, { BackgroundTransparency = 1 }, 0.12)
+                Tween(thumb, { ImageTransparency = 0.34 }, 0.12)
+                if rowStroke then
+                    Tween(rowStroke, { Transparency = 0.1 }, 0.12)
+                end
+            end)
+
+            return row
+        end
+
+        for _, g in ipairs(continuedList) do
+            local row = createGameRow(g.name, g.id, false)
+            left:AddPassthrough({
+                Element = row,
+                Height = 42
+            })
+        end
+
+        for _, g in ipairs(discontinuedList) do
+            local row = createGameRow(g.name, g.id, true)
+            right:AddPassthrough({
+                Element = row,
+                Height = 42
+            })
+        end
+    end)
     -- Reset so the first user-defined tab (not the built-in Settings tab) activates by default
     firstTab = true
     return WindowFuncs
