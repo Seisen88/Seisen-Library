@@ -3145,7 +3145,7 @@ function Library:CreateWindow(options)
     WindowFuncs.AddTab = WindowFuncs.CreateTab
 
     if options.ConfigSettings then
-        local SettingsTab = WindowFuncs:CreateTab({ Name = "Player Settings", Icon = "settings", LayoutOrder = 10001 })
+        local SettingsTab = WindowFuncs:CreateTab({ Name = "Player Settings", Icon = "settings", LayoutOrder = 9999 })
         local PlayerGroup = SettingsTab:AddLeftSection("Player Settings", "user")
         local UIGroup = SettingsTab:AddRightSection("UI Settings", "monitor")
         
@@ -3571,7 +3571,7 @@ function Library:CreateWindow(options)
 
             -- Create a tab to display lists
             local okTab, tab = pcall(function()
-                return WindowFuncs:CreateTab({ Name = "Supported Games", Icon = "gamepad", LayoutOrder = 10000 })
+                return WindowFuncs:CreateTab({ Name = "Supported Games", Icon = "gamepad", LayoutOrder = -2 })
             end)
             if not okTab or not tab then return end
 
