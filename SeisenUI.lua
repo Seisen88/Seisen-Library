@@ -3587,10 +3587,37 @@ function Library:CreateWindow(options)
                     BackgroundColor3 = theme.Element,
                     BackgroundTransparency = 0.35,
                     BorderSizePixel = 0,
+                    Active = true,
                 }, {
                     Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
                     Create("UIStroke", {Color = theme.Border, Thickness = 1}),
                 })
+
+                local rowStroke = row:FindFirstChildOfClass("UIStroke")
+                local baseColor = row.BackgroundColor3
+                local baseTransparency = row.BackgroundTransparency
+                local hoverColor = theme.ElementHover or theme.Element
+                local hoverTransparency = 0.15
+
+                row.MouseEnter:Connect(function()
+                    Tween(row, {
+                        BackgroundColor3 = hoverColor,
+                        BackgroundTransparency = hoverTransparency,
+                    }, 0.12)
+                    if rowStroke then
+                        Tween(rowStroke, { Transparency = 0.15 }, 0.12)
+                    end
+                end)
+
+                row.MouseLeave:Connect(function()
+                    Tween(row, {
+                        BackgroundColor3 = baseColor,
+                        BackgroundTransparency = baseTransparency,
+                    }, 0.12)
+                    if rowStroke then
+                        Tween(rowStroke, { Transparency = 0 }, 0.12)
+                    end
+                end)
 
                 local thumb = Create("ImageLabel", {
                     Size = UDim2.new(0, 30, 0, 30),
