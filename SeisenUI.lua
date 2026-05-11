@@ -3496,17 +3496,15 @@ function Library:CreateWindow(options)
         Library.SettingsTab     = SettingsTab
 
     end
-    -- Optional: add a built-in Supported Games tab that lists continued (left)
+    -- Built-in Supported Games tab that lists continued (left)
     -- and discontinued (right) games fetched from a remote gamelist.
-    -- Usage: Library:CreateWindow({ ..., SupportedGames = true })
-    if options.SupportedGames then
-        task.spawn(function()
-            local gamesUrl = "https://raw.githubusercontent.com/Ken-884/roblox/main/gamelist.lua"
-            local discUrl  = "https://raw.githubusercontent.com/Ken-884/roblox/main/discontinued.lua"
-            local ok, Games = pcall(function() return loadstring(game:HttpGet(gamesUrl))() end)
-            local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet(discUrl))() end)
-            Games = ok and Games or {}
-            Discontinued = ok2 and Discontinued or {}
+    task.spawn(function()
+        local gamesUrl = "https://raw.githubusercontent.com/Ken-884/roblox/main/gamelist.lua"
+        local discUrl  = "https://raw.githubusercontent.com/Ken-884/roblox/main/discontinued.lua"
+        local ok, Games = pcall(function() return loadstring(game:HttpGet(gamesUrl))() end)
+        local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet(discUrl))() end)
+        Games = ok and Games or {}
+        Discontinued = ok2 and Discontinued or {}
 
             local GameNameMap = {
                 ["7882829745"] = "Anime Eternal",
@@ -3675,7 +3673,6 @@ function Library:CreateWindow(options)
                 })
             end
         end)
-    end
     -- Reset so the first user-defined tab (not the built-in Settings tab) activates by default
     firstTab = true
     return WindowFuncs
