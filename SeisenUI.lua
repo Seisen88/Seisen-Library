@@ -3325,7 +3325,6 @@ function Library:CreateWindow(options)
         local fpsBoostEnabled = false
         local originalSettings = {}
         local savedEffects   = {}   -- { [obj] = originalEnabled }
-        local savedMeshes    = {}   -- { [obj] = originalRenderFidelity }
         local savedMaterials = {}   -- { [obj] = originalMaterial }
         local fpsBoostConnection = nil
 
@@ -3345,11 +3344,6 @@ function Library:CreateWindow(options)
                                 savedEffects[obj] = obj.Enabled
                             end
                             obj.Enabled = false
-                        elseif obj:IsA("MeshPart") and obj.ClassName ~= "SolidModel" then
-                            if savedMeshes[obj] == nil then
-                                savedMeshes[obj] = obj.RenderFidelity
-                            end
-                            obj.RenderFidelity = Enum.RenderFidelity.Performance
                         end
                         if obj:IsA("BasePart") then
                             if savedMaterials[obj] == nil then
@@ -3403,14 +3397,6 @@ function Library:CreateWindow(options)
                         end)
                     end
                     savedEffects = {}
-
-                    -- Restore mesh fidelity
-                    for obj, fidelity in pairs(savedMeshes) do
-                        pcall(function()
-                            if obj and obj.Parent then obj.RenderFidelity = fidelity end
-                        end)
-                    end
-                    savedMeshes = {}
 
                     -- Restore materials
                     for obj, mat in pairs(savedMaterials) do
