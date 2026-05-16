@@ -3384,12 +3384,12 @@ function Library:CreateWindow(options)
 
                     -- ── Terrain ─────────────────────────────────────────────
                     if Terrain then
-                        savedTerrain.Decoration        = Terrain.Decoration
-                        savedTerrain.WaterWaveSize     = Terrain.WaterWaveSize
-                        savedTerrain.WaterWaveSpeed    = Terrain.WaterWaveSpeed
-                        savedTerrain.WaterReflectance  = Terrain.WaterReflectance
-                        savedTerrain.WaterTransparency = Terrain.WaterTransparency
                         pcall(function()
+                            savedTerrain.Decoration        = Terrain.Decoration
+                            savedTerrain.WaterWaveSize     = Terrain.WaterWaveSize
+                            savedTerrain.WaterWaveSpeed    = Terrain.WaterWaveSpeed
+                            savedTerrain.WaterReflectance  = Terrain.WaterReflectance
+                            savedTerrain.WaterTransparency = Terrain.WaterTransparency
                             Terrain.Decoration        = false
                             Terrain.WaterWaveSize     = 0
                             Terrain.WaterWaveSpeed    = 0
