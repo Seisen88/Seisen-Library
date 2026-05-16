@@ -3359,16 +3359,14 @@ function Library:CreateWindow(options)
                     originalSettings.GlobalShadows = Lighting.GlobalShadows
                     originalSettings.FogEnd        = Lighting.FogEnd
                     originalSettings.FogStart      = Lighting.FogStart
-                    originalSettings.Brightness    = Lighting.Brightness
                     Lighting.GlobalShadows = false
                     Lighting.FogEnd        = 100000
                     Lighting.FogStart      = 100000
-                    Lighting.Brightness    = 1
 
                     -- ── Post-processing effects (Bloom, DOF, SunRays, etc.) ─
                     local postFXClasses = {
                         "BloomEffect", "BlurEffect", "DepthOfFieldEffect",
-                        "SunRaysEffect", "ColorCorrectionEffect"
+                        "SunRaysEffect"
                     }
                     for _, child in ipairs(Lighting:GetChildren()) do
                         for _, cls in ipairs(postFXClasses) do
@@ -3426,7 +3424,6 @@ function Library:CreateWindow(options)
                         Lighting.GlobalShadows = originalSettings.GlobalShadows
                         Lighting.FogEnd        = originalSettings.FogEnd
                         Lighting.FogStart      = originalSettings.FogStart
-                        Lighting.Brightness    = originalSettings.Brightness
                         originalSettings = {}
                     end
 
