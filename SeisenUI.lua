@@ -3324,8 +3324,10 @@ function Library:CreateWindow(options)
         -- FPS Boost
         local fpsBoostEnabled = false
         local originalSettings = {}
-        local savedEffects   = {}   -- { [obj] = originalEnabled }
-        local savedMaterials = {}   -- { [obj] = originalMaterial }
+        local savedEffects    = {}  -- { [obj] = originalEnabled }
+        local savedMaterials  = {}  -- { [obj] = originalMaterial }
+        local savedPostFX     = {}  -- { [obj] = { Enabled = bool, ... } }
+        local savedTerrain    = {}  -- terrain decoration / water props
         local fpsBoostConnection = nil
 
         PlayerGroup:AddToggle({
@@ -3336,61 +3338,124 @@ function Library:CreateWindow(options)
             Callback = function(v)
                 fpsBoostEnabled = v
                 local Lighting = game:GetService("Lighting")
+                local Terrain  = workspace:FindFirstChildOfClass("Terrain")
 
+                -- Per-workspace-object processor: VFX particles only
                 local function processObject(obj)
                     pcall(function()
-                        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+                        -- Disable VFX emitters
+                        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")
+                            or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
                             if savedEffects[obj] == nil then
                                 savedEffects[obj] = obj.Enabled
                             end
                             obj.Enabled = false
                         end
-                        if obj:IsA("BasePart") then
-                            if savedMaterials[obj] == nil then
-                                savedMaterials[obj] = obj.Material
-                            end
-                        end
                     end)
                 end
 
                 if fpsBoostEnabled then
-                    -- Save and apply Lighting settings
+                    -- ── Lighting ────────────────────────────────────────────
                     originalSettings.GlobalShadows = Lighting.GlobalShadows
-                    originalSettings.FogEnd = Lighting.FogEnd
-                    originalSettings.Brightness = Lighting.Brightness
+                    originalSettings.FogEnd        = Lighting.FogEnd
+                    originalSettings.FogStart      = Lighting.FogStart
+                    originalSettings.Brightness    = Lighting.Brightness
                     Lighting.GlobalShadows = false
-                    Lighting.FogEnd = 100000
-                    Lighting.Brightness = 1
-                    
-                    -- Process existing workspace objects
-                    for _, obj in pairs(workspace:GetDescendants()) do
-                        processObject(obj)
-                    end
-                    
-                    if not fpsBoostConnection then
-                        fpsBoostConnection = workspace.DescendantAdded:Connect(function(obj)
-                            if fpsBoostEnabled then
-                                processObject(obj)
+                    Lighting.FogEnd        = 100000
+                    Lighting.FogStart      = 100000
+                    Lighting.Brightness    = 1
+
+                    -- ── Post-processing effects (Bloom, DOF, SunRays, etc.) ─
+                    local postFXClasses = {
+                        "BloomEffect", "BlurEffect", "DepthOfFieldEffect",
+                        "SunRaysEffect", "ColorCorrectionEffect"
+                    }
+                    for _, child in ipairs(Lighting:GetChildren()) do
+                        for _, cls in ipairs(postFXClasses) do
+                            if child:IsA(cls) then
+                                if savedPostFX[child] == nil then
+                                    savedPostFX[child] = { Enabled = child.Enabled }
+                                end
+                                child.Enabled = false
+                                break
                             end
+                        end
+                    end
+
+                    -- ── Terrain ─────────────────────────────────────────────
+                    if Terrain then
+                        savedTerrain.Decoration        = Terrain.Decoration
+                        savedTerrain.WaterWaveSize     = Terrain.WaterWaveSize
+                        savedTerrain.WaterWaveSpeed    = Terrain.WaterWaveSpeed
+                        savedTerrain.WaterReflectance  = Terrain.WaterReflectance
+                        savedTerrain.WaterTransparency = Terrain.WaterTransparency
+                        pcall(function()
+                            Terrain.Decoration        = false
+                            Terrain.WaterWaveSize     = 0
+                            Terrain.WaterWaveSpeed    = 0
+                            Terrain.WaterReflectance  = 0
+                            Terrain.WaterTransparency = 0.5
                         end)
                     end
-                    
-                    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+                    -- ── Workspace objects ────────────────────────────────────
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        processObject(obj)
+                    end
+
+                    -- Watch for newly added objects
+                    if not fpsBoostConnection then
+                        fpsBoostConnection = workspace.DescendantAdded:Connect(function(obj)
+                            if fpsBoostEnabled then processObject(obj) end
+                        end)
+                    end
+
+                    -- ── Render quality ───────────────────────────────────────
+                    pcall(function()
+                        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+                    end)
                 else
+                    -- ── Stop watching ────────────────────────────────────────
                     if fpsBoostConnection then
                         fpsBoostConnection:Disconnect()
                         fpsBoostConnection = nil
                     end
 
-                    -- Restore Lighting
+                    -- ── Restore Lighting ─────────────────────────────────────
                     if originalSettings.GlobalShadows ~= nil then
                         Lighting.GlobalShadows = originalSettings.GlobalShadows
-                        Lighting.FogEnd = originalSettings.FogEnd
-                        Lighting.Brightness = originalSettings.Brightness
+                        Lighting.FogEnd        = originalSettings.FogEnd
+                        Lighting.FogStart      = originalSettings.FogStart
+                        Lighting.Brightness    = originalSettings.Brightness
+                        originalSettings = {}
                     end
-                    settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
 
-                    -- Restore effects
+                    -- ── Restore post-processing effects ──────────────────────
+                    for obj, saved in pairs(savedPostFX) do
+                        pcall(function()
+                            if obj and obj.Parent then obj.Enabled = saved.Enabled end
+                        end)
+                    end
+                    savedPostFX = {}
+
+                    -- ── Restore Terrain ──────────────────────────────────────
+                    if Terrain and next(savedTerrain) then
+                        pcall(function()
+                            Terrain.Decoration        = savedTerrain.Decoration
+                            Terrain.WaterWaveSize     = savedTerrain.WaterWaveSize
+                            Terrain.WaterWaveSpeed    = savedTerrain.WaterWaveSpeed
+                            Terrain.WaterReflectance  = savedTerrain.WaterReflectance
+                            Terrain.WaterTransparency = savedTerrain.WaterTransparency
+                        end)
+                        savedTerrain = {}
+                    end
+
+                    -- ── Restore render quality ───────────────────────────────
+                    pcall(function()
+                        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+                    end)
+
+                    -- ── Restore VFX ──────────────────────────────────────────
                     for obj, wasEnabled in pairs(savedEffects) do
                         pcall(function()
                             if obj and obj.Parent then obj.Enabled = wasEnabled end
@@ -3398,13 +3463,65 @@ function Library:CreateWindow(options)
                     end
                     savedEffects = {}
 
-                    -- Restore materials
+                    -- ── Restore materials ─────────────────────────────────────
                     for obj, mat in pairs(savedMaterials) do
                         pcall(function()
                             if obj and obj.Parent then obj.Material = mat end
                         end)
                     end
                     savedMaterials = {}
+                end
+            end
+        })
+
+        -- SmoothPlastic Mode (standalone material downgrade)
+        local smoothPlasticEnabled = false
+        local spMaterials  = {}  -- { [obj] = originalMaterial }
+        local spConnection = nil
+
+        PlayerGroup:AddToggle({
+            Name = "SmoothPlastic Mode",
+            Default = false,
+            Flag = "BuiltIn_SmoothPlastic",
+            Tooltip = "Replace all part materials with SmoothPlastic for better FPS",
+            Callback = function(v)
+                smoothPlasticEnabled = v
+
+                local function applyToObj(obj)
+                    pcall(function()
+                        if obj:IsA("BasePart") and obj.Material ~= Enum.Material.SmoothPlastic then
+                            if spMaterials[obj] == nil then
+                                spMaterials[obj] = obj.Material
+                            end
+                            obj.Material = Enum.Material.SmoothPlastic
+                        end
+                    end)
+                end
+
+                if smoothPlasticEnabled then
+                    -- Apply to all current objects
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        applyToObj(obj)
+                    end
+                    -- Watch new objects
+                    if not spConnection then
+                        spConnection = workspace.DescendantAdded:Connect(function(obj)
+                            if smoothPlasticEnabled then applyToObj(obj) end
+                        end)
+                    end
+                else
+                    -- Stop watching
+                    if spConnection then
+                        spConnection:Disconnect()
+                        spConnection = nil
+                    end
+                    -- Restore all original materials
+                    for obj, mat in pairs(spMaterials) do
+                        pcall(function()
+                            if obj and obj.Parent then obj.Material = mat end
+                        end)
+                    end
+                    spMaterials = {}
                 end
             end
         })
