@@ -3480,7 +3480,7 @@ function Library:CreateWindow(options)
         local spConnection = nil
 
         PlayerGroup:AddToggle({
-            Name = "SmoothPlastic Mode",
+            Name = "FPS Boost +",
             Default = false,
             Flag = "BuiltIn_SmoothPlastic",
             Tooltip = "Replace all part materials with SmoothPlastic for better FPS",
