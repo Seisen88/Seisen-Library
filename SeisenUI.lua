@@ -3599,8 +3599,8 @@ function Library:CreateWindow(options)
     -- Built-in Supported Games tab that lists continued (left)
     -- and discontinued (right) games fetched from a remote gamelist.
     task.spawn(function()
-        local gamesUrl = "https://raw.githubusercontent.com/Ken-884/roblox/main/gamelist.lua"
-        local discUrl  = "https://raw.githubusercontent.com/Ken-884/roblox/main/discontinued.lua"
+        local gamesUrl = "https://raw.githubusercontent.com/Mentos4/roblox/main/gamelist.lua"
+        local discUrl  = "https://raw.githubusercontent.com/Mentos4/roblox/main/discontinued.lua"
         local ok, Games = pcall(function() return loadstring(game:HttpGet(gamesUrl))() end)
         local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet(discUrl))() end)
         Games = ok and Games or {}
