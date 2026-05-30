@@ -1985,6 +1985,38 @@ function Library:CreateWindow(options)
         TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = profileSection
     })
+    -- Hide/show eye button for the player name and username
+    local profileHidden = false
+    local realDisplayName = LocalPlayer.DisplayName
+    local realUsername    = "@" .. LocalPlayer.Name
+    local eyeBtn = Create("ImageButton", {
+        Name = "HideEye",
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(1, -18, 0, 6),
+        BackgroundTransparency = 1,
+        ImageColor3 = theme.TextMuted,
+        ZIndex = 5,
+        Parent = profileSection
+    })
+    self:ApplyIcon(eyeBtn, "eye")
+    eyeBtn.MouseButton1Click:Connect(function()
+        profileHidden = not profileHidden
+        if profileHidden then
+            playerName.Text = string.rep("•", 8)
+            username.Text   = string.rep("•", 8)
+            self:ApplyIcon(eyeBtn, "eye-off")
+        else
+            playerName.Text = realDisplayName
+            username.Text   = realUsername
+            self:ApplyIcon(eyeBtn, "eye")
+        end
+    end)
+    eyeBtn.MouseEnter:Connect(function()
+        Tween(eyeBtn, {ImageColor3 = theme.Text})
+    end)
+    eyeBtn.MouseLeave:Connect(function()
+        Tween(eyeBtn, {ImageColor3 = theme.TextMuted})
+    end)
     local content = Create("Frame", {
         Name = "Content",
         Size = UDim2.new(1, -150, 1, 0),
@@ -4014,4 +4046,3 @@ task.spawn(function()
 end)
 
 return Library
-
