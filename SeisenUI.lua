@@ -18,6 +18,7 @@ local Library = {
     Icons = IconsLoaded and Icons or nil,
     KeybindFrame = nil,
     KeybindRows = {},
+    KeybindConnections = {},
     Theme = {
         Background = Color3.fromRGB(15, 15, 18),
         Sidebar = Color3.fromRGB(12, 12, 14),
@@ -725,7 +726,7 @@ function Library:CreateToggle(parent, options)
         if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
         if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
     end)
-    UserInputService.InputBegan:Connect(function(input, processed)
+    local _kbInputConn = UserInputService.InputBegan:Connect(function(input, processed)
         if listening and input.UserInputType == Enum.UserInputType.Keyboard then
             listening = false
             if input.KeyCode == Enum.KeyCode.Backspace then
@@ -747,6 +748,7 @@ function Library:CreateToggle(parent, options)
             end
         end
     end)
+    table.insert(self.KeybindConnections, _kbInputConn)
     self:ApplyCommonProperties(toggle, options, toggleObj)
     if flag then self.Toggles[flag] = toggleObj end
     -- Register a row in the keybind panel for this toggle
@@ -1421,6 +1423,13 @@ function Library:Unload()
         end
     end)
     
+    -- Disconnect all keybind InputBegan connections so they can't fire after unload
+    for _, conn in ipairs(self.KeybindConnections or {}) do
+        pcall(function() conn:Disconnect() end)
+    end
+    self.KeybindConnections = {}
+    self.KeybindEnabled = false
+
     -- Clear all tables
     self.Toggles = {}
     self.Options = {}
@@ -2447,11 +2456,12 @@ function Library:CreateWindow(options)
         Library.ToggleKeybind = options.ToggleKeybind
         Library.KeybindEnabled = true -- Initialize as enabled
     end
-    UserInputService.InputBegan:Connect(function(input, processed)
+    local _windowKbConn = UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and Library.KeybindEnabled and Library.ToggleKeybind and input.KeyCode == Library.ToggleKeybind then
             Library:Toggle()
         end
     end)
+    table.insert(Library.KeybindConnections, _windowKbConn)
     local WindowFuncs = {}
     function WindowFuncs:Notify(opts)
         Library:Notify(opts)
@@ -3988,6 +3998,13 @@ function Library:Unload()
         end
     end)
     
+    -- Disconnect all keybind InputBegan connections so they can't fire after unload
+    for _, conn in ipairs(self.KeybindConnections or {}) do
+        pcall(function() conn:Disconnect() end)
+    end
+    self.KeybindConnections = {}
+    self.KeybindEnabled = false
+
     -- Clear all tables
     self.Toggles = {}
     self.Options = {}
