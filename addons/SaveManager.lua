@@ -437,6 +437,16 @@ local SaveManager = {} do
 
         section:AddDivider()
 
+        local config, configType = self:GetAutoloadConfig()
+        local autoloadLabel = section:AddLabel({ Text = "Autoload: " .. config .. " (" .. configType .. ")" })
+
+        local function UpdateAutoloadLabel()
+            local cfg, cfgType = self:GetAutoloadConfig()
+            if autoloadLabel and autoloadLabel.SetText then
+                autoloadLabel:SetText("Autoload: " .. cfg .. " (" .. cfgType .. ")")
+            end
+        end
+
         section:AddButton({
             Name = "Set as Normal Autoload",
             Callback = function()
@@ -448,6 +458,7 @@ local SaveManager = {} do
                 end
                 Notify("Seisen Hub", "Set normal autoload to: " .. name, 5)
                 UpdateList()
+                UpdateAutoloadLabel()
             end
         })
 
@@ -462,6 +473,7 @@ local SaveManager = {} do
                 end
                 Notify("Seisen Hub", "Set account autoload to: " .. name, 5)
                 UpdateList()
+                UpdateAutoloadLabel()
             end
         })
 
@@ -476,11 +488,9 @@ local SaveManager = {} do
                 end
                 Notify("Seisen Hub", "Reset all autoloads", 5)
                 UpdateList()
+                UpdateAutoloadLabel()
             end
         })
-
-        local config, type = self:GetAutoloadConfig()
-        section:AddLabel({ Text = "Autoload: " .. config .. " (" .. type .. ")" })
 
         self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_AccountExclusive", "SaveManager_ApplyAutoload" })
     end
