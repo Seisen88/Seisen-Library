@@ -1372,6 +1372,14 @@ function Library:Unload()
         end
     end)
 
+    -- Explicit fly cleanup — kill the BodyVelocity and restore PlatformStand
+    -- even if the toggle path above fails (e.g. character changed mid-flight).
+    if self._stopFly then pcall(self._stopFly) end
+    if self._flyVel and self._flyVel.Parent then
+        pcall(function() self._flyVel:Destroy() end)
+    end
+    self._flyVel = nil
+
     -- Reset player stats that sliders may have changed but have no toggle
     pcall(function()
         local char = LocalPlayer and LocalPlayer.Character
@@ -3275,43 +3283,68 @@ function Library:CreateWindow(options)
         })
         PlayerGroup:AddDivider()
         local flying = false
-        local flyVel
+        local flyVel = nil
         local flySpeed = 50
+
+        local function stopFly()
+            flying = false
+            if flyVel and flyVel.Parent then
+                flyVel.Velocity = Vector3.zero
+                flyVel:Destroy()
+            end
+            flyVel = nil
+            self._flyVel = nil
+            pcall(function()
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if hum then hum.PlatformStand = false end
+            end)
+        end
+        self._stopFly = stopFly
+
         PlayerGroup:AddToggle({
             Name = "Fly",
             Default = false,
             Flag = "BuiltIn_Fly",
             Keybind = Enum.KeyCode.F3,
             Callback = function(v)
-                flying = v
-                if flying then
-                    pcall(function()
-                        local hrp = LocalPlayer.Character.HumanoidRootPart
-                        flyVel = Instance.new("BodyVelocity")
-                        flyVel.MaxForce = Vector3.new(1, 1, 1) * 10^6
-                        flyVel.Velocity = Vector3.zero
-                        flyVel.Parent = hrp
-                        
-                        task.spawn(function()
-                            while flying and hrp and hrp.Parent do
-                                local cam = workspace.CurrentCamera
-                                local dir = Vector3.zero
-                                if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
-                                if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
-                                if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
-                                if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
-                                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
-                                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
-                                
-                                flyVel.Velocity = dir * flySpeed
-                                task.wait()
-                            end
-                            if flyVel then flyVel:Destroy() end
-                        end)
-                    end)
-                else
-                    if flyVel then flyVel:Destroy() end
+                if not v then
+                    stopFly()
+                    return
                 end
+                flying = true
+                local char = LocalPlayer.Character
+                if not char then flying = false return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if not hrp then flying = false return end
+
+                if hum then hum.PlatformStand = true end
+
+                -- Clean up any leftover from previous activation
+                if flyVel and flyVel.Parent then flyVel:Destroy() end
+                flyVel = Instance.new("BodyVelocity")
+                flyVel.MaxForce = Vector3.new(1, 1, 1) * 10^6
+                flyVel.Velocity = Vector3.zero
+                flyVel.Parent = hrp
+                self._flyVel = flyVel
+
+                task.spawn(function()
+                    while flying and flyVel and flyVel.Parent and hrp and hrp.Parent do
+                        local cam = workspace.CurrentCamera
+                        local dir = Vector3.zero
+                        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+                        flyVel.Velocity = dir * flySpeed
+                        task.wait()
+                    end
+                    -- Loop exited — clean up if still parented
+                    if flyVel and flyVel.Parent then flyVel:Destroy() end
+                end)
             end
         })
 
@@ -3905,6 +3938,14 @@ function Library:Unload()
             end
         end
     end)
+
+    -- Explicit fly cleanup — kill the BodyVelocity and restore PlatformStand
+    -- even if the toggle path above fails (e.g. character changed mid-flight).
+    if self._stopFly then pcall(self._stopFly) end
+    if self._flyVel and self._flyVel.Parent then
+        pcall(function() self._flyVel:Destroy() end)
+    end
+    self._flyVel = nil
 
     -- Reset player stats that sliders may have changed but have no toggle
     pcall(function()
