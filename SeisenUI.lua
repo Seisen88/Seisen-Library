@@ -2387,13 +2387,30 @@ function Library:CreateWindow(options)
                 Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
                 Create("UIPadding", {PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4)}),
             })
-            local starIcon = Create("ImageLabel", {
-                Size = UDim2.new(1, 0, 1, 0),
-                BackgroundTransparency = 1,
-                ImageColor3 = Color3.fromRGB(0, 0, 0),
-                Parent = premiumBadge,
-            })
-            self:ApplyIcon(starIcon, "star")
+            local iconData = self:GetIcon("star")
+            if iconData and iconData.Url and iconData.Url ~= "star" then
+                local starIcon = Create("ImageLabel", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    ImageColor3 = Color3.fromRGB(0, 0, 0),
+                    Image = iconData.Url,
+                    ImageRectOffset = iconData.ImageRectOffset or Vector2.zero,
+                    ImageRectSize = iconData.ImageRectSize or Vector2.zero,
+                    Parent = premiumBadge,
+                })
+            else
+                Create("TextLabel", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = "★",
+                    TextColor3 = Color3.fromRGB(0, 0, 0),
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Center,
+                    TextYAlignment = Enum.TextYAlignment.Center,
+                    Parent = premiumBadge,
+                })
+            end
         end
     end
     local notificationContainer = Create("Frame", {
