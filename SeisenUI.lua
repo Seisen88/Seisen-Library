@@ -2381,7 +2381,7 @@ function Library:CreateWindow(options)
                 Name = "PremiumStar",
                 Size = UDim2.new(0, 20, 0, 20),
                 BackgroundTransparency = 1,
-                Image = "rbxassetid://105619557014645",
+                Image = "rbxassetid://97535501333536",
                 LayoutOrder = 3,
                 Parent = badgeContainer,
             })
