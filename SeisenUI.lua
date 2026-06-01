@@ -2377,14 +2377,23 @@ function Library:CreateWindow(options)
              createBadge(options.SubTitle, Color3.fromRGB(64, 164, 255), 2)
         end
         if options.Premium then
-            local starIcon = Create("ImageLabel", {
-                Name = "PremiumStar",
-                Size = UDim2.new(0, 20, 0, 20),
-                BackgroundTransparency = 1,
-                Image = "rbxassetid://97535501333536",
+            local premiumBadge = Create("Frame", {
+                Name = "PremiumBadge",
+                Size = UDim2.new(0, 24, 0, 24),
+                BackgroundColor3 = Color3.fromRGB(255, 185, 0),
                 LayoutOrder = 3,
                 Parent = badgeContainer,
+            }, {
+                Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+                Create("UIPadding", {PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4)}),
             })
+            local starIcon = Create("ImageLabel", {
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1,
+                ImageColor3 = Color3.fromRGB(0, 0, 0),
+                Parent = premiumBadge,
+            })
+            self:ApplyIcon(starIcon, "star")
         end
     end
     local notificationContainer = Create("Frame", {
