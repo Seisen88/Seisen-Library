@@ -2381,11 +2381,10 @@ function Library:CreateWindow(options)
                 Name = "PremiumStar",
                 Size = UDim2.new(0, 20, 0, 20),
                 BackgroundTransparency = 1,
-                ImageColor3 = Color3.fromRGB(255, 185, 0),
+                Image = "rbxassetid://105619557014645",
                 LayoutOrder = 3,
                 Parent = badgeContainer,
             })
-            self:ApplyIcon(starIcon, "star")
         end
     end
     local notificationContainer = Create("Frame", {
