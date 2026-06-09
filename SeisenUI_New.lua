@@ -1039,6 +1039,12 @@ function Library:CreateKeybind(parent, options)
         conn = UserInputService.InputBegan:Connect(function(input, processed)
             if input.UserInputType == Enum.UserInputType.Keyboard then
                 conn:Disconnect(); listening = false
+                for idx, c in ipairs(self.KeybindConnections) do
+                    if c == conn then
+                        table.remove(self.KeybindConnections, idx)
+                        break
+                    end
+                end
                 local newKey = input.KeyCode
                 if newKey == Enum.KeyCode.Escape or newKey == Enum.KeyCode.Backspace then
                     newKey = Enum.KeyCode.Unknown
@@ -1047,6 +1053,7 @@ function Library:CreateKeybind(parent, options)
                 keyButton.TextColor3 = self.Theme.Accent
             end
         end)
+        table.insert(self.KeybindConnections, conn)
     end)
     clearBtn.MouseButton1Click:Connect(function()
         keybindObj:SetValue(Enum.KeyCode.Unknown)
@@ -1491,12 +1498,14 @@ function Library:CreateColorPicker(parent, options)
                 dragging = true; fn(i)
             end
         end)
-        UserInputService.InputChanged:Connect(function(i)
+        local c1 = UserInputService.InputChanged:Connect(function(i)
             if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then fn(i) end
         end)
-        UserInputService.InputEnded:Connect(function(i)
+        local c2 = UserInputService.InputEnded:Connect(function(i)
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
         end)
+        table.insert(self.KeybindConnections, c1)
+        table.insert(self.KeybindConnections, c2)
     end
     hookDrag(svFrame, dragSV); hookDrag(hueStrip, dragHue)
 
@@ -2644,6 +2653,68 @@ function Library:OnUnload(fn)
     self._unloadFn = fn
 end
 
+-- ── Unload (destroy everything) ───────────────────────────────────
+function Library:Unload()
+    -- Disconnect all keybind connections
+    for _, conn in ipairs(self.KeybindConnections or {}) do
+        pcall(function() conn:Disconnect() end)
+    end
+    self.KeybindConnections = {}
+
+    -- Disconnect tooltip connection
+    if TooltipConnection then
+        pcall(function() TooltipConnection:Disconnect() end)
+        TooltipConnection = nil
+    end
+    if TooltipFrame then
+        pcall(function() TooltipFrame:Destroy() end)
+        TooltipFrame = nil
+    end
+    if self.TooltipThread then
+        pcall(function() task.cancel(self.TooltipThread) end)
+        self.TooltipThread = nil
+    end
+
+    -- Disconnect stats connection from widget if it exists
+    for _, conn in ipairs(self.WidgetConnections or {}) do
+        pcall(function() conn:Disconnect() end)
+    end
+    self.WidgetConnections = {}
+
+    -- Close all open dropdowns
+    self:CloseAllDropdowns()
+
+    -- Run custom user unload function
+    if self._unloadFn then
+        pcall(self._unloadFn)
+        self._unloadFn = nil
+    end
+
+    -- Destroy UI ScreenGui
+    if self.ScreenGui then
+        pcall(function() self.ScreenGui:Destroy() end)
+        self.ScreenGui = nil
+    end
+    
+    -- Destroy Notification container ScreenGui if it exists
+    if self.NotificationContainer then
+        local p = self.NotificationContainer.Parent
+        if p and p:IsA("ScreenGui") then
+            pcall(function() p:Destroy() end)
+        end
+        self.NotificationContainer = nil
+    end
+
+    -- Clear state tables
+    self.Toggles = {}
+    self.Options = {}
+    self.Labels = {}
+    self.Registry = {}
+    self.KeybindRows = {}
+    self.KeybindFrame = nil
+    self._refreshKeybindEmptyHint = nil
+end
+
 -- ── Toggle (show/hide) ────────────────────────────────────────────
 function Library:Toggle()
     if not self.ScreenGui then return end
@@ -2667,7 +2738,7 @@ local function MakeDraggable(handle, frame, onClick)
     local dragging, dragStart, startPos = false, nil, nil
     local moved = false
 
-    handle.InputBegan:Connect(function(input)
+    local bConn = handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
             dragging  = true
@@ -2676,7 +2747,7 @@ local function MakeDraggable(handle, frame, onClick)
             startPos  = frame.Position
         end
     end)
-    UserInputService.InputChanged:Connect(function(input)
+    local cConn = UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
             or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
@@ -2687,13 +2758,17 @@ local function MakeDraggable(handle, frame, onClick)
             )
         end
     end)
-    UserInputService.InputEnded:Connect(function(input)
+    local eConn = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
             if not moved and onClick then onClick() end
             dragging = false
         end
     end)
+
+    table.insert(Library.KeybindConnections, bConn)
+    table.insert(Library.KeybindConnections, cConn)
+    table.insert(Library.KeybindConnections, eConn)
 end
 
 -- ── CreateWindow ─────────────────────────────────────────────────
@@ -2934,8 +3009,7 @@ function Library:CreateWindow(options)
     closeBtn.MouseButton1Click:Connect(function()
         Tween(main, { Size = UDim2.new(0, 0, 0, 0) }, 0.25)
         task.delay(0.26, function()
-            if self._unloadFn then pcall(self._unloadFn) end
-            gui:Destroy()
+            self:Unload()
         end)
     end)
     local minimised = false
@@ -2979,7 +3053,7 @@ function Library:CreateWindow(options)
             startSize = Vector2.new(main.AbsoluteSize.X, main.AbsoluteSize.Y)
         end
     end)
-    UserInputService.InputChanged:Connect(function(i)
+    local resizeConn1 = UserInputService.InputChanged:Connect(function(i)
         if resizing and i.UserInputType == Enum.UserInputType.MouseMovement then
             local d = i.Position - resizeStart
             local nW = math.max(420, startSize.X + d.X)
@@ -2987,20 +3061,23 @@ function Library:CreateWindow(options)
             main.Size = UDim2.new(0, nW, 0, nH)
         end
     end)
-    UserInputService.InputEnded:Connect(function(i)
+    local resizeConn2 = UserInputService.InputEnded:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = false end
     end)
+    table.insert(self.KeybindConnections, resizeConn1)
+    table.insert(self.KeybindConnections, resizeConn2)
 
     -- ── Draggable ─────────────────────────────────────────────────
     MakeDraggable(sideHeader, main)
     MakeDraggable(contentHeader, main)
 
     -- ── Toggle keybind ────────────────────────────────────────────
-    UserInputService.InputBegan:Connect(function(input, processed)
+    local toggleKeybindConn = UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == keybind then
             self:Toggle()
         end
     end)
+    table.insert(self.KeybindConnections, toggleKeybindConn)
 
     -- ── Loading screen ────────────────────────────────────────────
     local mainScale = Instance.new("UIScale")
@@ -3343,6 +3420,7 @@ function Library:CreateWindow(options)
     end
 
     function Window:SetScale(s) Library:SetScale(s) end
+    function Window:Unload() Library:Unload() end
 
     return Window
 end
@@ -3692,16 +3770,22 @@ function Library:_BuildConfigTab(window)
 
     local configRight = configTab:AddRightSection("Misc", "sparkles")
     -- Anti AFK
+    local antiAfkConn
     configRight:AddToggle({
         Name = "Anti AFK", Flag = "CFG_AntiAFK", Default = false,
         Callback = function(v)
+            if antiAfkConn then
+                pcall(function() antiAfkConn:Disconnect() end)
+                antiAfkConn = nil
+            end
             if v then
                 local VPS = game:GetService("VirtualUser")
-                LocalPlayer.Idled:Connect(function()
+                antiAfkConn = LocalPlayer.Idled:Connect(function()
                     VPS:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                     task.wait(1)
                     VPS:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                 end)
+                table.insert(Library.KeybindConnections, antiAfkConn)
             end
         end
     })
@@ -3804,6 +3888,9 @@ function Library:CreateWidget(options)
         end
         statsLbl.Text = table.concat(parts, "  ·  ")
     end)
+
+    self.WidgetConnections = self.WidgetConnections or {}
+    table.insert(self.WidgetConnections, statsConn)
 
     MakeDraggable(widget, widget)
 
