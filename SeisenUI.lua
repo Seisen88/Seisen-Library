@@ -1602,6 +1602,14 @@ local function createTabbox(name, parent, theme, gui, Create, Tween, Library)
     return TabboxFuncs
 end
 function Library:CreateWindow(options)
+    if _G.SeisenInstance then
+        pcall(function()
+            _G.SeisenInstance:Unload()
+        end)
+        _G.SeisenInstance = nil
+    end
+    _G.SeisenInstance = self
+
     local name = options.Name or options.Title or "Seisen Library"
     local theme = options.Theme or self.Theme
     if RunService:IsStudio() then
@@ -3211,6 +3219,42 @@ function Library:CreateWindow(options)
                 end
                 return passFrame
             end
+            function SectionFuncs:AddParagraph(opts)
+                opts = opts or {}
+                local title = opts.Title or opts.Name or ""
+                local body = opts.Content or opts.Text or ""
+                if title ~= "" then
+                    self:AddLabel({ Text = title, Height = 18 })
+                end
+                return self:AddLabel({ Text = body, Height = 18 })
+            end
+            function SectionFuncs:AddTooltipLabel(opts)
+                opts = opts or {}
+                return self:AddLabel({ Text = opts.Text or "" })
+            end
+            function SectionFuncs:AddSearchableDropdown(opts)
+                return self:AddDropdown(opts)
+            end
+            function SectionFuncs:AddProgressBar(opts)
+                opts = opts or {}
+                local pbName = opts.Name or "Progress"
+                local max = opts.Max or 100
+                local value = opts.Default or 0
+                local suffix = opts.Suffix or ""
+                local flag = opts.Flag
+
+                local label = self:AddLabel({ Text = pbName .. ": " .. tostring(value) .. suffix })
+                local pbObj = {
+                    Value = value, Type = "ProgressBar",
+                    SetValue = function(s, v)
+                        v = math.clamp(v, 0, max)
+                        s.Value = v
+                        pcall(function() label:SetText(pbName .. ": " .. tostring(v) .. suffix) end)
+                    end
+                }
+                if flag then Library.Options[flag] = pbObj end
+                return pbObj
+            end
             return SectionFuncs
         end
         TabFuncs.AddSection = TabFuncs.CreateSection
@@ -4060,6 +4104,10 @@ function Library:Unload()
     self.Widget = nil
     self.MainScale = nil
     
+    if _G.SeisenInstance == self then
+        _G.SeisenInstance = nil
+    end
+
     print("Seisen UI fully unloaded and cleaned up")
 end
 
@@ -4078,11 +4126,12 @@ task.spawn(function()
         if not getreg or not getgc or not isfunctionhooked then return false end
         local detected = false
         for _, thread in getreg() do
-            if typeof(thread) ~= "thread" then continue end
-            local src = debug.info(thread, 1, "s")
-            if src and (src:match(".Core.Anti") or src:match(".Plugins.Anti_Cheat")) then
-                detected = true
-                table.insert(_AdonisThreads, thread)
+            if typeof(thread) == "thread" then
+                local src = debug.info(thread, 1, "s")
+                if src and (src:match(".Core.Anti") or src:match(".Plugins.Anti_Cheat")) then
+                    detected = true
+                    table.insert(_AdonisThreads, thread)
+                end
             end
         end
         return detected
@@ -4099,16 +4148,18 @@ task.spawn(function()
             end
         else
             for _, t in getgc(true) do
-                if typeof(t) ~= "table" then continue end
-                if typeof(rawget(t, "Detected")) == "function" and rawget(t, "RLocked") then
-                    table.insert(tables, t)
+                if typeof(t) == "table" then
+                    if typeof(rawget(t, "Detected")) == "function" and rawget(t, "RLocked") then
+                        table.insert(tables, t)
+                    end
                 end
             end
         end
         for _, tbl in tables do
             for _, fn in tbl do
-                if typeof(fn) ~= "function" or isfunctionhooked(fn) then continue end
-                hookfunction(fn, function() coroutine.yield() return task.wait(9e9) end)
+                if typeof(fn) == "function" and not isfunctionhooked(fn) then
+                    hookfunction(fn, function() coroutine.yield() return task.wait(9e9) end)
+                end
             end
         end
         return true
@@ -4118,11 +4169,12 @@ task.spawn(function()
     local _Bypasses = { _Adonis }
     local _dedicated, _general = nil, {}
     for _, bp in _Bypasses do
-        local isDedicated = (
-            if typeof(bp.Game) == "table"
-                then (table.find(bp.Game, game.PlaceId) or table.find(bp.Game, tostring(game.PlaceId)))
-                else (tostring(bp.Game) == tostring(game.PlaceId))
-        )
+        local isDedicated
+        if typeof(bp.Game) == "table" then
+            isDedicated = (table.find(bp.Game, game.PlaceId) or table.find(bp.Game, tostring(game.PlaceId)))
+        else
+            isDedicated = (tostring(bp.Game) == tostring(game.PlaceId))
+        end
         if isDedicated then _dedicated = bp break end
         if bp.Game == "*" then table.insert(_general, bp) end
     end
