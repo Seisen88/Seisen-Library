@@ -4223,14 +4223,23 @@ end
 -- ================================================================
 
 -- Called by CreateWindow if options.ConfigSettings == true
+-- ── Built-in section guard ───────────────────────────────────────
+-- Creates the shared "Built-In" sidebar divider+section exactly once,
+-- no matter how many built-in tab builders are called.
+function Library:_EnsureBuiltInSection(window)
+    if self._builtInSectionCreated then return end
+    self._builtInSectionCreated = true
+    window:AddSidebarDivider(true)
+    window:AddSidebarSection("Built-In", true)
+end
+
 -- Inserts WalkSpeed / JumpPower / Fly / AntiAFK / FPS-boost toggles
 -- into the content as a dedicated internal page accessible via the
 -- sidebar.  Exposed as a real AddTab so ThemeManager / SaveManager
 -- still get a normal SettingsTab to build into.
 function Library:_BuildConfigTab(window)
-    window:AddSidebarDivider(true)
-    window:AddSidebarSection("Player", true)
-    local configTab = window:AddTab("Config", "cog", true)
+    self:_EnsureBuiltInSection(window)
+    local configTab = window:AddTab("Performance", "activity", true)
     local configLeft = configTab:AddLeftSection("Character", "person-standing")
     local configRight = configTab:AddRightSection("Misc", "sparkles")
 
@@ -4740,6 +4749,7 @@ function Library:_BuildConfigTab(window)
     })
 
     -- FPS Uncapper Section
+    local fpsCapValue = 144  -- upvalue shared by both toggle and slider
     configRight:AddDivider()
     configRight:AddToggle({
         Name = "Unlock FPS",
@@ -4748,11 +4758,10 @@ function Library:_BuildConfigTab(window)
         Tooltip = "Remove the Roblox 60 FPS cap and allow higher frame rates",
         Callback = function(v)
             pcall(function()
-                local cap = v and (Library.Options and Library.Options["BuiltIn_FPSCap"] and Library.Options["BuiltIn_FPSCap"].Value or 144) or 60
                 if setfpscap then
-                    setfpscap(v and cap or 60)
+                    setfpscap(v and fpsCapValue or 60)
                 elseif set_fps_cap then
-                    set_fps_cap(v and cap or 60)
+                    set_fps_cap(v and fpsCapValue or 60)
                 end
             end)
         end
@@ -4766,8 +4775,9 @@ function Library:_BuildConfigTab(window)
         Flag = "BuiltIn_FPSCap",
         Tooltip = "Maximum FPS cap when Unlock FPS is enabled",
         Callback = function(v)
+            fpsCapValue = v  -- always update shared upvalue
             pcall(function()
-                if Library.Toggles and Library.Toggles["BuiltIn_UnlockFPS"] and Library.Toggles["BuiltIn_UnlockFPS"].Value then
+                if Library.Toggles["BuiltIn_UnlockFPS"] and Library.Toggles["BuiltIn_UnlockFPS"].Value then
                     if setfpscap then
                         setfpscap(v)
                     elseif set_fps_cap then
@@ -4873,7 +4883,7 @@ end
 
 -- ── Managers tab builder ─────────────────────────────────────────
 function Library:_BuildManagersTab(window, folderName)
-    window:AddSidebarSection("Managers", true)
+    self:_EnsureBuiltInSection(window)  -- shares the "Built-In" section with Config tab
     local mgrTab = window:AddTab("Settings", "settings", true)
     local mgrLeft  = mgrTab:AddLeftSection("Theme", "palette")
     local mgrRight = mgrTab:AddRightSection("Configs", "save")
@@ -5229,23 +5239,64 @@ do
                 end
             end)
         end
-        -- Script version check
+        -- Script version check via GitHub commit message
         if options and options.ScriptUpdate and options.ScriptUrl and options.ScriptUrl ~= "" then
             local localVer = options.Version or ""
             task.spawn(function()
-                local ok, remoteContent = pcall(function()
-                    return game:HttpGet(options.ScriptUrl, true)
-                end)
-                if ok and remoteContent then
-                    remoteContent = remoteContent:match("^%s*(.-)%s*$") or remoteContent
-                    if remoteContent ~= "" and remoteContent ~= localVer then
-                        task.wait(3) -- wait for UI to fully appear
-                        self:Notify({
-                            Title = "Script Update Available",
-                            Content = "New version detected! (Current: " .. (localVer ~= "" and localVer or "unknown") .. ")",
-                            Type = "warning",
-                            Duration = 8
-                        })
+                -- Parse raw.githubusercontent.com URL into GitHub API call
+                -- Supports both:
+                --   raw.githubusercontent.com/owner/repo/BRANCH/path
+                --   raw.githubusercontent.com/owner/repo/refs/heads/BRANCH/path
+                local url = options.ScriptUrl
+                local owner, repo, filePath
+                owner, repo, filePath = url:match("raw%.githubusercontent%.com/([^/]+)/([^/]+)/refs/heads/[^/]+/(.+)")
+                if not owner then
+                    owner, repo, filePath = url:match("raw%.githubusercontent%.com/([^/]+)/([^/]+)/[^/]+/(.+)")
+                end
+
+                if owner and repo and filePath then
+                    -- Fetch latest commit for this specific file via GitHub API
+                    local apiUrl = "https://api.github.com/repos/" .. owner .. "/" .. repo
+                        .. "/commits?path=" .. filePath .. "&per_page=1"
+                    local ok, data = pcall(function()
+                        return game:HttpGet(apiUrl, true)
+                    end)
+                    if ok and data and data ~= "" then
+                        -- Extract first commit message from JSON (before any newline)
+                        local commitMsg = data:match('"message"%s*:%s*"([^"\\]*)') or ""
+                        local firstLine = commitMsg:match("^([^\n]+)") or commitMsg
+                        -- Try to extract a semver tag (v1.2.3 or 1.2.3)
+                        local remoteVer = firstLine:match("v%d+%.%d+[%.%d]*") or firstLine:match("%d+%.%d+[%.%d]*") or firstLine
+                        remoteVer = remoteVer:match("^%s*(.-)%s*$") or remoteVer
+
+                        if remoteVer ~= "" and remoteVer ~= localVer then
+                            task.wait(3)
+                            self:Notify({
+                                Title = "Script Update Available",
+                                Content = "Latest commit: " .. firstLine
+                                    .. (localVer ~= "" and "\nCurrent: " .. localVer or ""),
+                                Type = "warning",
+                                Duration = 10
+                            })
+                        end
+                    end
+                else
+                    -- Fallback: raw file content compare (e.g. version.txt)
+                    local ok, remoteContent = pcall(function()
+                        return game:HttpGet(url, true)
+                    end)
+                    if ok and remoteContent then
+                        remoteContent = remoteContent:match("^%s*(.-)%s*$") or remoteContent
+                        if remoteContent ~= "" and remoteContent ~= localVer then
+                            task.wait(3)
+                            self:Notify({
+                                Title = "Script Update Available",
+                                Content = "Remote: " .. remoteContent
+                                    .. (localVer ~= "" and " | Current: " .. localVer or ""),
+                                Type = "warning",
+                                Duration = 8
+                            })
+                        end
                     end
                 end
             end)
