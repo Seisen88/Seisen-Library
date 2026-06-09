@@ -3421,16 +3421,28 @@ function Library:CreateWindow(options)
             ensureColumns()
             return Library:CreateSection(rightCol, sectionName, iconName2)
         end
-        function Tab:CreateSection(opts)
+        function Tab:CreateSection(options, sideArg, iconArg)
             ensureColumns()
-            local side = opts and opts.Side or "Left"
-            local col  = (side == "Right") and rightCol or leftCol
-            return Library:CreateSection(col, opts and opts.Name or "Section", nil)
+            local sectionName, side, sectionIconName
+            if type(options) == "string" then
+                sectionName = options
+                side = sideArg or "Left"
+                sectionIconName = iconArg
+            else
+                options = options or {}
+                sectionName = options.Name or "Section"
+                side = options.Side or "Left"
+                sectionIconName = options.Icon
+            end
+            local col = (side == "Right") and rightCol or leftCol
+            return Library:CreateSection(col, sectionName, sectionIconName)
         end
+        Tab.AddSection = Tab.CreateSection
 
         return Tab
     end
 
+    Window.CreateTab = Window.AddTab
     function Window:SetScale(s) Library:SetScale(s) end
     function Window:Unload() Library:Unload() end
 
