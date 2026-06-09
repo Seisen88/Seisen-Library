@@ -2631,8 +2631,11 @@ end
 
 -- ── SetScale ──────────────────────────────────────────────────────
 function Library:SetScale(scale)
-    if self._windowScale then
-        self._windowScale.Scale = math.clamp(scale, 0.5, 2)
+    self._baseScale = math.clamp(scale, 0.5, 2)
+    if self._autoAdjustScale then
+        pcall(self._autoAdjustScale)
+    elseif self._windowScale then
+        self._windowScale.Scale = self._baseScale
     end
 end
 
@@ -2714,9 +2717,38 @@ function Library:CreateWindow(options)
     if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
     self.ScreenGui = gui
 
-    -- UIScale for SetScale support
+    -- Dynamic Mobile Detection
+    self.IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+
+    -- UIScale for SetScale support & Responsive Auto-scaling
     local scale = Instance.new("UIScale"); scale.Scale = 1; scale.Parent = gui
     self._windowScale = scale
+    self._baseScale = options and options.Scale or 1
+
+    local function autoAdjustScale()
+        local viewportSize = gui.AbsoluteSize
+        if viewportSize.X == 0 or viewportSize.Y == 0 then return end
+        
+        local WIN_W = options and options.Width or 680
+        local WIN_H = options and options.Height or 480
+        
+        -- Add margins to ensure the UI stays fully visible on device edges
+        local margin = 32
+        local targetW = WIN_W + margin
+        local targetH = WIN_H + margin
+        
+        local scaleX = viewportSize.X / targetW
+        local scaleY = viewportSize.Y / targetH
+        local maxScale = math.min(scaleX, scaleY)
+        
+        -- Down-scale proportionally if the screen is too small, and apply user scale multiplier
+        local finalScale = math.min(1, maxScale) * (self._baseScale or 1)
+        scale.Scale = math.clamp(finalScale, 0.45, 2.0)
+    end
+    self._autoAdjustScale = autoAdjustScale
+
+    gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(autoAdjustScale)
+    task.defer(autoAdjustScale)
 
     -- ── Notification container ───────────────────────────────────
     local notifContainer = Create("Frame", {
