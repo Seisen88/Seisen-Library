@@ -1193,7 +1193,12 @@ function Library:CreateDropdown(parent, options)
         for _, b in pairs(itemButtons) do b:Destroy() end; itemButtons = {}
         panel.CanvasSize = UDim2.new(0, 0, 0, #list * ITEM_H + 4)
         local newH = math.min(#list, maxVisible) * ITEM_H + 8
-        panel.Size = UDim2.new(1, 0, 0, newH)
+        if panel.Parent == self._mainWindow then
+            local scale = self._windowScale and self._windowScale.Scale or (self._mainWindowScale and self._mainWindowScale.Scale or 1)
+            panel.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, newH)
+        else
+            panel.Size = UDim2.new(1, 0, 0, newH)
+        end
         for i, item in ipairs(list) do
             local isSelected = isMulti and (value[item] == true) or (value == item)
             local btn = Create("TextButton", {
@@ -1251,7 +1256,7 @@ function Library:CreateDropdown(parent, options)
         isOpen = true
         if self._mainWindow then
             panel.Parent = self._mainWindow
-            local scale = self._windowScale and self._windowScale.Scale or 1
+            local scale = self._windowScale and self._windowScale.Scale or (self._mainWindowScale and self._mainWindowScale.Scale or 1)
             panel.Position = UDim2.fromOffset(
                 (field.AbsolutePosition.X - self._mainWindow.AbsolutePosition.X) / scale,
                 (field.AbsolutePosition.Y - self._mainWindow.AbsolutePosition.Y) / scale + DROP_H + 2
@@ -2794,7 +2799,7 @@ end
 
 -- ── Toggle (show/hide) ────────────────────────────────────────────
 function Library:Toggle()
-    if not self.ScreenGui then return end
+    if not self.ScreenGui or Library.IntroOngoing then return end
     local mw = self._mainWindow
     local ms = self._mainWindowScale
     if not mw or not ms then
@@ -2857,6 +2862,7 @@ function Library:CreateWindow(options)
         _G.SeisenInstance = nil
     end
     _G.SeisenInstance = self
+    Library.IntroOngoing = true
 
     local winName   = options.Name or "Seisen Hub"
     local subtitle  = options.SubTitle or ""
@@ -3276,7 +3282,10 @@ function Library:CreateWindow(options)
 
         -- Phase 4: scale in main window
         main.Visible = true
-        TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+        local tween = TweenService:Create(mainScale, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Scale = 1 })
+        tween:Play()
+        tween.Completed:Wait()
+        Library.IntroOngoing = false
     end)
 
     -- ── Tab & sidebar API ─────────────────────────────────────────
