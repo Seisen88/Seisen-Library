@@ -2492,6 +2492,197 @@ function Library:CreateVStack(parent, options)
     return stackObj
 end
 
+-- ── Analytics Graph ────────────────────────────────────────────────
+function Library:CreateGraph(parent, options)
+    local opts      = options or {}
+    local graphName = opts.Name or "Graph"
+    local height    = opts.Height or 80
+    local maxValues = opts.MaxValues or 15
+    local data      = {}
+
+    local frame = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, height + 28), BackgroundTransparency = 1, Parent = parent
+    })
+
+    local nameLbl = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 16), Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1, Text = graphName,
+        TextColor3 = self.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Left, Parent = frame
+    })
+    self:RegisterElement(nameLbl, "Text", "TextColor3")
+
+    local canvas = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, height), Position = UDim2.new(0, 0, 0, 20),
+        BackgroundColor3 = self.Theme.InputBg, Parent = frame
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+        Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            HorizontalAlignment = Enum.HorizontalAlignment.Left,
+            VerticalAlignment = Enum.VerticalAlignment.Bottom,
+            Padding = UDim.new(0, 2)
+        }),
+        Create("UIPadding", {
+            PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6),
+            PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)
+        })
+    })
+    self:RegisterElement(canvas, "InputBg")
+    self:RegisterElement(canvas:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+
+    local graphObj = {}
+
+    function graphObj:AddPoint(val)
+        table.insert(data, val)
+        if #data > maxValues then
+            table.remove(data, 1)
+        end
+        self:Render()
+    end
+
+    function graphObj:Clear()
+        data = {}
+        self:Render()
+    end
+
+    function graphObj:Render()
+        for _, child in ipairs(canvas:GetChildren()) do
+            if child:IsA("Frame") then
+                child:Destroy()
+            end
+        end
+
+        local maxVal = 0.001
+        for _, v in ipairs(data) do
+            if v > maxVal then maxVal = v end
+        end
+
+        local totalSpace = canvas.AbsoluteSize.X
+        if totalSpace == 0 then
+            totalSpace = 180
+        end
+        totalSpace = totalSpace - 12 -- padding (left/right 6px)
+
+        local numBars = maxValues
+        local padding = 2
+        local barWidth = (totalSpace - (numBars - 1) * padding) / numBars
+        barWidth = math.floor(math.max(1, barWidth))
+
+        for i, val in ipairs(data) do
+            local ratio = val / maxVal
+            local barHeight = math.clamp(ratio * (height - 12), 2, height - 12)
+
+            local bar = Create("Frame", {
+                Size = UDim2.new(0, barWidth, 0, barHeight),
+                BackgroundColor3 = self.Theme.Accent,
+                BorderSizePixel = 0,
+                LayoutOrder = i,
+                Parent = canvas
+            }, {
+                Create("UICorner", { CornerRadius = UDim.new(0, 2) })
+            })
+            self:RegisterElement(bar, "Accent")
+
+            local tooltip = Create("TextLabel", {
+                Size = UDim2.new(0, 50, 0, 16),
+                Position = UDim2.new(0.5, -25, 0, -20),
+                BackgroundColor3 = self.Theme.Sidebar,
+                TextColor3 = self.Theme.Text,
+                Text = tostring(val),
+                Font = Enum.Font.GothamBold,
+                TextSize = 9,
+                Visible = false,
+                ZIndex = 20,
+                Parent = bar
+            }, {
+                Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
+            })
+            self:RegisterElement(tooltip, "Sidebar")
+            self:RegisterElement(tooltip, "Text", "TextColor3")
+            self:RegisterElement(tooltip:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+
+            bar.MouseEnter:Connect(function()
+                tooltip.Visible = true
+            end)
+            bar.MouseLeave:Connect(function()
+                tooltip.Visible = false
+            end)
+        end
+    end
+
+    graphObj:Render()
+
+    return graphObj
+end
+
+-- ── Grid Layout Container ──────────────────────────────────────────
+function Library:CreateGridLayout(parent, options)
+    local opts       = options or {}
+    local columns    = opts.Columns or 2
+    local cellHeight = opts.CellHeight or 28
+    local gap        = opts.Gap or 6
+
+    local frame = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+        AutomaticSize = Enum.AutomaticSize.Y, Parent = parent
+    })
+
+    local grid = Create("UIGridLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        CellSize = UDim2.new(1 / columns, -((columns - 1) * gap / columns), 0, cellHeight),
+        CellPadding = UDim2.new(0, gap, 0, gap),
+        Parent = frame
+    })
+
+    local gridObj = { Instance = frame }
+
+    function gridObj:AddToggle(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateToggle(f, itemOpts)
+    end
+
+    function gridObj:AddButton(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateButton(f, itemOpts)
+    end
+
+    function gridObj:AddCheckbox(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateCheckbox(f, itemOpts)
+    end
+
+    function gridObj:AddBadge(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateBadge(f, itemOpts)
+    end
+
+    function gridObj:AddLabel(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateLabel(f, itemOpts)
+    end
+
+    function gridObj:AddSlider(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateSlider(f, itemOpts)
+    end
+
+    function gridObj:AddDropdown(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateDropdown(f, itemOpts)
+    end
+
+    function gridObj:AddTextbox(itemOpts)
+        local f = Create("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = frame })
+        return Library:CreateTextbox(f, itemOpts)
+    end
+
+    return gridObj
+end
+
 -- ── TabSection ───────────────────────────────────────────────────
 -- Underline-style tab selector — visual alternative to pill Tabbox
 function Library:CreateTabSection(parent, options)
@@ -3032,9 +3223,52 @@ function Library:CreateWindow(options)
     })
     self:RegisterElement(gameLbl, "TextMuted", "TextColor3")
 
+    -- ── Sidebar Search Box ──────────────────────────────────────────
+    local searchFrame = Create("Frame", {
+        Name = "SearchFrame",
+        Size = UDim2.new(1, -16, 0, 26), Position = UDim2.new(0, 8, 0, 60),
+        BackgroundColor3 = self.Theme.InputBg, Parent = sidebar
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+        Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
+    })
+    self:RegisterElement(searchFrame, "InputBg")
+    self:RegisterElement(searchFrame:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+
+    local searchTxt = Create("TextBox", {
+        Name = "SearchBox",
+        Size = UDim2.new(1, -26, 1, 0), Position = UDim2.new(0, 8, 0, 0),
+        BackgroundTransparency = 1, Text = "", PlaceholderText = "Search tabs...",
+        TextColor3 = self.Theme.Text, PlaceholderColor3 = self.Theme.TextDim,
+        Font = Enum.Font.Gotham, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left,
+        ClearTextOnFocus = false, Parent = searchFrame
+    })
+    self:RegisterElement(searchTxt, "Text", "TextColor3")
+
+    local clearBtn = Create("TextButton", {
+        Name = "ClearBtn",
+        Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(1, -20, 0.5, -8),
+        BackgroundTransparency = 1, Text = "×", TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.GothamBold, TextSize = 12, Visible = false, Parent = searchFrame
+    })
+    self:RegisterElement(clearBtn, "TextDim", "TextColor3")
+
+    searchTxt:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = searchTxt.Text:lower()
+        clearBtn.Visible = (query ~= "")
+        for _, entry in ipairs(tabList) do
+            local matches = entry.name:lower():find(query, 1, true)
+            entry.btn.Visible = (query == "" or matches ~= nil)
+        end
+    end)
+
+    clearBtn.MouseButton1Click:Connect(function()
+        searchTxt.Text = ""
+    end)
+
     -- ── Sidebar tab list ──────────────────────────────────────────
     local sideScroll = Create("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 1, -60), Position = UDim2.new(0, 0, 0, 60),
+        Size = UDim2.new(1, 0, 1, -94), Position = UDim2.new(0, 0, 0, 94),
         BackgroundTransparency = 1, ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0), Parent = sidebar
     }, {
@@ -3451,6 +3685,29 @@ function Library:CreateWindow(options)
             TextXAlignment = Enum.TextXAlignment.Left, Parent = btn
         })
 
+        local badge = Create("Frame", {
+            Name = "_badge",
+            Size = UDim2.new(0, 16, 0, 16),
+            Position = UDim2.new(1, -24, 0.5, -8),
+            BackgroundColor3 = Library.Theme.Error,
+            BorderSizePixel = 0,
+            Visible = false,
+            Parent = btn
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(1, 0) })
+        })
+        Library:RegisterElement(badge, "Error")
+
+        local badgeLbl = Create("TextLabel", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            TextColor3 = Color3.new(1, 1, 1),
+            Font = Enum.Font.GothamBold,
+            TextSize = 9,
+            Parent = badge
+        })
+
         -- Hover effect
         btn.MouseEnter:Connect(function()
             if activeTab and activeTab.btn == btn then return end
@@ -3527,6 +3784,19 @@ function Library:CreateWindow(options)
             return Library:CreateSection(col, sectionName, sectionIconName)
         end
         Tab.AddSection = Tab.CreateSection
+
+        function Tab:SetNotification(val)
+            if not val or val == 0 or val == "" then
+                badge.Visible = false
+            else
+                badgeLbl.Text = tostring(val)
+                badge.Visible = true
+            end
+        end
+
+        function Tab:ClearNotification()
+            badge.Visible = false
+        end
 
         return Tab
     end
@@ -3853,6 +4123,22 @@ function Library:CreateSection(parent, name, iconName)
             AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
         })
         return Library:CreateVStack(f, opts)
+    end
+
+    function S:AddGraph(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateGraph(f, opts)
+    end
+
+    function S:AddGridLayout(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateGridLayout(f, opts)
     end
 
     -- SaveManager compatibility: tab:CreateSection({Name,Side})
