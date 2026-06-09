@@ -1100,13 +1100,12 @@ function Library:CreateDropdown(parent, options)
     })
     self:RegisterElement(fieldLabel, "Text", "TextColor3")
 
-    local chevron = Create("TextLabel", {
-        Size = UDim2.new(0, 18, 1, 0), Position = UDim2.new(1, -22, 0, 0),
-        BackgroundTransparency = 1, Text = "▾",
-        TextColor3 = self.Theme.TextDim, Font = Enum.Font.Gotham, TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Center, Parent = field
+    local chevron = Create("ImageLabel", {
+        Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(1, -22, 0.5, -7),
+        BackgroundTransparency = 1, ImageColor3 = self.Theme.TextDim, ZIndex = 2, Parent = field
     })
-    self:RegisterElement(chevron, "TextDim", "TextColor3")
+    self:ApplyIcon(chevron, "chevron-down")
+    self:RegisterElement(chevron, "TextDim", "ImageColor3")
 
     local nameLabel = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 14), Position = UDim2.new(0, 0, 0, DROP_H + 1),
@@ -1203,15 +1202,39 @@ function Library:CreateDropdown(parent, options)
 
     local isOpen = false
     local function openPanel()
-        isOpen = true; panel.Visible = true
-        Tween(chevron, { TextColor3 = self.Theme.Accent })
+        isOpen = true
+        if self._mainWindow then
+            panel.Parent = self._mainWindow
+            local scale = self._windowScale and self._windowScale.Scale or 1
+            panel.Position = UDim2.fromOffset(
+                (field.AbsolutePosition.X - self._mainWindow.AbsolutePosition.X) / scale,
+                (field.AbsolutePosition.Y - self._mainWindow.AbsolutePosition.Y) / scale + DROP_H + 2
+            )
+            panel.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, panelHeight)
+        end
+        panel.Visible = true
+        Tween(chevron, { ImageColor3 = self.Theme.Accent })
         Tween(fieldStroke, { Color = self.Theme.Accent })
-        table.insert(self.OpenDropdowns, function() if isOpen then isOpen = false; panel.Visible = false
-            Tween(chevron, { TextColor3 = self.Theme.TextDim }); Tween(fieldStroke, { Color = self.Theme.Border }) end end)
+        table.insert(self.OpenDropdowns, function()
+            if isOpen then
+                isOpen = false
+                panel.Visible = false
+                panel.Parent = container
+                panel.Position = UDim2.new(0, 0, 0, DROP_H + 2)
+                panel.Size = UDim2.new(1, 0, 0, panelHeight)
+                Tween(chevron, { ImageColor3 = self.Theme.TextDim })
+                Tween(fieldStroke, { Color = self.Theme.Border })
+            end
+        end)
     end
     local function closePanel()
-        isOpen = false; panel.Visible = false
-        Tween(chevron, { TextColor3 = self.Theme.TextDim }); Tween(fieldStroke, { Color = self.Theme.Border })
+        isOpen = false
+        panel.Visible = false
+        panel.Parent = container
+        panel.Position = UDim2.new(0, 0, 0, DROP_H + 2)
+        panel.Size = UDim2.new(1, 0, 0, panelHeight)
+        Tween(chevron, { ImageColor3 = self.Theme.TextDim })
+        Tween(fieldStroke, { Color = self.Theme.Border })
     end
 
     field.MouseButton1Click:Connect(function()
@@ -2896,14 +2919,14 @@ function Library:CreateWindow(options)
     local pages = Instance.new("Folder"); pages.Name = "Pages"; pages.Parent = content
 
     -- ── Resize handle ─────────────────────────────────────────────
-    local resizeHandle = Create("TextButton", {
-        Size = UDim2.new(0, 18, 0, 18),
-        Position = UDim2.new(1, -18, 1, -18),
-        BackgroundTransparency = 1, Text = "⠿",
-        TextColor3 = self.Theme.TextMuted, Font = Enum.Font.Gotham, TextSize = 11,
+    local resizeHandle = Create("ImageButton", {
+        Size = UDim2.new(0, 12, 0, 12),
+        Position = UDim2.new(1, -14, 1, -14),
+        BackgroundTransparency = 1, ImageColor3 = self.Theme.TextMuted,
         ZIndex = 5, Parent = main
     })
-    self:RegisterElement(resizeHandle, "TextMuted", "TextColor3")
+    self:ApplyIcon(resizeHandle, "corner-down-right")
+    self:RegisterElement(resizeHandle, "TextMuted", "ImageColor3")
 
     local resizing = false; local resizeStart, startSize
     resizeHandle.InputBegan:Connect(function(i)
