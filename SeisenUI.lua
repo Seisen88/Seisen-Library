@@ -4706,6 +4706,33 @@ function Library:_BuildConfigTab(window)
         Text = "Memory: -- MB | Instances: --"
     })
 
+    local statsWidget = nil
+    configPerf:AddToggle({
+        Name = "Show Performance HUD",
+        Default = false,
+        Flag = "BuiltIn_ShowPerfHUD",
+        Tooltip = "Show a floating real-time performance HUD overlay",
+        Callback = function(v)
+            if v then
+                if not statsWidget then
+                    statsWidget = Library:CreateWidget({
+                        Title = "Performance",
+                        ShowFPS = true,
+                        ShowPing = true,
+                        ShowMemory = true,
+                        ShowInstances = true
+                    })
+                else
+                    statsWidget.Instance.Visible = true
+                end
+            else
+                if statsWidget then
+                    statsWidget.Instance.Visible = false
+                end
+            end
+        end
+    })
+
     -- FPS calculations
     local lastTime = os.clock()
     local fpsCount = 0
@@ -4766,10 +4793,17 @@ function Library:CreateWidget(options)
     local title    = opts.Title or "Seisen"
     local showFPS  = opts.ShowFPS ~= false
     local showPing = opts.ShowPing ~= false
+    local showMemory = opts.ShowMemory or false
+    local showInstances = opts.ShowInstances or false
+
+    local width = 130
+    if showMemory or showInstances then
+        width = 220
+    end
 
     local widget = Create("Frame", {
         Name = "Widget",
-        Size = UDim2.new(0, 130, 0, 52),
+        Size = UDim2.new(0, width, 0, 52),
         Position = UDim2.new(0, 12, 0, 12),
         BackgroundColor3 = self.Theme.Element,
         BorderSizePixel = 0, ZIndex = 10,
@@ -4822,6 +4856,16 @@ function Library:CreateWidget(options)
                 Stats.Network.ServerStatsItem["Data Ping"] and
                 Stats.Network.ServerStatsItem["Data Ping"]:GetValue() or 0
             table.insert(parts, math.floor(ping) .. "ms")
+        end
+        if showMemory then
+            local mem = 0
+            pcall(function() mem = math.round(game:GetService("Stats"):GetTotalMemoryUsageMb()) end)
+            table.insert(parts, mem .. " MB")
+        end
+        if showInstances then
+            local insts = 0
+            pcall(function() insts = #workspace:GetDescendants() end)
+            table.insert(parts, insts .. " Obj")
         end
         statsLbl.Text = table.concat(parts, "  ·  ")
     end)
