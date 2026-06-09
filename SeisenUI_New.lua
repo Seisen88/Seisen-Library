@@ -3354,8 +3354,7 @@ function Library:CreateWindow(options)
         Name = "TagsContainer",
         Position = UDim2.new(1, -84, 0.5, 0),
         AnchorPoint = Vector2.new(1, 0.5),
-        Size = UDim2.new(0, 0, 0, 18),
-        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.new(0, 300, 0, 18),
         BackgroundTransparency = 1,
         Parent = contentHeader
     }, {
@@ -3371,7 +3370,7 @@ function Library:CreateWindow(options)
     if version and version ~= "" then
         local verTag = Create("TextLabel", {
             Name = "VersionTag",
-            AutomaticSize = Enum.AutomaticSize.XY,
+            AutomaticSize = Enum.AutomaticSize.X,
             Size = UDim2.new(0, 0, 0, 16),
             BackgroundColor3 = self.Theme.Accent,
             BackgroundTransparency = 0.82,
@@ -3379,6 +3378,7 @@ function Library:CreateWindow(options)
             TextColor3 = self.Theme.Accent,
             Font = Enum.Font.GothamBold,
             TextSize = 10,
+            TextWrapped = false,
             LayoutOrder = 2,
             Parent = tagsContainer
         }, {
@@ -3401,7 +3401,7 @@ function Library:CreateWindow(options)
     if winName and winName ~= "" then
         local nameTag = Create("TextLabel", {
             Name = "NameTag",
-            AutomaticSize = Enum.AutomaticSize.XY,
+            AutomaticSize = Enum.AutomaticSize.X,
             Size = UDim2.new(0, 0, 0, 16),
             BackgroundColor3 = self.Theme.Element,
             BackgroundTransparency = 0.3,
@@ -3409,6 +3409,7 @@ function Library:CreateWindow(options)
             TextColor3 = self.Theme.TextDim,
             Font = Enum.Font.GothamBold,
             TextSize = 10,
+            TextWrapped = false,
             LayoutOrder = 1,
             Parent = tagsContainer
         }, {
