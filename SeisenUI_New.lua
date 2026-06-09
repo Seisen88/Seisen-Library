@@ -694,8 +694,9 @@ function Library:CreateToggle(parent, options)
     local toggle = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 24), BackgroundTransparency = 1, Parent = parent
     })
+    local labelOffset = (hasKeybind and not self.IsMobile) and -112 or -48
     local toggleLabel = Create("TextLabel", {
-        Size = self.IsMobile and UDim2.new(1, -48, 1, 0) or UDim2.new(1, -112, 1, 0),
+        Size = UDim2.new(1, labelOffset, 1, 0),
         BackgroundTransparency = 1, Text = toggleName,
         TextColor3 = self.Theme.Text, Font = Enum.Font.Gotham, TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
@@ -2732,7 +2733,8 @@ function Library:CreateWindow(options)
     self.NotificationContainer = notifContainer
 
     -- ── Main window frame ────────────────────────────────────────
-    local WIN_W, WIN_H = 680, 480
+    local WIN_W = options and options.Width or 680
+    local WIN_H = options and options.Height or 480
     local SIDE_W       = 150
 
     local main = Create("Frame", {
