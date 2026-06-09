@@ -3070,17 +3070,16 @@ function Library:CreateWindow(options)
 
     local winName      = options.Name or "Seisen Hub"
     local subtitle     = options.SubTitle or ""
+    local scriptName   = options.ScriptName or subtitle or ""
     local version      = options.Version or ""
     local icon         = options.Icon or ""
     local keybind      = options.ToggleKeybind or Enum.KeyCode.LeftAlt
     local configUI     = options.ConfigSettings or false
     local managerUI    = options.Manager or false
     local scriptUpdate = options.ScriptUpdate or false
-    local scriptUrl    = options.ScriptUrl or ""
     local folderName   = options.Folder or winName
     self.ToggleKeybind = keybind
     self._windowVersion = version
-    self._scriptUrl     = scriptUrl
 
     -- ── ScreenGui ────────────────────────────────────────────────
     local gui = Instance.new("ScreenGui")
@@ -3342,7 +3341,7 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1, Parent = content
     })
     local activeTitle = Create("TextLabel", {
-        Size = UDim2.new(1, -260, 1, 0), Position = UDim2.new(0, 16, 0, 0),
+        Size = UDim2.new(1, -380, 1, 0), Position = UDim2.new(0, 16, 0, 0),
         BackgroundTransparency = 1, Text = "",
         TextColor3 = self.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left, Parent = contentHeader
@@ -3379,7 +3378,7 @@ function Library:CreateWindow(options)
             Font = Enum.Font.GothamBold,
             TextSize = 10,
             TextWrapped = false,
-            LayoutOrder = 2,
+            LayoutOrder = 3,
             Parent = tagsContainer
         }, {
             Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
@@ -3410,7 +3409,7 @@ function Library:CreateWindow(options)
             Font = Enum.Font.GothamBold,
             TextSize = 10,
             TextWrapped = false,
-            LayoutOrder = 1,
+            LayoutOrder = 2,
             Parent = tagsContainer
         }, {
             Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
@@ -3427,6 +3426,38 @@ function Library:CreateWindow(options)
         local nameTagStroke = nameTag:FindFirstChildWhichIsA("UIStroke")
         if nameTagStroke then
             self:RegisterElement(nameTagStroke, "Border", "Color")
+        end
+    end
+
+    if scriptName and scriptName ~= "" then
+        local scriptTag = Create("TextLabel", {
+            Name = "ScriptTag",
+            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.new(0, 0, 0, 16),
+            BackgroundColor3 = self.Theme.Element,
+            BackgroundTransparency = 0.3,
+            Text = scriptName,
+            TextColor3 = self.Theme.TextDim,
+            Font = Enum.Font.GothamBold,
+            TextSize = 10,
+            TextWrapped = false,
+            LayoutOrder = 1,
+            Parent = tagsContainer
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
+            Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+            Create("UIPadding", {
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6),
+                PaddingTop = UDim.new(0, 2),
+                PaddingBottom = UDim.new(0, 2)
+            })
+        })
+        self:RegisterElement(scriptTag, "Element", "BackgroundColor3")
+        self:RegisterElement(scriptTag, "TextDim", "TextColor3")
+        local scriptTagStroke = scriptTag:FindFirstChildWhichIsA("UIStroke")
+        if scriptTagStroke then
+            self:RegisterElement(scriptTagStroke, "Border", "Color")
         end
     end
 
@@ -5553,57 +5584,43 @@ do
                 end
             end)
         end
-        -- Script version check via GitHub commit message
-        if options and options.ScriptUpdate and options.ScriptUrl and options.ScriptUrl ~= "" then
-            local localVer = options.Version or ""
+        -- Library version check via GitHub commit message / version.txt
+        if options and options.ScriptUpdate then
+            local localVer = "v1.0.0"
             task.spawn(function()
-                local url = options.ScriptUrl
-                local owner, repo, filePath
-                owner, repo, filePath = url:match("raw%.githubusercontent%.com/([^/]+)/([^/]+)/refs/heads/[^/]+/(.+)")
-                if not owner then
-                    owner, repo, filePath = url:match("raw%.githubusercontent%.com/([^/]+)/([^/]+)/[^/]+/(.+)")
+                local owner = "Seisen88"
+                local repo = "Seisen-Library"
+                local filePath = "SeisenUI.lua"
+                local apiUrl = "https://api.github.com/repos/" .. owner .. "/" .. repo
+                    .. "/commits?path=" .. filePath .. "&per_page=1"
+                local ok, data = pcall(function()
+                    return game:HttpGet(apiUrl, true)
+                end)
+                local commitMsg, firstLine, remoteVer
+                if ok and data and data ~= "" then
+                    commitMsg = data:match('"message"%s*:%s*"([^"\\]*)') or ""
+                    firstLine = commitMsg:match("^([^\n]+)") or commitMsg
+                    remoteVer = firstLine:match("v%d+%.%d+[%.%d]*") or firstLine:match("%d+%.%d+[%.%d]*")
                 end
-
-                if owner and repo and filePath then
-                    local apiUrl = "https://api.github.com/repos/" .. owner .. "/" .. repo
-                        .. "/commits?path=" .. filePath .. "&per_page=1"
-                    local ok, data = pcall(function()
-                        return game:HttpGet(apiUrl, true)
+                
+                -- Fallback to version.txt if no version found in commit message
+                if not remoteVer or remoteVer == "" then
+                    local ok2, verData = pcall(function()
+                        return game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/version.txt", true)
                     end)
-                    if ok and data and data ~= "" then
-                        local commitMsg = data:match('"message"%s*:%s*"([^"\\]*)') or ""
-                        local firstLine = commitMsg:match("^([^\n]+)") or commitMsg
-                        local remoteVer = firstLine:match("v%d+%.%d+[%.%d]*") or firstLine:match("%d+%.%d+[%.%d]*") or firstLine
-                        remoteVer = remoteVer:match("^%s*(.-)%s*$") or remoteVer
-
-                        if remoteVer ~= "" and remoteVer ~= localVer then
-                            task.wait(3)
-                            self:Notify({
-                                Title = "Script Update Available",
-                                Content = "Latest commit: " .. firstLine
-                                    .. (localVer ~= "" and "\nCurrent: " .. localVer or ""),
-                                Type = "warning",
-                                Duration = 10
-                            })
-                        end
+                    if ok2 and verData then
+                        remoteVer = verData:match("^%s*(.-)%s*$")
                     end
-                else
-                    local ok, remoteContent = pcall(function()
-                        return game:HttpGet(url, true)
-                    end)
-                    if ok and remoteContent then
-                        remoteContent = remoteContent:match("^%s*(.-)%s*$") or remoteContent
-                        if remoteContent ~= "" and remoteContent ~= localVer then
-                            task.wait(3)
-                            self:Notify({
-                                Title = "Script Update Available",
-                                Content = "Remote: " .. remoteContent
-                                    .. (localVer ~= "" and " | Current: " .. localVer or ""),
-                                Type = "warning",
-                                Duration = 8
-                            })
-                        end
-                    end
+                end
+                
+                if remoteVer and remoteVer ~= "" and remoteVer ~= localVer then
+                    task.wait(3)
+                    self:Notify({
+                        Title = "Library Update Available",
+                        Content = "New Version: " .. remoteVer .. (firstLine and ("\nCommit: " .. firstLine) or ""),
+                        Type = "warning",
+                        Duration = 10
+                    })
                 end
             end)
         end
