@@ -52,14 +52,14 @@ local Library = {
 -- ── Keybind panel row ────────────────────────────────────────────
 function Library:RegisterKeybindRow(name, getKeyFn, isToggle, getValueFn)
     if not self.KeybindFrame then return end
-    local container = self.KeybindFrame:FindFirstChildWhichIsA("ScrollingFrame")
+    local container = self.KeybindFrame
     if not container then return end
     local function n(class, props)
         local i = Instance.new(class)
         for k, v in pairs(props) do i[k] = v end
         return i
     end
-    local row = n("Frame", { Size = UDim2.new(1, -8, 0, 22), BackgroundTransparency = 1, BorderSizePixel = 0 })
+    local row = n("Frame", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, BorderSizePixel = 0 })
     local keyBadge = n("TextLabel", {
         Size = UDim2.new(0, 50, 1, -4), Position = UDim2.new(0, 0, 0, 2),
         BackgroundColor3 = self.Theme.Element, Text = "NONE",
@@ -1448,7 +1448,7 @@ function Library:CreateColorPicker(parent, options)
     })
 
     local previewBtn = Create("TextButton", {
-        Size = UDim2.new(0, 24, 0, 24), Position = UDim2.new(0, 0, 0.5, -12),
+        Size = UDim2.new(0, 24, 0, 24), Position = UDim2.new(0, 0, 0, 2),
         BackgroundColor3 = value, Text = "", AutoButtonColor = false, Parent = container
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
@@ -1456,7 +1456,7 @@ function Library:CreateColorPicker(parent, options)
     })
 
     local cpNameLabel = Create("TextLabel", {
-        Size = UDim2.new(1, -80, 1, 0), Position = UDim2.new(0, 30, 0, 0),
+        Size = UDim2.new(1, -100, 0, 28), Position = UDim2.new(0, 30, 0, 0),
         BackgroundTransparency = 1, Text = cpName,
         TextColor3 = self.Theme.Text, Font = Enum.Font.Gotham, TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left, Parent = container
@@ -1464,7 +1464,7 @@ function Library:CreateColorPicker(parent, options)
     self:RegisterElement(cpNameLabel, "Text", "TextColor3")
 
     local hexLabel = Create("TextLabel", {
-        Size = UDim2.new(0, 60, 0, 20), Position = UDim2.new(1, -62, 0.5, -10),
+        Size = UDim2.new(0, 60, 0, 20), Position = UDim2.new(1, -62, 0, 4),
         BackgroundColor3 = self.Theme.InputBg,
         Text = "#" .. value:ToHex():upper(),
         TextColor3 = self.Theme.Accent, Font = Enum.Font.Code, TextSize = 10,
@@ -4879,8 +4879,10 @@ function Library:BuildKeybindPanel()
         Position = UDim2.new(0, 12, 1, -12),
         AnchorPoint = Vector2.new(0, 1),
         BackgroundColor3 = self.Theme.Element,
-        BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y,
-        ZIndex = 20, Visible = false, Parent = self.ScreenGui
+        BackgroundTransparency = 0.5,
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        ZIndex = 100, Visible = false, Parent = self.ScreenGui
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 10) }),
         Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
@@ -4890,18 +4892,10 @@ function Library:BuildKeybindPanel()
     self:RegisterElement(panel, "Element")
     self.KeybindFrame = panel
 
-    local scroll = Create("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
-        BorderSizePixel = 0, ScrollBarThickness = 2,
-        ScrollBarImageColor3 = self.Theme.Border,
-        AutomaticSize = Enum.AutomaticSize.Y,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollingDirection = Enum.ScrollingDirection.Y,
-        LayoutOrder = 1, Parent = panel
-    }, {
-        Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) })
-    })
-    self:RegisterElement(scroll:FindFirstChildWhichIsA("UIListLayout"), "Border", "Color")
+    local stroke = panel:FindFirstChildWhichIsA("UIStroke")
+    if stroke then
+        self:RegisterElement(stroke, "Border", "Color")
+    end
 
     local emptyHint = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1,
@@ -4910,12 +4904,25 @@ function Library:BuildKeybindPanel()
         TextXAlignment = Enum.TextXAlignment.Center,
         LayoutOrder = 999, Parent = panel
     })
+    self:RegisterElement(emptyHint, "TextMuted", "TextColor3")
 
-    self._refreshKeybindEmptyHint = function()
-        emptyHint.Visible = #self.KeybindRows == 0
-        panel.Visible     = #self.KeybindRows > 0
+    local function refreshEmptyHint()
+        local any = false
+        for _, entry in ipairs(self.KeybindRows) do
+            if entry.row.Visible then any = true break end
+        end
+        emptyHint.Visible = not any
+        
+        local showPanel = true
+        if self.Toggles and self.Toggles["BuiltIn_ShowKeybinds"] then
+            showPanel = self.Toggles["BuiltIn_ShowKeybinds"].Value
+        end
+        panel.Visible = showPanel and any
     end
-    self:_refreshKeybindEmptyHint()
+    self._refreshKeybindEmptyHint = refreshEmptyHint
+    refreshEmptyHint()
+
+    MakeDraggable(panel, panel)
 end
 
 -- ── Final wiring: patch CreateWindow to attach config tab ─────────

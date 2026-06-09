@@ -255,7 +255,7 @@ local ThemeManager = {} do
     function ThemeManager:BuildThemeSection(tab)
         assert(self.Library, "Must set ThemeManager.Library")
 
-        local section = tab:CreateSection({ Name = "Themes", Side = "Left" })
+        local section = tab:CreateSection({ Name = "Theme Settings", Side = "Left" })
 
         local themeNames = {}
         for name, data in pairs(self.BuiltInThemes) do
@@ -317,7 +317,7 @@ local ThemeManager = {} do
             end
         })
 
-        local creator = tab:CreateSection({ Name = "Theme Customizer", Side = "Right" })
+        local creator = section
 
         creator:AddColorPicker({
             Name = "Accent Color",
