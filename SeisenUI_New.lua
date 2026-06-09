@@ -43,7 +43,8 @@ local Library = {
         Info          = Color3.fromRGB(155, 155, 170),
     },
     ToggleKeybind = nil,
-    IsMobile = false
+    IsMobile = false,
+    IsNew = true
 }
 
 -- ── Keybind panel row ────────────────────────────────────────────
@@ -138,16 +139,38 @@ function Library:UpdateColorsUsingRegistry()
     if self.Theme.Element and self.Theme.Content and self.Theme.Element == self.Theme.Content then
         self.Theme.Element = self.Theme.Content:Lerp(Color3.new(1,1,1), 0.05)
     end
+    
+    local isLight = false
+    if self.Theme.Element then
+        local r, g, b = self.Theme.Element.R, self.Theme.Element.G, self.Theme.Element.B
+        local luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        isLight = (luminance > 0.5)
+    end
+
     if self.Theme.Element and self.Theme.Border == self.Theme.Element then
-        self.Theme.Border = self.Theme.Element:Lerp(Color3.new(1,1,1), 0.12)
+        if isLight then
+            self.Theme.Border = self.Theme.Element:Lerp(Color3.new(0, 0, 0), 0.18)
+        else
+            self.Theme.Border = self.Theme.Element:Lerp(Color3.new(1, 1, 1), 0.18)
+        end
     end
     if self.Theme.Element then
-        self.Theme.InputBg     = self.Theme.Element:Lerp(Color3.new(0,0,0), 0.18)
-        self.Theme.ElementHover = self.Theme.Element:Lerp(Color3.new(1,1,1), 0.1)
-        self.Theme.BorderLight  = self.Theme.Border:Lerp(Color3.new(1,1,1), 0.2)
+        if isLight then
+            self.Theme.InputBg     = self.Theme.Element:Lerp(Color3.new(0,0,0), 0.12)
+            self.Theme.ElementHover = self.Theme.Element:Lerp(Color3.new(0,0,0), 0.06)
+            self.Theme.BorderLight  = self.Theme.Border:Lerp(Color3.new(0,0,0), 0.15)
+        else
+            self.Theme.InputBg     = self.Theme.Element:Lerp(Color3.new(0,0,0), 0.22)
+            self.Theme.ElementHover = self.Theme.Element:Lerp(Color3.new(1,1,1), 0.08)
+            self.Theme.BorderLight  = self.Theme.Border:Lerp(Color3.new(1,1,1), 0.15)
+        end
     end
     if self.Theme.ToggleOff == self.Theme.Element then
-        self.Theme.ToggleOff = self.Theme.InputBg
+        if isLight then
+            self.Theme.ToggleOff = self.Theme.Element:Lerp(Color3.new(0, 0, 0), 0.18)
+        else
+            self.Theme.ToggleOff = self.Theme.Element:Lerp(Color3.new(0, 0, 0), 0.32)
+        end
     end
     for _, entry in ipairs(self.Registry) do
         if entry.Callback then
@@ -1375,6 +1398,10 @@ function Library:CreateCheckbox(parent, options)
     })
     self:RegisterElement(label, "Text", "TextColor3")
     local boxStroke = box:FindFirstChildWhichIsA("UIStroke")
+    table.insert(self.Registry, { Callback = function(t)
+        Tween(box, { BackgroundColor3 = state and t.Accent or t.InputBg })
+        if boxStroke then Tween(boxStroke, { Color = state and t.Accent or t.Border }) end
+    end })
 
     local cbObj = {
         Value = state, Type = "Toggle",
@@ -2934,11 +2961,12 @@ function Library:CreateWindow(options)
         BorderSizePixel = 0, ClipsDescendants = true, Parent = main
     }, { Create("UICorner", { CornerRadius = UDim.new(0, 12) }) })
     -- Right-side clip (squared corners on right edge)
-    Create("Frame", {
+    local sidebarClip = Create("Frame", {
         Size = UDim2.new(0, 12, 1, 0), Position = UDim2.new(1, -12, 0, 0),
         BackgroundColor3 = self.Theme.Sidebar, BorderSizePixel = 0, Parent = sidebar
     })
     self:RegisterElement(sidebar, "Sidebar")
+    self:RegisterElement(sidebarClip, "Sidebar")
 
     -- ── Header bar inside sidebar (Roblox Player Profile) ──────────
     local sideHeader = Create("Frame", {
@@ -3023,11 +3051,12 @@ function Library:CreateWindow(options)
         Create("UICorner", { CornerRadius = UDim.new(0, 12) })
     })
     -- Squared left edge
-    Create("Frame", {
+    local contentClip = Create("Frame", {
         Size = UDim2.new(0, 12, 1, 0), Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = self.Theme.Content, BorderSizePixel = 0, Parent = content
     })
     self:RegisterElement(content, "Content")
+    self:RegisterElement(contentClip, "Content")
 
     -- Content top bar (title + search hint)
     local contentHeader = Create("Frame", {
@@ -3086,10 +3115,11 @@ function Library:CreateWindow(options)
     end)
 
     -- Thin accent line under content header
-    Create("Frame", {
+    local contentHeaderLine = Create("Frame", {
         Size = UDim2.new(1, -16, 0, 1), Position = UDim2.new(0, 8, 0, 35),
         BackgroundColor3 = self.Theme.Border, BorderSizePixel = 0, Parent = content
     })
+    self:RegisterElement(contentHeaderLine, "Border")
 
     -- Pages folder (holds tab scroll frames)
     local pages = Instance.new("Folder"); pages.Name = "Pages"; pages.Parent = content
@@ -3333,11 +3363,12 @@ function Library:CreateWindow(options)
     end
 
     function Window:AddSidebarDivider()
-        Create("Frame", {
+        local div = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 1),
             BackgroundColor3 = Library.Theme.Border,
             BorderSizePixel = 0, LayoutOrder = tabOrder, Parent = sideScroll
         })
+        Library:RegisterElement(div, "Border")
         tabOrder = tabOrder + 1
     end
 
@@ -3359,6 +3390,7 @@ function Library:CreateWindow(options)
             }),
             Create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) })
         })
+        Library:RegisterElement(page, "Accent", "ScrollBarImageColor3")
 
         -- Auto-grow canvas
         local ll = page:FindFirstChildWhichIsA("UIListLayout")
@@ -3495,6 +3527,26 @@ function Library:CreateWindow(options)
     function Window:SetScale(s) Library:SetScale(s) end
     function Window:Unload() Library:Unload() end
 
+    table.insert(self.Registry, { Callback = function(t)
+        for _, entry in ipairs(tabList) do
+            local isActive = (activeTab == entry)
+            if isActive then
+                entry.btn.BackgroundColor3 = t.SidebarActive
+                entry.btn.BackgroundTransparency = 0
+                local lbl = entry.btn:FindFirstChildWhichIsA("TextLabel")
+                local ico = entry.btn:FindFirstChild("_icon")
+                if lbl then lbl.TextColor3 = t.Text end
+                if ico then ico.ImageColor3 = t.Accent end
+            else
+                entry.btn.BackgroundTransparency = 1
+                local lbl = entry.btn:FindFirstChildWhichIsA("TextLabel")
+                local ico = entry.btn:FindFirstChild("_icon")
+                if lbl then lbl.TextColor3 = t.TextDim end
+                if ico then ico.ImageColor3 = t.TextDim end
+            end
+        end
+    end })
+
     return Window
 end
 
@@ -3529,12 +3581,13 @@ function Library:CreateSection(parent, name, iconName)
         Create("UICorner", { CornerRadius = UDim.new(0, 10) })
     })
     -- Squared bottom corners via overlay
-    Create("Frame", {
+    local headerClip = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 10),
         Position = UDim2.new(0, 0, 1, -10),
         BackgroundColor3 = self.Theme.InputBg, BorderSizePixel = 0, Parent = header
     })
     self:RegisterElement(header, "InputBg")
+    self:RegisterElement(headerClip, "InputBg")
 
     -- Section icon (optional)
     local iconOffset = 10

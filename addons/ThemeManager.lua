@@ -180,16 +180,25 @@ local ThemeManager = {} do
         self.Library.Theme.Background = Color3.fromHex(scheme.BackgroundColor)
         self.Library.Theme.Sidebar = Color3.fromHex(scheme.BackgroundColor)
         self.Library.Theme.Content = Color3.fromHex(scheme.MainColor)
-        self.Library.Theme.Element = Color3.fromHex(scheme.OutlineColor)
-        self.Library.Theme.ElementHover = Color3.fromHex(scheme.OutlineColor):Lerp(Color3.new(1,1,1), 0.1)
-        self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor)
+        
+        if self.Library.IsNew then
+            self.Library.Theme.Element = Color3.fromHex(scheme.MainColor):Lerp(Color3.new(1, 1, 1), 0.05)
+            self.Library.Theme.ElementHover = Color3.fromHex(scheme.MainColor):Lerp(Color3.new(1, 1, 1), 0.10)
+            self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor)
+            self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor)
+        else
+            self.Library.Theme.Element = Color3.fromHex(scheme.OutlineColor)
+            self.Library.Theme.ElementHover = Color3.fromHex(scheme.OutlineColor):Lerp(Color3.new(1, 1, 1), 0.1)
+            self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor)
+            self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor)
+        end
+        
         self.Library.Theme.Accent = Color3.fromHex(scheme.AccentColor)
         self.Library.Theme.AccentHover = Color3.fromHex(scheme.AccentColor):Lerp(Color3.new(1,1,1), 0.15)
         self.Library.Theme.Text = Color3.fromHex(scheme.FontColor)
         self.Library.Theme.TextDim = Color3.fromHex(scheme.FontColor):Lerp(Color3.new(0,0,0), 0.3)
         self.Library.Theme.TextMuted = Color3.fromHex(scheme.FontColor):Lerp(Color3.new(0,0,0), 0.5)
         self.Library.Theme.Toggle = Color3.fromHex(scheme.AccentColor)
-        self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor)
         self.Library.Theme.SidebarActive = Color3.fromHex(scheme.MainColor)
 
         -- Update UI using registry
