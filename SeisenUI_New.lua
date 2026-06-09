@@ -3443,6 +3443,9 @@ function Library:CreateWindow(options)
     end
 
     Window.CreateTab = Window.AddTab
+    function Window:Notify(opts)
+        Library:Notify(opts)
+    end
     function Window:SetScale(s) Library:SetScale(s) end
     function Window:Unload() Library:Unload() end
 
@@ -3821,10 +3824,14 @@ function Library:_BuildConfigTab(window)
             if v then
                 ls.GlobalShadows = false
                 ls.FogEnd = 9e9
-                game:GetService("RenderSettings").QualityLevel = Enum.QualityLevel.Level01
+                pcall(function()
+                    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+                end)
             else
                 ls.GlobalShadows = true
-                game:GetService("RenderSettings").QualityLevel = Enum.QualityLevel.Automatic
+                pcall(function()
+                    settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+                end)
             end
         end
     })
@@ -3838,6 +3845,9 @@ function Library:_BuildConfigTab(window)
             end)
         end
     })
+
+    self.PlayerSettings = configLeft
+    self.UISettings     = configRight
 
     return configTab
 end
@@ -4017,6 +4027,35 @@ do
         -- Build the keybind panel once the gui exists
         task.defer(function() self:BuildKeybindPanel() end)
         return win
+    end
+end
+
+-- ── Convenience wrappers ──────────────────────────────────────────
+function Library:AddToPlayerSettings(opts, elementType)
+    if not self.PlayerSettings then
+        warn("[SeisenUI] AddToPlayerSettings called before CreateWindow or ConfigSettings is false.")
+        return
+    end
+    elementType = elementType or "Toggle"
+    local method = "Add" .. elementType
+    if self.PlayerSettings[method] then
+        return self.PlayerSettings[method](self.PlayerSettings, opts)
+    else
+        warn("[SeisenUI] Unknown element type: " .. tostring(elementType))
+    end
+end
+
+function Library:AddToUISettings(opts, elementType)
+    if not self.UISettings then
+        warn("[SeisenUI] AddToUISettings called before CreateWindow or ConfigSettings is false.")
+        return
+    end
+    elementType = elementType or "Toggle"
+    local method = "Add" .. elementType
+    if self.UISettings[method] then
+        return self.UISettings[method](self.UISettings, opts)
+    else
+        warn("[SeisenUI] Unknown element type: " .. tostring(elementType))
     end
 end
 
