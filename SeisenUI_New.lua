@@ -1312,6 +1312,14 @@ function Library:CreateDropdown(parent, options)
         end,
     }
 
+    table.insert(self.Registry, {
+        Callback = function()
+            if container and container.Parent then
+                rebuildItems(items)
+            end
+        end
+    })
+
     self:ApplyCommonProperties(container, options, dropObj)
     if flag then self.Options[flag] = dropObj end
     return dropObj
