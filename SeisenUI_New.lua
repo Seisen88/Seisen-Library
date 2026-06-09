@@ -689,6 +689,7 @@ function Library:CreateToggle(parent, options)
     local flag       = options.Flag
     local state      = default
     local keybind    = options.Keybind or Enum.KeyCode.Unknown
+    local hasKeybind = options.Keybind ~= nil
 
     local toggle = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 24), BackgroundTransparency = 1, Parent = parent
@@ -721,25 +722,29 @@ function Library:CreateToggle(parent, options)
         Create("UIStroke", { Color = Color3.new(0,0,0), Transparency = 0.88, Thickness = 1 })
     })
 
-    -- Keybind badge — accent text, charcoal bg
+    -- Keybind badge — accent text, InputBg bg
+    local keybindStroke = Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
     local keybindBtn = Create("TextButton", {
         Size = UDim2.new(0, 38, 0, 16),
         Position = UDim2.new(1, -100, 0.5, -8),
-        BackgroundColor3 = self.Theme.Element,
+        BackgroundColor3 = self.Theme.InputBg,
         Text = ShortKey(keybind),
         TextColor3 = self.Theme.Accent, Font = Enum.Font.GothamBold, TextSize = 9,
-        AutoButtonColor = false, Visible = not self.IsMobile, ZIndex = 2, Parent = toggle
+        AutoButtonColor = false,
+        Visible = hasKeybind and (not self.IsMobile),
+        ZIndex = 2, Parent = toggle
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
+        keybindStroke
     })
 
-    -- clearBtn centered on keybindBtn: keybindBtn center = (1, -100+19, 0.5, -8+8) = (1,-81,0.5,0)
+    -- clearBtn positioned at top-right of keybindBtn
     local clearBtn = Create("TextButton", {
         Size = UDim2.new(0, 14, 0, 14),
-        Position = UDim2.new(1, -88, 0.5, -7),
+        Position = UDim2.new(1, -69, 0.5, -15),
         BackgroundColor3 = Color3.fromRGB(180, 50, 50),
         Text = "", AutoButtonColor = false, ZIndex = 4,
-        Visible = not self.IsMobile and (keybind ~= Enum.KeyCode.Unknown),
+        Visible = hasKeybind and (not self.IsMobile) and (keybind ~= Enum.KeyCode.Unknown),
         Parent = toggle
     }, {
         Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
@@ -755,13 +760,16 @@ function Library:CreateToggle(parent, options)
         })
     })
 
-    self:RegisterElement(keybindBtn, "Element")
+    if hasKeybind then
+        self:RegisterElement(keybindBtn, "InputBg")
+        self:RegisterElement(keybindStroke, "Border", "Color")
+    end
     table.insert(self.Registry, { Callback = function(t)
         Tween(switchBg, { BackgroundColor3 = state and t.Toggle or t.ToggleOff })
     end })
 
     local function updateClearBtn()
-        clearBtn.Visible = not self.IsMobile and (keybind ~= Enum.KeyCode.Unknown)
+        clearBtn.Visible = hasKeybind and (not self.IsMobile) and (keybind ~= Enum.KeyCode.Unknown)
     end
 
     local toggleObj = {
@@ -774,6 +782,7 @@ function Library:CreateToggle(parent, options)
             if s._kbUpdate then pcall(s._kbUpdate) end
         end,
         SetKeybind = function(s, key)
+            if not hasKeybind then return end
             keybind = key or Enum.KeyCode.Unknown; s.Keybind = keybind
             keybindBtn.Text = ShortKey(keybind)
             updateClearBtn()
@@ -787,40 +796,44 @@ function Library:CreateToggle(parent, options)
     })
     switchBtn.MouseButton1Click:Connect(function() toggleObj:SetValue(not state) end)
 
-    local listening = false
-    keybindBtn.MouseButton1Click:Connect(function() listening = true; keybindBtn.Text = "..." end)
-    clearBtn.MouseButton1Click:Connect(function()
-        listening = false; keybind = Enum.KeyCode.Unknown
-        toggleObj.Keybind = Enum.KeyCode.Unknown; keybindBtn.Text = "NONE"; updateClearBtn()
-        if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
-        if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
-    end)
-
-    local _kbConn = UserInputService.InputBegan:Connect(function(input, processed)
-        if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-            listening = false
-            if input.KeyCode == Enum.KeyCode.Backspace then
-                keybind = Enum.KeyCode.Unknown; toggleObj.Keybind = Enum.KeyCode.Unknown
-                keybindBtn.Text = "NONE"
-            else
-                keybind = input.KeyCode; toggleObj.Keybind = input.KeyCode
-                keybindBtn.Text = ShortKey(input.KeyCode)
-            end
-            updateClearBtn()
+    if hasKeybind then
+        local listening = false
+        keybindBtn.MouseButton1Click:Connect(function() listening = true; keybindBtn.Text = "..." end)
+        clearBtn.MouseButton1Click:Connect(function()
+            listening = false; keybind = Enum.KeyCode.Unknown
+            toggleObj.Keybind = Enum.KeyCode.Unknown; keybindBtn.Text = "NONE"; updateClearBtn()
             if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
-        elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then
-            if not toggleObj._disabled then toggleObj:SetValue(not state) end
-        end
-    end)
-    table.insert(self.KeybindConnections, _kbConn)
+        end)
+
+        local _kbConn = UserInputService.InputBegan:Connect(function(input, processed)
+            if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                listening = false
+                if input.KeyCode == Enum.KeyCode.Backspace then
+                    keybind = Enum.KeyCode.Unknown; toggleObj.Keybind = Enum.KeyCode.Unknown
+                    keybindBtn.Text = "NONE"
+                else
+                    keybind = input.KeyCode; toggleObj.Keybind = input.KeyCode
+                    keybindBtn.Text = ShortKey(input.KeyCode)
+                end
+                updateClearBtn()
+                if toggleObj._kbUpdate then pcall(toggleObj._kbUpdate) end
+                if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
+            elseif keybind ~= Enum.KeyCode.Unknown and input.KeyCode == keybind and not processed then
+                if not toggleObj._disabled then toggleObj:SetValue(not state) end
+            end
+        end)
+        table.insert(self.KeybindConnections, _kbConn)
+    end
 
     self:ApplyCommonProperties(toggle, options, toggleObj)
     if flag then self.Toggles[flag] = toggleObj end
 
-    local kbUpdate = self:RegisterKeybindRow(toggleName or flag,
-        function() return toggleObj.Keybind end, true, function() return toggleObj.Value end)
-    toggleObj._kbUpdate = kbUpdate
+    if hasKeybind then
+        local kbUpdate = self:RegisterKeybindRow(toggleName or flag,
+            function() return toggleObj.Keybind end, true, function() return toggleObj.Value end)
+        toggleObj._kbUpdate = kbUpdate
+    end
     if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
     if default then callback(true) end
     return toggleObj
