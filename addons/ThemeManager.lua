@@ -222,7 +222,7 @@ local ThemeManager = {} do
                 return content
             end
         end
-        return "Default"
+        return nil
     end
 
     function ThemeManager:BuildThemeSection(tab)
@@ -247,7 +247,7 @@ local ThemeManager = {} do
         section:AddDropdown({
             Name = "Theme",
             Options = sortedNames,
-            Default = defaultTheme,
+            Default = defaultTheme or "Default",
             Flag = "ThemeManager_ThemeList",
             Callback = function(value)
                 self:ApplyTheme(value)
@@ -277,8 +277,10 @@ local ThemeManager = {} do
             end
         })
 
-        -- Apply default theme on load
-        self:ApplyTheme(defaultTheme)
+        -- Apply default theme on load only if one was saved
+        if defaultTheme then
+            self:ApplyTheme(defaultTheme)
+        end
     end
 
     ThemeManager:BuildFolderTree()
