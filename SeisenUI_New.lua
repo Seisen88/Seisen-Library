@@ -2713,6 +2713,10 @@ function Library:Unload()
     self.KeybindRows = {}
     self.KeybindFrame = nil
     self._refreshKeybindEmptyHint = nil
+
+    if _G.SeisenInstance == self then
+        _G.SeisenInstance = nil
+    end
 end
 
 -- ── Toggle (show/hide) ────────────────────────────────────────────
@@ -2773,6 +2777,14 @@ end
 
 -- ── CreateWindow ─────────────────────────────────────────────────
 function Library:CreateWindow(options)
+    if _G.SeisenInstance then
+        pcall(function()
+            _G.SeisenInstance:Unload()
+        end)
+        _G.SeisenInstance = nil
+    end
+    _G.SeisenInstance = self
+
     local winName   = options.Name or "Seisen Hub"
     local subtitle  = options.SubTitle or ""
     local version   = options.Version or ""
