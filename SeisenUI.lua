@@ -3068,13 +3068,19 @@ function Library:CreateWindow(options)
     _G.SeisenInstance = self
     Library.IntroOngoing = true
 
-    local winName   = options.Name or "Seisen Hub"
-    local subtitle  = options.SubTitle or ""
-    local version   = options.Version or ""
-    local icon      = options.Icon or ""
-    local keybind   = options.ToggleKeybind or Enum.KeyCode.LeftAlt
-    local configUI  = options.ConfigSettings or false
+    local winName      = options.Name or "Seisen Hub"
+    local subtitle     = options.SubTitle or ""
+    local version      = options.Version or ""
+    local icon         = options.Icon or ""
+    local keybind      = options.ToggleKeybind or Enum.KeyCode.LeftAlt
+    local configUI     = options.ConfigSettings or false
+    local managerUI    = options.Manager or false
+    local scriptUpdate = options.ScriptUpdate or false
+    local scriptUrl    = options.ScriptUrl or ""
+    local folderName   = options.Folder or winName
     self.ToggleKeybind = keybind
+    self._windowVersion = version
+    self._scriptUrl     = scriptUrl
 
     -- ── ScreenGui ────────────────────────────────────────────────
     local gui = Instance.new("ScreenGui")
@@ -3193,12 +3199,16 @@ function Library:CreateWindow(options)
         avatarUrl = Players:GetUserThumbnailAsync(lp.UserId, thumbType, thumbSize)
     end)
 
-    -- Rounded avatar frame
-    local logoFrame = Create("ImageLabel", {
+    -- Rounded avatar frame (ImageButton for privacy toggle)
+    local nameHidden = false
+    local realNameStr = lp.DisplayName
+    local realUserStr = "@" .. lp.Name
+    local logoFrame = Create("ImageButton", {
         Size = UDim2.new(0, 32, 0, 32),
         Position = UDim2.new(0, 10, 0.5, -16),
         BackgroundColor3 = self.Theme.InputBg,
         Image = avatarUrl,
+        AutoButtonColor = false,
         Parent = sideHeader
     }, {
         Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
@@ -3234,6 +3244,20 @@ function Library:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left, Parent = sideHeader
     })
     self:RegisterElement(gameLbl, "TextMuted", "TextColor3")
+
+    -- Privacy toggle: click avatar to hide/show name+username
+    logoFrame.MouseButton1Click:Connect(function()
+        nameHidden = not nameHidden
+        nameLbl.Text = nameHidden and "Hidden Player" or realNameStr
+        idLbl.Text   = nameHidden and "@hidden"       or realUserStr
+        Tween(logoFrame, { BackgroundTransparency = nameHidden and 0.4 or 0 }, 0.15)
+    end)
+    logoFrame.MouseEnter:Connect(function()
+        Tween(logoFrame, { BackgroundTransparency = 0.3 }, 0.1)
+    end)
+    logoFrame.MouseLeave:Connect(function()
+        Tween(logoFrame, { BackgroundTransparency = nameHidden and 0.4 or 0 }, 0.1)
+    end)
 
     -- ── Sidebar Search Box ──────────────────────────────────────────
     local searchFrame = Create("Frame", {
@@ -3542,7 +3566,8 @@ function Library:CreateWindow(options)
     end)
 
     -- ── Tab & sidebar API ─────────────────────────────────────────
-    local tabOrder   = 0
+    local tabOrder    = 0
+    local builtInOrder = 10000  -- Built-in tabs get high LayoutOrder (bottom)
     tabList    = {}   -- { name, page, sideBtn }
     local activeTab  = nil
     local currentSection = nil
@@ -3570,13 +3595,20 @@ function Library:CreateWindow(options)
     -- ── Window object ─────────────────────────────────────────────
     local Window = {}
 
-    function Window:AddSidebarSection(label)
+    function Window:AddSidebarSection(label, isBuiltIn)
+        local order
+        if isBuiltIn then
+            order = builtInOrder
+            builtInOrder = builtInOrder + 1
+        else
+            order = tabOrder
+            tabOrder = tabOrder + 1
+        end
         local secHeader = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 20),
             BackgroundTransparency = 1,
-            LayoutOrder = tabOrder, Parent = sideScroll
+            LayoutOrder = order, Parent = sideScroll
         })
-        tabOrder = tabOrder + 1
 
         local chevron = Create("ImageLabel", {
             Size = UDim2.new(0, 8, 0, 8),
@@ -3624,18 +3656,32 @@ function Library:CreateWindow(options)
         end)
     end
 
-    function Window:AddSidebarDivider()
+    function Window:AddSidebarDivider(isBuiltIn)
+        local order
+        if isBuiltIn then
+            order = builtInOrder
+            builtInOrder = builtInOrder + 1
+        else
+            order = tabOrder
+            tabOrder = tabOrder + 1
+        end
         local div = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 1),
             BackgroundColor3 = Library.Theme.Border,
-            BorderSizePixel = 0, LayoutOrder = tabOrder, Parent = sideScroll
+            BorderSizePixel = 0, LayoutOrder = order, Parent = sideScroll
         })
         Library:RegisterElement(div, "Border")
-        tabOrder = tabOrder + 1
     end
 
-    function Window:AddTab(name, iconName)
-        tabOrder = tabOrder + 1
+    function Window:AddTab(name, iconName, isBuiltIn)
+        local order
+        if isBuiltIn then
+            order = builtInOrder
+            builtInOrder = builtInOrder + 1
+        else
+            tabOrder = tabOrder + 1
+            order = tabOrder
+        end
         local page = Create("ScrollingFrame", {
             Name = name, Size = UDim2.new(1, 0, 1, -38),
             Position = UDim2.new(0, 0, 0, 38),
@@ -3667,7 +3713,7 @@ function Library:CreateWindow(options)
             BackgroundTransparency = 1,
             Text = "", AutoButtonColor = false,
             Visible = currentSection == nil or currentSection.Visible,
-            LayoutOrder = tabOrder, Parent = sideScroll
+            LayoutOrder = order, Parent = sideScroll
         }, {
             Create("UICorner", { CornerRadius = UDim.new(0, 8) }),
         })
@@ -4182,9 +4228,9 @@ end
 -- sidebar.  Exposed as a real AddTab so ThemeManager / SaveManager
 -- still get a normal SettingsTab to build into.
 function Library:_BuildConfigTab(window)
-    window:AddSidebarDivider()
-    window:AddSidebarSection("Player")
-    local configTab = window:AddTab("Config", "cog")
+    window:AddSidebarDivider(true)
+    window:AddSidebarSection("Player", true)
+    local configTab = window:AddTab("Config", "cog", true)
     local configLeft = configTab:AddLeftSection("Character", "person-standing")
     local configRight = configTab:AddRightSection("Misc", "sparkles")
 
@@ -4693,6 +4739,45 @@ function Library:_BuildConfigTab(window)
         end
     })
 
+    -- FPS Uncapper Section
+    configRight:AddDivider()
+    configRight:AddToggle({
+        Name = "Unlock FPS",
+        Default = false,
+        Flag = "BuiltIn_UnlockFPS",
+        Tooltip = "Remove the Roblox 60 FPS cap and allow higher frame rates",
+        Callback = function(v)
+            pcall(function()
+                local cap = v and (Library.Options and Library.Options["BuiltIn_FPSCap"] and Library.Options["BuiltIn_FPSCap"].Value or 144) or 60
+                if setfpscap then
+                    setfpscap(v and cap or 60)
+                elseif set_fps_cap then
+                    set_fps_cap(v and cap or 60)
+                end
+            end)
+        end
+    })
+    configRight:AddSlider({
+        Name = "FPS Limit",
+        Min = 30,
+        Max = 360,
+        Default = 144,
+        Increment = 5,
+        Flag = "BuiltIn_FPSCap",
+        Tooltip = "Maximum FPS cap when Unlock FPS is enabled",
+        Callback = function(v)
+            pcall(function()
+                if Library.Toggles and Library.Toggles["BuiltIn_UnlockFPS"] and Library.Toggles["BuiltIn_UnlockFPS"].Value then
+                    if setfpscap then
+                        setfpscap(v)
+                    elseif set_fps_cap then
+                        set_fps_cap(v)
+                    end
+                end
+            end)
+        end
+    })
+
     -- Performance Monitor Section
     local configPerf = configTab:AddRightSection("Performance", "activity")
 
@@ -4786,6 +4871,130 @@ end
 -- PHASE 7 · Widget · Profile · Keybind panel · Final wiring
 -- ================================================================
 
+-- ── Managers tab builder ─────────────────────────────────────────
+function Library:_BuildManagersTab(window, folderName)
+    window:AddSidebarSection("Managers", true)
+    local mgrTab = window:AddTab("Settings", "settings", true)
+    local mgrLeft  = mgrTab:AddLeftSection("Theme", "palette")
+    local mgrRight = mgrTab:AddRightSection("Configs", "save")
+
+    -- Theme Manager built-in
+    local themes = { "Default", "Mocha", "Macchiato", "Frappe", "Latte", "Nord", "Tokyo Night", "Gruvbox" }
+    local themeData = {
+        Default    = { Background = Color3.fromRGB(16,16,20),   Element = Color3.fromRGB(28,28,36),  Accent = Color3.fromRGB(155,155,170), Text = Color3.fromRGB(225,225,232) },
+        Mocha      = { Background = Color3.fromRGB(30,30,46),   Element = Color3.fromRGB(49,50,68),  Accent = Color3.fromRGB(203,166,247), Text = Color3.fromRGB(205,214,244) },
+        Macchiato  = { Background = Color3.fromRGB(24,25,38),   Element = Color3.fromRGB(36,39,58),  Accent = Color3.fromRGB(198,160,246), Text = Color3.fromRGB(202,211,245) },
+        Frappe     = { Background = Color3.fromRGB(48,52,70),   Element = Color3.fromRGB(65,69,89),  Accent = Color3.fromRGB(202,158,230), Text = Color3.fromRGB(198,208,245) },
+        Latte      = { Background = Color3.fromRGB(230,233,239),Element = Color3.fromRGB(204,208,218),Accent = Color3.fromRGB(114,135,253),Text = Color3.fromRGB(76,79,105) },
+        Nord       = { Background = Color3.fromRGB(46,52,64),   Element = Color3.fromRGB(59,66,82),  Accent = Color3.fromRGB(136,192,208), Text = Color3.fromRGB(236,239,244) },
+        ["Tokyo Night"] = { Background = Color3.fromRGB(26,27,38), Element = Color3.fromRGB(36,40,59), Accent = Color3.fromRGB(122,162,247), Text = Color3.fromRGB(192,202,245) },
+        Gruvbox    = { Background = Color3.fromRGB(40,40,40),   Element = Color3.fromRGB(60,56,54),  Accent = Color3.fromRGB(215,153,33),  Text = Color3.fromRGB(235,219,178) },
+    }
+    local currentThemeName = "Default"
+    mgrLeft:AddDropdown({
+        Name = "Theme Preset",
+        Flag = "BuiltIn_ThemePreset",
+        Options = themes,
+        Default = "Default",
+        Callback = function(v)
+            currentThemeName = v
+            local t = themeData[v]
+            if t then Library:SetTheme(t) end
+        end
+    })
+    mgrLeft:AddColorPicker({
+        Name = "Accent Color",
+        Flag = "BuiltIn_AccentColor",
+        Default = Library.Theme.Accent,
+        Callback = function(v)
+            Library:SetTheme({ Accent = v, Toggle = v, Info = v })
+        end
+    })
+    mgrLeft:AddColorPicker({
+        Name = "Background Color",
+        Flag = "BuiltIn_BgColor",
+        Default = Library.Theme.Background,
+        Callback = function(v)
+            Library:SetTheme({ Background = v })
+        end
+    })
+    mgrLeft:AddColorPicker({
+        Name = "Element Color",
+        Flag = "BuiltIn_ElemColor",
+        Default = Library.Theme.Element,
+        Callback = function(v)
+            Library:SetTheme({ Element = v, ToggleOff = v })
+        end
+    })
+    mgrLeft:AddButton({
+        Name = "Reset to Default",
+        Callback = function()
+            Library:SetTheme({
+                Background = Color3.fromRGB(16,16,20), Sidebar = Color3.fromRGB(12,12,15),
+                SidebarActive = Color3.fromRGB(26,26,34), Content = Color3.fromRGB(20,20,25),
+                Element = Color3.fromRGB(28,28,36), ElementHover = Color3.fromRGB(36,36,46),
+                InputBg = Color3.fromRGB(22,22,28), Border = Color3.fromRGB(46,46,58),
+                BorderLight = Color3.fromRGB(62,62,78), Accent = Color3.fromRGB(155,155,170),
+                AccentHover = Color3.fromRGB(180,180,195), AccentDark = Color3.fromRGB(44,44,56),
+                Text = Color3.fromRGB(225,225,232), TextDim = Color3.fromRGB(128,128,145),
+                TextMuted = Color3.fromRGB(62,62,78), Toggle = Color3.fromRGB(155,155,170),
+                ToggleOff = Color3.fromRGB(36,36,48)
+            })
+        end
+    })
+
+    -- Save Manager built-in
+    local folder = folderName or "SeisenConfigs"
+    mgrRight:AddLabel({ Text = "Config Folder: " .. folder })
+    local cfgNameBox = mgrRight:AddTextbox({
+        Name = "Config Name",
+        Flag = "BuiltIn_ConfigName",
+        Default = "default",
+        Placeholder = "Enter config name..."
+    })
+    mgrRight:AddButton({
+        Name = "Save Config",
+        Callback = function()
+            local name = (Library.Options["BuiltIn_ConfigName"] and Library.Options["BuiltIn_ConfigName"].Value) or "default"
+            local safeName = tostring(name):gsub("[^%w_%-]", "_")
+            Library:SaveConfig(folder .. "_" .. safeName)
+            Library:Notify({ Title = "Config Saved", Content = "Saved as '" .. safeName .. "'", Type = "success", Duration = 3 })
+        end
+    })
+    mgrRight:AddButton({
+        Name = "Load Config",
+        Callback = function()
+            local name = (Library.Options["BuiltIn_ConfigName"] and Library.Options["BuiltIn_ConfigName"].Value) or "default"
+            local safeName = tostring(name):gsub("[^%w_%-]", "_")
+            Library:LoadConfig(folder .. "_" .. safeName)
+            Library:Notify({ Title = "Config Loaded", Content = "Loaded '" .. safeName .. "'", Type = "info", Duration = 3 })
+        end
+    })
+    mgrRight:AddDivider()
+    mgrRight:AddToggle({
+        Name = "Auto-load Config",
+        Flag = "BuiltIn_AutoLoad",
+        Default = false,
+        Tooltip = "Automatically load the 'autoload' config on startup",
+        Callback = function(v)
+            if v then
+                Library:LoadConfig(folder .. "_autoload")
+            end
+        end
+    })
+    mgrRight:AddButton({
+        Name = "Set as Auto-load",
+        Callback = function()
+            local name = (Library.Options["BuiltIn_ConfigName"] and Library.Options["BuiltIn_ConfigName"].Value) or "default"
+            local safeName = tostring(name):gsub("[^%w_%-]", "_")
+            Library:SaveConfig(folder .. "_autoload")
+            Library:Notify({ Title = "Auto-load Set", Content = "'" .. safeName .. "' will load on startup", Type = "success", Duration = 3 })
+        end
+    })
+
+    return mgrTab
+end
+
 -- ── Widget (floating mini HUD) ────────────────────────────────────
 function Library:CreateWidget(options)
     if not self.ScreenGui then return end
@@ -4814,19 +5023,36 @@ function Library:CreateWidget(options)
     })
     self:RegisterElement(widget, "Element")
 
-    -- Circular accent icon
+    -- Circular avatar icon (player headshot or letter fallback)
+    local widgetAvatarUrl = ""
+    pcall(function()
+        widgetAvatarUrl = Players:GetUserThumbnailAsync(
+            LocalPlayer.UserId,
+            Enum.ThumbnailType.HeadShot,
+            Enum.ThumbnailSize.Size48x48
+        )
+    end)
     local iconCircle = Create("Frame", {
         Size = UDim2.new(0, 32, 0, 32),
         Position = UDim2.new(0, 10, 0.5, -16),
         BackgroundColor3 = self.Theme.Accent, ZIndex = 11, Parent = widget
     }, {
-        Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Create("UICorner", { CornerRadius = UDim.new(1, 0) })
+    })
+    if widgetAvatarUrl ~= "" then
+        Create("ImageLabel", {
+            Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+            Image = widgetAvatarUrl, ScaleType = Enum.ScaleType.Crop,
+            ZIndex = 12, Parent = iconCircle
+        }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+    else
         Create("TextLabel", {
             Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1,
             Text = title:sub(1,1):upper(), TextColor3 = Color3.new(1,1,1),
-            Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 12
+            Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 12,
+            Parent = iconCircle
         })
-    })
+    end
     self:RegisterElement(iconCircle, "Accent")
 
     local titleLbl = Create("TextLabel", {
@@ -4983,7 +5209,7 @@ function Library:BuildKeybindPanel()
     MakeDraggable(panel, panel)
 end
 
--- ── Final wiring: patch CreateWindow to attach config tab ─────────
+-- ── Final wiring: patch CreateWindow to attach config tab + manager + version check ─────────
 do
     local _orig = Library.CreateWindow
     Library.CreateWindow = function(self, options)
@@ -4992,6 +5218,37 @@ do
         self:BuildKeybindPanel()
         if options and options.ConfigSettings then
             self:_BuildConfigTab(win)
+        end
+        if options and options.Manager then
+            local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
+            self:_BuildManagersTab(win, folderName)
+            -- Auto-load config if enabled
+            task.defer(function()
+                if self.Toggles and self.Toggles["BuiltIn_AutoLoad"] and self.Toggles["BuiltIn_AutoLoad"].Value then
+                    self:LoadConfig(folderName .. "_autoload")
+                end
+            end)
+        end
+        -- Script version check
+        if options and options.ScriptUpdate and options.ScriptUrl and options.ScriptUrl ~= "" then
+            local localVer = options.Version or ""
+            task.spawn(function()
+                local ok, remoteContent = pcall(function()
+                    return game:HttpGet(options.ScriptUrl, true)
+                end)
+                if ok and remoteContent then
+                    remoteContent = remoteContent:match("^%s*(.-)%s*$") or remoteContent
+                    if remoteContent ~= "" and remoteContent ~= localVer then
+                        task.wait(3) -- wait for UI to fully appear
+                        self:Notify({
+                            Title = "Script Update Available",
+                            Content = "New version detected! (Current: " .. (localVer ~= "" and localVer or "unknown") .. ")",
+                            Type = "warning",
+                            Duration = 8
+                        })
+                    end
+                end
+            end)
         end
         return win
     end
