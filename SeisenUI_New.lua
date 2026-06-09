@@ -135,6 +135,12 @@ function Library:RegisterElement(element, themeProperty, targetProperty)
 end
 
 function Library:UpdateColorsUsingRegistry()
+    if self.Theme.Element and self.Theme.Content and self.Theme.Element == self.Theme.Content then
+        self.Theme.Element = self.Theme.Content:Lerp(Color3.new(1,1,1), 0.05)
+    end
+    if self.Theme.Element and self.Theme.Border == self.Theme.Element then
+        self.Theme.Border = self.Theme.Element:Lerp(Color3.new(1,1,1), 0.12)
+    end
     if self.Theme.Element then
         self.Theme.InputBg     = self.Theme.Element:Lerp(Color3.new(0,0,0), 0.18)
         self.Theme.ElementHover = self.Theme.Element:Lerp(Color3.new(1,1,1), 0.1)
