@@ -3058,6 +3058,7 @@ end
 
 -- ── CreateWindow ─────────────────────────────────────────────────
 function Library:CreateWindow(options)
+    local tabList = {}
     if _G.SeisenInstance then
         pcall(function()
             _G.SeisenInstance:Unload()
@@ -3357,6 +3358,11 @@ function Library:CreateWindow(options)
         minimised = not minimised
         Tween(main, { Size = minimised and UDim2.new(0, WIN_W, 0, 36) or UDim2.new(0, WIN_W, 0, WIN_H) }, 0.22)
         Tween(minBtn, { BackgroundTransparency = minimised and 0.45 or 0 })
+        sidebar.Visible = not minimised
+        Tween(content, {
+            Position = minimised and UDim2.new(0, 0, 0, 0) or UDim2.new(0, SIDE_W, 0, 0),
+            Size = minimised and UDim2.new(1, 0, 1, 0) or UDim2.new(1, -SIDE_W, 1, 0)
+        }, 0.22)
     end)
     local maximised = false
     maxBtn.MouseButton1Click:Connect(function()
@@ -3537,7 +3543,7 @@ function Library:CreateWindow(options)
 
     -- ── Tab & sidebar API ─────────────────────────────────────────
     local tabOrder   = 0
-    local tabList    = {}   -- { name, page, sideBtn }
+    tabList    = {}   -- { name, page, sideBtn }
     local activeTab  = nil
     local currentSection = nil
 
