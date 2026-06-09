@@ -2494,6 +2494,7 @@ end
 
 -- ── Analytics Graph ────────────────────────────────────────────────
 function Library:CreateGraph(parent, options)
+    local Library   = self
     local opts      = options or {}
     local graphName = opts.Name or "Graph"
     local height    = opts.Height or 80
@@ -2507,17 +2508,17 @@ function Library:CreateGraph(parent, options)
     local nameLbl = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 16), Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1, Text = graphName,
-        TextColor3 = self.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 11,
+        TextColor3 = Library.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Left, Parent = frame
     })
-    self:RegisterElement(nameLbl, "Text", "TextColor3")
+    Library:RegisterElement(nameLbl, "Text", "TextColor3")
 
     local canvas = Create("Frame", {
         Size = UDim2.new(1, 0, 0, height), Position = UDim2.new(0, 0, 0, 20),
-        BackgroundColor3 = self.Theme.InputBg, Parent = frame
+        BackgroundColor3 = Library.Theme.InputBg, Parent = frame
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
-        Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+        Create("UIStroke", { Color = Library.Theme.Border, Thickness = 1 }),
         Create("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -2530,8 +2531,8 @@ function Library:CreateGraph(parent, options)
             PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)
         })
     })
-    self:RegisterElement(canvas, "InputBg")
-    self:RegisterElement(canvas:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+    Library:RegisterElement(canvas, "InputBg")
+    Library:RegisterElement(canvas:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
 
     local graphObj = {}
 
@@ -2577,20 +2578,20 @@ function Library:CreateGraph(parent, options)
 
             local bar = Create("Frame", {
                 Size = UDim2.new(0, barWidth, 0, barHeight),
-                BackgroundColor3 = self.Theme.Accent,
+                BackgroundColor3 = Library.Theme.Accent,
                 BorderSizePixel = 0,
                 LayoutOrder = i,
                 Parent = canvas
             }, {
                 Create("UICorner", { CornerRadius = UDim.new(0, 2) })
             })
-            self:RegisterElement(bar, "Accent")
+            Library:RegisterElement(bar, "Accent")
 
             local tooltip = Create("TextLabel", {
                 Size = UDim2.new(0, 50, 0, 16),
                 Position = UDim2.new(0.5, -25, 0, -20),
-                BackgroundColor3 = self.Theme.Sidebar,
-                TextColor3 = self.Theme.Text,
+                BackgroundColor3 = Library.Theme.Sidebar,
+                TextColor3 = Library.Theme.Text,
                 Text = tostring(val),
                 Font = Enum.Font.GothamBold,
                 TextSize = 9,
@@ -2599,11 +2600,11 @@ function Library:CreateGraph(parent, options)
                 Parent = bar
             }, {
                 Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
-                Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
+                Create("UIStroke", { Color = Library.Theme.Border, Thickness = 1 })
             })
-            self:RegisterElement(tooltip, "Sidebar")
-            self:RegisterElement(tooltip, "Text", "TextColor3")
-            self:RegisterElement(tooltip:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+            Library:RegisterElement(tooltip, "Sidebar")
+            Library:RegisterElement(tooltip, "Text", "TextColor3")
+            Library:RegisterElement(tooltip:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
 
             bar.MouseEnter:Connect(function()
                 tooltip.Visible = true
@@ -4887,6 +4888,19 @@ function Library:BuildKeybindPanel()
     self:RegisterElement(panel, "Element")
     self.KeybindFrame = panel
 
+    local scroll = Create("ScrollingFrame", {
+        Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+        BorderSizePixel = 0, ScrollBarThickness = 2,
+        ScrollBarImageColor3 = self.Theme.Border,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        LayoutOrder = 1, Parent = panel
+    }, {
+        Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) })
+    })
+    self:RegisterElement(scroll:FindFirstChildWhichIsA("UIListLayout"), "Border", "Color")
+
     local emptyHint = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1,
         Text = "No keybinds set.", TextColor3 = self.Theme.TextMuted,
@@ -4907,11 +4921,11 @@ do
     local _orig = Library.CreateWindow
     Library.CreateWindow = function(self, options)
         local win = _orig(self, options)
+        -- Build the keybind panel synchronously so elements can register keybinds
+        self:BuildKeybindPanel()
         if options and options.ConfigSettings then
             self:_BuildConfigTab(win)
         end
-        -- Build the keybind panel once the gui exists
-        task.defer(function() self:BuildKeybindPanel() end)
         return win
     end
 end
