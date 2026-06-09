@@ -1236,7 +1236,8 @@ function Library:CreateDropdown(parent, options)
                 end
             end)
             btn.MouseLeave:Connect(function()
-                Tween(btn, { BackgroundColor3 = (isMulti and value[item]) or (value == item) and self.Theme.AccentDark or self.Theme.Element })
+                local isSel = isMulti and (value[item] == true) or (value == item)
+                Tween(btn, { BackgroundColor3 = isSel and self.Theme.AccentDark or self.Theme.Element })
             end)
             btn.MouseButton1Click:Connect(function()
                 if isMulti then
