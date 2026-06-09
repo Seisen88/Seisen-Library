@@ -3342,12 +3342,92 @@ function Library:CreateWindow(options)
         BackgroundTransparency = 1, Parent = content
     })
     local activeTitle = Create("TextLabel", {
-        Size = UDim2.new(1, -90, 1, 0), Position = UDim2.new(0, 16, 0, 0),
+        Size = UDim2.new(1, -260, 1, 0), Position = UDim2.new(0, 16, 0, 0),
         BackgroundTransparency = 1, Text = "",
         TextColor3 = self.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left, Parent = contentHeader
     })
     self:RegisterElement(activeTitle, "Text", "TextColor3")
+
+    -- Script name and version tags beside maximize button
+    local tagsContainer = Create("Frame", {
+        Name = "TagsContainer",
+        Position = UDim2.new(1, -84, 0.5, 0),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Size = UDim2.new(0, 0, 0, 18),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundTransparency = 1,
+        Parent = contentHeader
+    }, {
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.Right,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 6)
+        })
+    })
+
+    if version and version ~= "" then
+        local verTag = Create("TextLabel", {
+            Name = "VersionTag",
+            AutomaticSize = Enum.AutomaticSize.XY,
+            Size = UDim2.new(0, 0, 0, 16),
+            BackgroundColor3 = self.Theme.Accent,
+            BackgroundTransparency = 0.82,
+            Text = version,
+            TextColor3 = self.Theme.Accent,
+            Font = Enum.Font.GothamBold,
+            TextSize = 10,
+            LayoutOrder = 2,
+            Parent = tagsContainer
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
+            Create("UIStroke", { Color = self.Theme.Accent, Transparency = 0.6, Thickness = 1 }),
+            Create("UIPadding", {
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6),
+                PaddingTop = UDim.new(0, 2),
+                PaddingBottom = UDim.new(0, 2)
+            })
+        })
+        self:RegisterElement(verTag, "Accent", "TextColor3")
+        local verTagStroke = verTag:FindFirstChildWhichIsA("UIStroke")
+        if verTagStroke then
+            self:RegisterElement(verTagStroke, "Accent", "Color")
+        end
+    end
+
+    if winName and winName ~= "" then
+        local nameTag = Create("TextLabel", {
+            Name = "NameTag",
+            AutomaticSize = Enum.AutomaticSize.XY,
+            Size = UDim2.new(0, 0, 0, 16),
+            BackgroundColor3 = self.Theme.Element,
+            BackgroundTransparency = 0.3,
+            Text = winName,
+            TextColor3 = self.Theme.TextDim,
+            Font = Enum.Font.GothamBold,
+            TextSize = 10,
+            LayoutOrder = 1,
+            Parent = tagsContainer
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
+            Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+            Create("UIPadding", {
+                PaddingLeft = UDim.new(0, 6),
+                PaddingRight = UDim.new(0, 6),
+                PaddingTop = UDim.new(0, 2),
+                PaddingBottom = UDim.new(0, 2)
+            })
+        })
+        self:RegisterElement(nameTag, "Element", "BackgroundColor3")
+        self:RegisterElement(nameTag, "TextDim", "TextColor3")
+        local nameTagStroke = nameTag:FindFirstChildWhichIsA("UIStroke")
+        if nameTagStroke then
+            self:RegisterElement(nameTagStroke, "Border", "Color")
+        end
+    end
 
         -- ── Window controls (icon buttons on content header right) ───────
     local function makeWinBtn(pos, bgColor, iconName, tooltipText)
