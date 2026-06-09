@@ -140,6 +140,9 @@ function Library:UpdateColorsUsingRegistry()
         self.Theme.ElementHover = self.Theme.Element:Lerp(Color3.new(1,1,1), 0.1)
         self.Theme.BorderLight  = self.Theme.Border:Lerp(Color3.new(1,1,1), 0.2)
     end
+    if self.Theme.ToggleOff == self.Theme.Element then
+        self.Theme.ToggleOff = self.Theme.InputBg
+    end
     for _, entry in ipairs(self.Registry) do
         if entry.Callback then
             task.spawn(entry.Callback, self.Theme)
@@ -705,12 +708,18 @@ function Library:CreateToggle(parent, options)
     self:RegisterElement(toggleLabel, "Text", "TextColor3")
 
     -- 40×20 switch
+    local switchStroke = Create("UIStroke", {
+        Color = self.Theme.Border,
+        Thickness = 1,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    })
     local switchBg = Create("Frame", {
         Size = UDim2.new(0, 40, 0, 20),
         Position = UDim2.new(1, -40, 0.5, -10),
         BackgroundColor3 = state and self.Theme.Toggle or self.Theme.ToggleOff,
         BorderSizePixel = 0, Parent = toggle
-    }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+    }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }), switchStroke })
+    self:RegisterElement(switchStroke, "Border", "Color")
 
     -- 14×14 knob
     local knob = Create("Frame", {
@@ -2655,7 +2664,13 @@ end
 
 -- ── Unload (destroy everything) ───────────────────────────────────
 function Library:Unload()
-    -- Disconnect all keybind connections
+    -- Call the custom unloadFn / UnloadCallback first (for user cleanup like stopping loops)
+    if self._unloadFn then
+        pcall(self._unloadFn)
+        self._unloadFn = nil
+    end
+
+    -- Disconnect all keybind and global connections
     for _, conn in ipairs(self.KeybindConnections or {}) do
         pcall(function() conn:Disconnect() end)
     end
@@ -2681,14 +2696,39 @@ function Library:Unload()
     end
     self.WidgetConnections = {}
 
+    -- Turn off all toggles to trigger their cleanup callbacks
+    pcall(function()
+        for flag, toggle in pairs(self.Toggles) do
+            if toggle.SetValue and toggle.Value then
+                pcall(function()
+                    toggle:SetValue(false)
+                end)
+            end
+        end
+    end)
+
+    -- Explicit fly cleanup — kill the BodyVelocity and restore PlatformStand
+    if self._stopFly then pcall(self._stopFly) end
+    if self._flyVel and self._flyVel.Parent then
+        pcall(function() self._flyVel:Destroy() end)
+    end
+    self._flyVel = nil
+
+    -- Reset player stats that sliders may have changed but have no toggle
+    pcall(function()
+        local char = LocalPlayer and LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed = 16
+                hum.UseJumpPower = true
+                hum.JumpPower = 50
+            end
+        end
+    end)
+
     -- Close all open dropdowns
     self:CloseAllDropdowns()
-
-    -- Run custom user unload function
-    if self._unloadFn then
-        pcall(self._unloadFn)
-        self._unloadFn = nil
-    end
 
     -- Destroy UI ScreenGui
     if self.ScreenGui then
@@ -3773,69 +3813,436 @@ function Library:_BuildConfigTab(window)
     window:AddSidebarSection("Player")
     local configTab = window:AddTab("Config", "cog")
     local configLeft = configTab:AddLeftSection("Character", "person-standing")
-
-    -- WalkSpeed
-    configLeft:AddSlider({
-        Name = "WalkSpeed", Min = 8, Max = 200, Default = 16,
-        Flag = "CFG_WalkSpeed",
-        Callback = function(v)
-            pcall(function()
-                LocalPlayer.Character.Humanoid.WalkSpeed = v
-            end)
-        end
-    })
-    -- JumpPower
-    configLeft:AddSlider({
-        Name = "JumpPower", Min = 7, Max = 300, Default = 50,
-        Flag = "CFG_JumpPower",
-        Callback = function(v)
-            pcall(function()
-                LocalPlayer.Character.Humanoid.JumpPower = v
-            end)
-        end
-    })
-
     local configRight = configTab:AddRightSection("Misc", "sparkles")
-    -- Anti AFK
-    local antiAfkConn
-    configRight:AddToggle({
-        Name = "Anti AFK", Flag = "CFG_AntiAFK", Default = false,
+
+    local walkSpeedValue = 16
+    local walkSpeedConnection = nil
+    local walkSpeedCharConnection = nil
+
+    -- WalkSpeed Toggle
+    configLeft:AddToggle({
+        Name = "WalkSpeed",
+        Default = false,
+        Flag = "BuiltIn_WalkSpeedToggle",
         Callback = function(v)
-            if antiAfkConn then
-                pcall(function() antiAfkConn:Disconnect() end)
-                antiAfkConn = nil
-            end
-            if v then
-                local VPS = game:GetService("VirtualUser")
-                antiAfkConn = LocalPlayer.Idled:Connect(function()
-                    VPS:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                    task.wait(1)
-                    VPS:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                end)
-                table.insert(Library.KeybindConnections, antiAfkConn)
+            pcall(function()
+                if v then
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                        LocalPlayer.Character.Humanoid.WalkSpeed = walkSpeedValue
+                    end
+                    
+                    if not walkSpeedCharConnection then
+                        walkSpeedCharConnection = LocalPlayer.CharacterAdded:Connect(function(char)
+                            task.wait(0.5)
+                            local hum = char:FindFirstChild("Humanoid")
+                            if hum then
+                                hum.WalkSpeed = walkSpeedValue
+                            end
+                        end)
+                    end
+
+                    if not walkSpeedConnection then
+                        walkSpeedConnection = RunService.Heartbeat:Connect(function()
+                            if LocalPlayer.Character then
+                                local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+                                if hum and hum.WalkSpeed ~= walkSpeedValue then
+                                    hum.WalkSpeed = walkSpeedValue
+                                end
+                            end
+                        end)
+                    end
+                else
+                    local wasActive = false
+                    if walkSpeedConnection then
+                        walkSpeedConnection:Disconnect()
+                        walkSpeedConnection = nil
+                        wasActive = true
+                    end
+                    if walkSpeedCharConnection then
+                        walkSpeedCharConnection:Disconnect()
+                        walkSpeedCharConnection = nil
+                        wasActive = true
+                    end
+                    if wasActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                    end
+                end
+            end)
+        end
+    })
+
+    -- WalkSpeed Value Slider
+    configLeft:AddSlider({
+        Name = "WalkSpeed Value",
+        Min = 16,
+        Max = 300,
+        Default = 16,
+        Flag = "BuiltIn_WalkSpeed",
+        Callback = function(v)
+            walkSpeedValue = v
+            if walkSpeedConnection and LocalPlayer.Character then
+                local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+                if hum then
+                    hum.WalkSpeed = v
+                end
             end
         end
     })
-    -- FPS Boost
-    configRight:AddToggle({
-        Name = "FPS Boost", Flag = "CFG_FPSBoost", Default = false,
+
+    configLeft:AddDivider()
+
+    -- JumpPower Slider
+    configLeft:AddSlider({
+        Name = "JumpPower",
+        Min = 50,
+        Max = 300,
+        Default = 50,
+        Flag = "BuiltIn_JumpPower",
         Callback = function(v)
-            local ls = game:GetService("Lighting")
-            if v then
-                ls.GlobalShadows = false
-                ls.FogEnd = 9e9
+            pcall(function()
+                local hum = LocalPlayer.Character.Humanoid
+                hum.UseJumpPower = true
+                hum.JumpPower = v
+            end)
+        end
+    })
+
+    configLeft:AddDivider()
+
+    -- Fly Setup
+    local flying = false
+    local flyVel = nil
+    local flySpeed = 50
+
+    local function stopFly()
+        flying = false
+        if flyVel and flyVel.Parent then
+            flyVel.Velocity = Vector3.zero
+            flyVel:Destroy()
+        end
+        flyVel = nil
+        self._flyVel = nil
+        pcall(function()
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then hum.PlatformStand = false end
+        end)
+    end
+    self._stopFly = stopFly
+
+    configLeft:AddToggle({
+        Name = "Fly",
+        Default = false,
+        Flag = "BuiltIn_Fly",
+        Keybind = Enum.KeyCode.F3,
+        Callback = function(v)
+            if not v then
+                stopFly()
+                return
+            end
+            flying = true
+            local char = LocalPlayer.Character
+            if not char then flying = false return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hrp then flying = false return end
+
+            if hum then hum.PlatformStand = true end
+
+            if flyVel and flyVel.Parent then flyVel:Destroy() end
+            flyVel = Instance.new("BodyVelocity")
+            flyVel.MaxForce = Vector3.new(1, 1, 1) * 10^6
+            flyVel.Velocity = Vector3.zero
+            flyVel.Parent = hrp
+            self._flyVel = flyVel
+
+            task.spawn(function()
+                while flying and flyVel and flyVel.Parent and hrp and hrp.Parent do
+                    local cam = workspace.CurrentCamera
+                    local dir = Vector3.zero
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+                    flyVel.Velocity = dir * flySpeed
+                    task.wait()
+                end
+                if flyVel and flyVel.Parent then flyVel:Destroy() end
+            end)
+        end
+    })
+
+    configLeft:AddSlider({
+        Name = "Fly Speed",
+        Min = 10,
+        Max = 200,
+        Default = 50,
+        Increment = 5,
+        Flag = "BuiltIn_FlySpeed",
+        Callback = function(v)
+            flySpeed = v
+        end
+    })
+
+    -- ── Right Column: Misc / UI Settings ────────────────────────────────────
+    configRight:AddLabel({ Text = "Script by: Seisen" })
+
+    local gameName = "Unknown Game"
+    pcall(function()
+        local MarketplaceService = game:GetService("MarketplaceService")
+        local success, info = pcall(function()
+            return MarketplaceService:GetProductInfo(game.PlaceId)
+        end)
+        if success and info then
+            gameName = info.Name
+        end
+    end)
+    configRight:AddLabel({ Text = "Game: " .. gameName })
+
+    configRight:AddButton({
+        Name = "Join Discord",
+        Callback = function()
+            setclipboard("https://discord.gg/F4sAf6z8Ph")
+        end
+    })
+
+    configRight:AddDivider()
+
+    -- Anti-AFK
+    local antiAfk = false
+    local antiAfkConnection = nil
+    configRight:AddToggle({
+        Name = "Anti-AFK",
+        Default = false,
+        Flag = "BuiltIn_AntiAFK",
+        Callback = function(v)
+            antiAfk = v
+            if antiAfk then
+                if not antiAfkConnection then
+                    local VirtualUser = game:GetService("VirtualUser")
+                    antiAfkConnection = LocalPlayer.Idled:Connect(function()
+                        if antiAfk then
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.new())
+                        end
+                    end)
+                end
+            else
+                if antiAfkConnection then
+                    antiAfkConnection:Disconnect()
+                    antiAfkConnection = nil
+                end
+            end
+        end
+    })
+
+    -- FPS Boost
+    local fpsBoostEnabled = false
+    local originalSettings = {}
+    local savedEffects    = {}
+    local savedMaterials  = {}
+    local savedPostFX     = {}
+    local savedTerrain    = {}
+    local fpsBoostConnection = nil
+
+    local function processObject(obj)
+        pcall(function()
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")
+                or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+                if savedEffects[obj] == nil then
+                    savedEffects[obj] = obj.Enabled
+                end
+                obj.Enabled = false
+            end
+        end)
+    end
+
+    configRight:AddToggle({
+        Name = "FPS Boost",
+        Default = false,
+        Flag = "BuiltIn_FPSBoost",
+        Tooltip = "Optimize graphics for better performance",
+        Callback = function(v)
+            fpsBoostEnabled = v
+            local Lighting = game:GetService("Lighting")
+            local Terrain  = workspace:FindFirstChildOfClass("Terrain")
+
+            if fpsBoostEnabled then
+                originalSettings.GlobalShadows = Lighting.GlobalShadows
+                originalSettings.FogEnd        = Lighting.FogEnd
+                originalSettings.FogStart      = Lighting.FogStart
+                Lighting.GlobalShadows = false
+                Lighting.FogEnd        = 100000
+                Lighting.FogStart      = 100000
+
+                local postFXClasses = {
+                    "BloomEffect", "BlurEffect", "DepthOfFieldEffect",
+                    "SunRaysEffect"
+                }
+                for _, child in ipairs(Lighting:GetChildren()) do
+                    for _, cls in ipairs(postFXClasses) do
+                        if child:IsA(cls) then
+                            if savedPostFX[child] == nil then
+                                savedPostFX[child] = { Enabled = child.Enabled }
+                            end
+                            child.Enabled = false
+                            break
+                        end
+                    end
+                end
+
+                if Terrain then
+                    pcall(function()
+                        savedTerrain.Decoration        = Terrain.Decoration
+                        savedTerrain.WaterWaveSize     = Terrain.WaterWaveSize
+                        savedTerrain.WaterWaveSpeed    = Terrain.WaterWaveSpeed
+                        savedTerrain.WaterReflectance  = Terrain.WaterReflectance
+                        savedTerrain.WaterTransparency = Terrain.WaterTransparency
+                        Terrain.Decoration        = false
+                        Terrain.WaterWaveSize     = 0
+                        Terrain.WaterWaveSpeed    = 0
+                        Terrain.WaterReflectance  = 0
+                        Terrain.WaterTransparency = 0.5
+                    end)
+                end
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    processObject(obj)
+                end
+
+                if not fpsBoostConnection then
+                    fpsBoostConnection = workspace.DescendantAdded:Connect(function(obj)
+                        if fpsBoostEnabled then processObject(obj) end
+                    end)
+                end
+
                 pcall(function()
                     settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
                 end)
             else
-                ls.GlobalShadows = true
+                if fpsBoostConnection then
+                    fpsBoostConnection:Disconnect()
+                    fpsBoostConnection = nil
+                end
+
+                if originalSettings.GlobalShadows ~= nil then
+                    Lighting.GlobalShadows = originalSettings.GlobalShadows
+                    Lighting.FogEnd        = originalSettings.FogEnd
+                    Lighting.FogStart      = originalSettings.FogStart
+                    originalSettings = {}
+                end
+
+                for obj, saved in pairs(savedPostFX) do
+                    pcall(function()
+                        if obj and obj.Parent then obj.Enabled = saved.Enabled end
+                    end)
+                end
+                savedPostFX = {}
+
+                if Terrain and next(savedTerrain) then
+                    pcall(function()
+                        Terrain.Decoration        = savedTerrain.Decoration
+                        Terrain.WaterWaveSize     = savedTerrain.WaterWaveSize
+                        Terrain.WaterWaveSpeed    = savedTerrain.WaterWaveSpeed
+                        Terrain.WaterReflectance  = savedTerrain.WaterReflectance
+                        Terrain.WaterTransparency = savedTerrain.WaterTransparency
+                    end)
+                    savedTerrain = {}
+                end
+
                 pcall(function()
                     settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+                end)
+
+                for obj, wasEnabled in pairs(savedEffects) do
+                    pcall(function()
+                        if obj and obj.Parent then obj.Enabled = wasEnabled end
+                    end)
+                end
+                savedEffects = {}
+            end
+        end
+    })
+
+    -- SmoothPlastic Mode (FPS Boost +)
+    local smoothPlasticEnabled = false
+    local spMaterials  = {}
+    local spConnection = nil
+
+    configRight:AddToggle({
+        Name = "FPS Boost +",
+        Default = false,
+        Flag = "BuiltIn_SmoothPlastic",
+        Tooltip = "Replace all part materials with SmoothPlastic for better FPS",
+        Callback = function(v)
+            smoothPlasticEnabled = v
+
+            local function applyToObj(obj)
+                pcall(function()
+                    if obj:IsA("BasePart") and obj.Material ~= Enum.Material.SmoothPlastic then
+                        if spMaterials[obj] == nil then
+                            spMaterials[obj] = obj.Material
+                        end
+                        obj.Material = Enum.Material.SmoothPlastic
+                    end
+                end)
+            end
+
+            if smoothPlasticEnabled then
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    applyToObj(obj)
+                end
+                if not spConnection then
+                    spConnection = workspace.DescendantAdded:Connect(function(obj)
+                        if smoothPlasticEnabled then applyToObj(obj) end
+                    end)
+                end
+            else
+                if spConnection then
+                    spConnection:Disconnect()
+                    spConnection = nil
+                end
+                for obj, mat in pairs(spMaterials) do
+                    pcall(function()
+                        if obj and obj.Parent then obj.Material = mat end
+                    end)
+                end
+                spMaterials = {}
+            end
+        end
+    })
+
+    configRight:AddToggle({
+        Name = "Auto Hide UI",
+        Default = false,
+        Flag = "BuiltIn_AutoHideUI",
+        Tooltip = "Automatically hide the UI when the script loads",
+        Callback = function(v)
+            if v then
+                task.defer(function()
+                    Library:Toggle(false)
                 end)
             end
         end
     })
-    -- Fullbright
+
+    configRight:AddToggle({
+        Name = "Show Keybinds Panel",
+        Default = false,
+        Flag = "BuiltIn_ShowKeybinds",
+        Tooltip = "Show/hide the floating keybinds list",
+        Callback = function(v)
+            if Library.KeybindFrame then
+                Library.KeybindFrame.Visible = v
+                if v and Library._refreshKeybindEmptyHint then
+                    Library._refreshKeybindEmptyHint()
+                end
+            end
+        end
+    })
+
     configRight:AddToggle({
         Name = "Fullbright", Flag = "CFG_Fullbright", Default = false,
         Callback = function(v)
@@ -3848,6 +4255,7 @@ function Library:_BuildConfigTab(window)
 
     self.PlayerSettings = configLeft
     self.UISettings     = configRight
+    self.SettingsTab    = configTab
 
     return configTab
 end
