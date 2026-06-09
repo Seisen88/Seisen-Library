@@ -2941,6 +2941,7 @@ function Library:CreateWindow(options)
         Position = UDim2.new(0.5, -WIN_W / 2, 0.5, -WIN_H / 2),
         BackgroundColor3 = self.Theme.Background,
         BorderSizePixel = 0, ClipsDescendants = false,
+        Visible = false,
         Parent = gui
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 12) }),
