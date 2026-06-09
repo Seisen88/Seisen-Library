@@ -2807,55 +2807,65 @@ function Library:CreateWindow(options)
     })
     self:RegisterElement(sidebar, "Sidebar")
 
-    -- ── Header bar inside sidebar ─────────────────────────────────
+    -- ── Header bar inside sidebar (Roblox Player Profile) ──────────
     local sideHeader = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 52),
+        Size = UDim2.new(1, 0, 0, 58),
         BackgroundTransparency = 1, Parent = sidebar
     })
 
-    -- Logo icon
-    local logoFrame = Create("Frame", {
-        Size = UDim2.new(0, 28, 0, 28),
-        Position = UDim2.new(0, 11, 0, 12),
-        BackgroundColor3 = self.Theme.Accent,
+    local lp = LocalPlayer
+    local thumbType = Enum.ThumbnailType.HeadShot
+    local thumbSize = Enum.ThumbnailSize.Size48x48
+    local avatarUrl = "rbxassetid://0"
+    pcall(function()
+        avatarUrl = Players:GetUserThumbnailAsync(lp.UserId, thumbType, thumbSize)
+    end)
+
+    -- Rounded avatar frame
+    local logoFrame = Create("ImageLabel", {
+        Size = UDim2.new(0, 32, 0, 32),
+        Position = UDim2.new(0, 10, 0.5, -16),
+        BackgroundColor3 = self.Theme.InputBg,
+        Image = avatarUrl,
         Parent = sideHeader
-    }, { Create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-    self:RegisterElement(logoFrame, "Accent")
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Create("UIStroke", { Color = self.Theme.Accent, Thickness = 1.5 })
+    })
+    self:RegisterElement(logoFrame, "InputBg")
+    self:RegisterElement(logoFrame:FindFirstChildWhichIsA("UIStroke"), "Accent", "Color")
 
-    if icon ~= "" then
-        Create("ImageLabel", {
-            Size = UDim2.new(0.75, 0, 0.75, 0),
-            Position = UDim2.new(0.125, 0, 0.125, 0),
-            BackgroundTransparency = 1,
-            Image = icon, Parent = logoFrame
-        })
-    else
-        Create("TextLabel", {
-            Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1,
-            Text = "S", TextColor3 = Color3.new(1,1,1),
-            Font = Enum.Font.GothamBold, TextSize = 14, Parent = logoFrame
-        })
-    end
-
-    -- Hub name (small, above subtitle)
-    Create("TextLabel", {
-        Size = UDim2.new(1, -48, 0, 14), Position = UDim2.new(0, 46, 0, 12),
-        BackgroundTransparency = 1, Text = winName,
-        TextColor3 = self.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 11,
+    -- Player Display Name
+    local nameLbl = Create("TextLabel", {
+        Size = UDim2.new(1, -48, 0, 14), Position = UDim2.new(0, 48, 0, 8),
+        BackgroundTransparency = 1, Text = lp.DisplayName,
+        TextColor3 = self.Theme.Text, Font = Enum.Font.GothamBold, TextSize = 10,
         TextXAlignment = Enum.TextXAlignment.Left, Parent = sideHeader
     })
-    Create("TextLabel", {
-        Size = UDim2.new(1, -48, 0, 12), Position = UDim2.new(0, 46, 0, 27),
-        BackgroundTransparency = 1, Text = subtitle ~= "" and subtitle or version,
-        TextColor3 = self.Theme.TextDim, Font = Enum.Font.Gotham, TextSize = 9,
+    self:RegisterElement(nameLbl, "Text", "TextColor3")
+
+    -- Player Username (@username)
+    local idLbl = Create("TextLabel", {
+        Size = UDim2.new(1, -48, 0, 12), Position = UDim2.new(0, 48, 0, 22),
+        BackgroundTransparency = 1, Text = "@" .. lp.Name,
+        TextColor3 = self.Theme.TextDim, Font = Enum.Font.Gotham, TextSize = 8,
         TextXAlignment = Enum.TextXAlignment.Left, Parent = sideHeader
     })
+    self:RegisterElement(idLbl, "TextDim", "TextColor3")
 
-    -- (window controls moved to content header right side)
+    -- Active Roblox Game ID
+    local gameId = game.GameId ~= 0 and game.GameId or game.PlaceId
+    local gameLbl = Create("TextLabel", {
+        Size = UDim2.new(1, -48, 0, 12), Position = UDim2.new(0, 48, 0, 34),
+        BackgroundTransparency = 1, Text = "Game ID: " .. tostring(gameId),
+        TextColor3 = self.Theme.TextMuted, Font = Enum.Font.Gotham, TextSize = 8,
+        TextXAlignment = Enum.TextXAlignment.Left, Parent = sideHeader
+    })
+    self:RegisterElement(gameLbl, "TextMuted", "TextColor3")
 
     -- ── Sidebar tab list ──────────────────────────────────────────
     local sideScroll = Create("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 1, -54), Position = UDim2.new(0, 0, 0, 54),
+        Size = UDim2.new(1, 0, 1, -60), Position = UDim2.new(0, 0, 0, 60),
         BackgroundTransparency = 1, ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0), Parent = sidebar
     }, {
@@ -3108,6 +3118,7 @@ function Library:CreateWindow(options)
     local tabOrder   = 0
     local tabList    = {}   -- { name, page, sideBtn }
     local activeTab  = nil
+    local currentSection = nil
 
     local function switchTab(entry)
         if activeTab then
@@ -3133,16 +3144,57 @@ function Library:CreateWindow(options)
     local Window = {}
 
     function Window:AddSidebarSection(label)
-        Create("TextLabel", {
-            Size = UDim2.new(1, 0, 0, 18),
+        local secHeader = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 20),
+            BackgroundTransparency = 1,
+            LayoutOrder = tabOrder, Parent = sideScroll
+        })
+        tabOrder = tabOrder + 1
+
+        local chevron = Create("ImageLabel", {
+            Size = UDim2.new(0, 8, 0, 8),
+            Position = UDim2.new(0, 0, 0.5, -4),
+            BackgroundTransparency = 1,
+            ImageColor3 = Library.Theme.TextMuted,
+            Rotation = 0,
+            ZIndex = 2, Parent = secHeader
+        })
+        Library:ApplyIcon(chevron, "chevron-down")
+        Library:RegisterElement(chevron, "TextMuted", "ImageColor3")
+
+        local lbl = Create("TextLabel", {
+            Size = UDim2.new(1, -14, 1, 0),
+            Position = UDim2.new(0, 12, 0, 0),
             BackgroundTransparency = 1,
             Text = label:upper(),
             TextColor3 = Library.Theme.TextMuted,
             Font = Enum.Font.GothamBold, TextSize = 9,
             TextXAlignment = Enum.TextXAlignment.Left,
-            LayoutOrder = tabOrder, Parent = sideScroll
+            ZIndex = 2, Parent = secHeader
         })
-        tabOrder = tabOrder + 1
+        Library:RegisterElement(lbl, "TextMuted", "TextColor3")
+
+        local btn = Create("TextButton", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = "", AutoButtonColor = false,
+            ZIndex = 3, Parent = secHeader
+        })
+
+        local sectionData = {
+            Visible = true,
+            Tabs = {},
+            Chevron = chevron
+        }
+        currentSection = sectionData
+
+        btn.MouseButton1Click:Connect(function()
+            sectionData.Visible = not sectionData.Visible
+            Tween(chevron, { Rotation = sectionData.Visible and 0 or -90 }, 0.2)
+            for _, tabBtn in ipairs(sectionData.Tabs) do
+                tabBtn.Visible = sectionData.Visible
+            end
+        end)
     end
 
     function Window:AddSidebarDivider()
@@ -3185,10 +3237,14 @@ function Library:CreateWindow(options)
             BackgroundColor3 = Color3.new(0,0,0),
             BackgroundTransparency = 1,
             Text = "", AutoButtonColor = false,
+            Visible = currentSection == nil or currentSection.Visible,
             LayoutOrder = tabOrder, Parent = sideScroll
         }, {
             Create("UICorner", { CornerRadius = UDim.new(0, 8) }),
         })
+        if currentSection then
+            table.insert(currentSection.Tabs, btn)
+        end
 
         -- Icon
         local iconImg; do
