@@ -4883,124 +4883,357 @@ end
 
 -- ── Managers tab builder ─────────────────────────────────────────
 function Library:_BuildManagersTab(window, folderName)
-    self:_EnsureBuiltInSection(window)  -- shares the "Built-In" section with Config tab
-    local mgrTab = window:AddTab("Settings", "settings", true)
-    local mgrLeft  = mgrTab:AddLeftSection("Theme", "palette")
+    self:_EnsureBuiltInSection(window)
+    local mgrTab   = window:AddTab("Settings", "settings", true)
+    local mgrLeft  = mgrTab:AddLeftSection("Theme",   "palette")
     local mgrRight = mgrTab:AddRightSection("Configs", "save")
 
-    -- Theme Manager built-in
-    local themes = { "Default", "Mocha", "Macchiato", "Frappe", "Latte", "Nord", "Tokyo Night", "Gruvbox" }
-    local themeData = {
-        Default    = { Background = Color3.fromRGB(16,16,20),   Element = Color3.fromRGB(28,28,36),  Accent = Color3.fromRGB(155,155,170), Text = Color3.fromRGB(225,225,232) },
-        Mocha      = { Background = Color3.fromRGB(30,30,46),   Element = Color3.fromRGB(49,50,68),  Accent = Color3.fromRGB(203,166,247), Text = Color3.fromRGB(205,214,244) },
-        Macchiato  = { Background = Color3.fromRGB(24,25,38),   Element = Color3.fromRGB(36,39,58),  Accent = Color3.fromRGB(198,160,246), Text = Color3.fromRGB(202,211,245) },
-        Frappe     = { Background = Color3.fromRGB(48,52,70),   Element = Color3.fromRGB(65,69,89),  Accent = Color3.fromRGB(202,158,230), Text = Color3.fromRGB(198,208,245) },
-        Latte      = { Background = Color3.fromRGB(230,233,239),Element = Color3.fromRGB(204,208,218),Accent = Color3.fromRGB(114,135,253),Text = Color3.fromRGB(76,79,105) },
-        Nord       = { Background = Color3.fromRGB(46,52,64),   Element = Color3.fromRGB(59,66,82),  Accent = Color3.fromRGB(136,192,208), Text = Color3.fromRGB(236,239,244) },
-        ["Tokyo Night"] = { Background = Color3.fromRGB(26,27,38), Element = Color3.fromRGB(36,40,59), Accent = Color3.fromRGB(122,162,247), Text = Color3.fromRGB(192,202,245) },
-        Gruvbox    = { Background = Color3.fromRGB(40,40,40),   Element = Color3.fromRGB(60,56,54),  Accent = Color3.fromRGB(215,153,33),  Text = Color3.fromRGB(235,219,178) },
-    }
-    local currentThemeName = "Default"
-    mgrLeft:AddDropdown({
-        Name = "Theme Preset",
-        Flag = "BuiltIn_ThemePreset",
-        Options = themes,
-        Default = "Default",
-        Callback = function(v)
-            currentThemeName = v
-            local t = themeData[v]
-            if t then Library:SetTheme(t) end
-        end
-    })
-    mgrLeft:AddColorPicker({
-        Name = "Accent Color",
-        Flag = "BuiltIn_AccentColor",
-        Default = Library.Theme.Accent,
-        Callback = function(v)
-            Library:SetTheme({ Accent = v, Toggle = v, Info = v })
-        end
-    })
-    mgrLeft:AddColorPicker({
-        Name = "Background Color",
-        Flag = "BuiltIn_BgColor",
-        Default = Library.Theme.Background,
-        Callback = function(v)
-            Library:SetTheme({ Background = v })
-        end
-    })
-    mgrLeft:AddColorPicker({
-        Name = "Element Color",
-        Flag = "BuiltIn_ElemColor",
-        Default = Library.Theme.Element,
-        Callback = function(v)
-            Library:SetTheme({ Element = v, ToggleOff = v })
-        end
-    })
-    mgrLeft:AddButton({
-        Name = "Reset to Default",
-        Callback = function()
-            Library:SetTheme({
-                Background = Color3.fromRGB(16,16,20), Sidebar = Color3.fromRGB(12,12,15),
-                SidebarActive = Color3.fromRGB(26,26,34), Content = Color3.fromRGB(20,20,25),
-                Element = Color3.fromRGB(28,28,36), ElementHover = Color3.fromRGB(36,36,46),
-                InputBg = Color3.fromRGB(22,22,28), Border = Color3.fromRGB(46,46,58),
-                BorderLight = Color3.fromRGB(62,62,78), Accent = Color3.fromRGB(155,155,170),
-                AccentHover = Color3.fromRGB(180,180,195), AccentDark = Color3.fromRGB(44,44,56),
-                Text = Color3.fromRGB(225,225,232), TextDim = Color3.fromRGB(128,128,145),
-                TextMuted = Color3.fromRGB(62,62,78), Toggle = Color3.fromRGB(155,155,170),
-                ToggleOff = Color3.fromRGB(36,36,48)
-            })
-        end
-    })
+    -- ── Theme Manager ────────────────────────────────────────────────
+    local themeFolder = folderName or "SeisenHub"
+    local themeDir    = themeFolder .. "/Themes"
+    pcall(function()
+        if not isfolder(themeFolder) then makefolder(themeFolder) end
+        if not isfolder(themeDir)    then makefolder(themeDir)    end
+    end)
 
-    -- Save Manager built-in
-    local folder = folderName or "SeisenConfigs"
-    mgrRight:AddLabel({ Text = "Config Folder: " .. folder })
-    local cfgNameBox = mgrRight:AddTextbox({
-        Name = "Config Name",
-        Flag = "BuiltIn_ConfigName",
-        Default = "default",
-        Placeholder = "Enter config name..."
-    })
-    mgrRight:AddButton({
-        Name = "Save Config",
-        Callback = function()
-            local name = (Library.Options["BuiltIn_ConfigName"] and Library.Options["BuiltIn_ConfigName"].Value) or "default"
-            local safeName = tostring(name):gsub("[^%w_%-]", "_")
-            Library:SaveConfig(folder .. "_" .. safeName)
-            Library:Notify({ Title = "Config Saved", Content = "Saved as '" .. safeName .. "'", Type = "success", Duration = 3 })
+    local savedDefault = nil
+    pcall(function()
+        if isfile(themeDir .. "/default.txt") then
+            savedDefault = readfile(themeDir .. "/default.txt")
         end
-    })
-    mgrRight:AddButton({
-        Name = "Load Config",
-        Callback = function()
-            local name = (Library.Options["BuiltIn_ConfigName"] and Library.Options["BuiltIn_ConfigName"].Value) or "default"
-            local safeName = tostring(name):gsub("[^%w_%-]", "_")
-            Library:LoadConfig(folder .. "_" .. safeName)
-            Library:Notify({ Title = "Config Loaded", Content = "Loaded '" .. safeName .. "'", Type = "info", Duration = 3 })
+    end)
+
+    -- 36 built-in themes (name, bg, element, accent, text, border)
+    local function hex(h) return Color3.fromHex(h) end
+    local builtInThemes = {
+        { n="Default",      bg=hex"101014", el=hex"1c1c24", ac=hex"9b9baa", tx=hex"e1e1e8", br=hex"2d2d38" },
+        { n="Mint",         bg=hex"1c1c1c", el=hex"242424", ac=hex"3db488", tx=hex"ffffff", br=hex"373737" },
+        { n="Rose",         bg=hex"1c1c1c", el=hex"242424", ac=hex"db4467", tx=hex"ffffff", br=hex"373737" },
+        { n="Ocean",        bg=hex"16232a", el=hex"1b2b34", ac=hex"6699cc", tx=hex"ffffff", br=hex"343d46" },
+        { n="Sunset",       bg=hex"1a1225", el=hex"2d1f3d", ac=hex"ff6b6b", tx=hex"ffffff", br=hex"4a3560" },
+        { n="Forest",       bg=hex"141a14", el=hex"1e2a1e", ac=hex"4caf50", tx=hex"e0e0e0", br=hex"2d3e2d" },
+        { n="BBot",         bg=hex"232323", el=hex"1e1e1e", ac=hex"7e48a3", tx=hex"ffffff", br=hex"141414" },
+        { n="Fatality",     bg=hex"191335", el=hex"1e1842", ac=hex"c50754", tx=hex"ffffff", br=hex"3c355d" },
+        { n="Tokyo Night",  bg=hex"16161f", el=hex"191925", ac=hex"6759b3", tx=hex"ffffff", br=hex"323232" },
+        { n="Nord",         bg=hex"2e3440", el=hex"3b4252", ac=hex"88c0d0", tx=hex"eceff4", br=hex"4c566a" },
+        { n="Dracula",      bg=hex"282a36", el=hex"44475a", ac=hex"ff79c6", tx=hex"f8f8f2", br=hex"6272a4" },
+        { n="Monokai",      bg=hex"1e1f1c", el=hex"272822", ac=hex"f92672", tx=hex"f8f8f2", br=hex"49483e" },
+        { n="Gruvbox",      bg=hex"282828", el=hex"3c3836", ac=hex"fb4934", tx=hex"ebdbb2", br=hex"504945" },
+        { n="Catppuccin",   bg=hex"1e1e2e", el=hex"302d41", ac=hex"f5c2e7", tx=hex"d9e0ee", br=hex"575268" },
+        { n="One Dark",     bg=hex"21252b", el=hex"282c34", ac=hex"c678dd", tx=hex"abb2bf", br=hex"5c6370" },
+        { n="Cyberpunk",    bg=hex"1a1a2e", el=hex"262335", ac=hex"00ff9f", tx=hex"f9f9f9", br=hex"413c5e" },
+        { n="Material",     bg=hex"151515", el=hex"212121", ac=hex"82aaff", tx=hex"eeffff", br=hex"424242" },
+        { n="Solarized",    bg=hex"002b36", el=hex"073642", ac=hex"cb4b16", tx=hex"839496", br=hex"586e75" },
+        { n="Ubuntu",       bg=hex"323232", el=hex"3e3e3e", ac=hex"e2581e", tx=hex"ffffff", br=hex"191919" },
+        { n="Midnight",     bg=hex"010409", el=hex"0d1117", ac=hex"58a6ff", tx=hex"ffffff", br=hex"21262d" },
+        { n="Blood",        bg=hex"0d0505", el=hex"1a0a0a", ac=hex"8b0000", tx=hex"ffffff", br=hex"2d1515" },
+        { n="Lavender",     bg=hex"1e1a30", el=hex"2a2640", ac=hex"b19cd9", tx=hex"ffffff", br=hex"3d3660" },
+        { n="Aqua",         bg=hex"0f1a24", el=hex"1a2d3d", ac=hex"00bcd4", tx=hex"ffffff", br=hex"264050" },
+        { n="Golden",       bg=hex"141008", el=hex"1f1a0f", ac=hex"ffc107", tx=hex"ffffff", br=hex"3d3520" },
+        { n="Obsidian",     bg=hex"2f3136", el=hex"202225", ac=hex"7289da", tx=hex"dcddde", br=hex"36393f" },
+        { n="Synthwave",    bg=hex"1a1328", el=hex"241b2f", ac=hex"e2b714", tx=hex"ff7edb", br=hex"362a4a" },
+        { n="Everforest",   bg=hex"232a2e", el=hex"2d353b", ac=hex"a7c080", tx=hex"d3c6aa", br=hex"475258" },
+        { n="Rose Pine",    bg=hex"191724", el=hex"1f1d2e", ac=hex"ebbcba", tx=hex"e0def4", br=hex"26233a" },
+        { n="Ayu Dark",     bg=hex"0d1017", el=hex"0b0e14", ac=hex"e6b450", tx=hex"bfbdb6", br=hex"1b1f27" },
+        { n="Palenight",    bg=hex"1e222d", el=hex"292d3e", ac=hex"c792ea", tx=hex"a6accd", br=hex"3d4255" },
+        { n="Horizon",      bg=hex"16161c", el=hex"1c1e26", ac=hex"e95678", tx=hex"e9e9f4", br=hex"2e303e" },
+        { n="Nightfox",     bg=hex"131a24", el=hex"192330", ac=hex"719cd6", tx=hex"cdcecf", br=hex"29394f" },
+        { n="Cherry",       bg=hex"1a0d14", el=hex"2a1520", ac=hex"e91e63", tx=hex"ffffff", br=hex"402030" },
+        { n="Neon",         bg=hex"050505", el=hex"0a0a0a", ac=hex"39ff14", tx=hex"ffffff", br=hex"1a1a1a" },
+        { n="Ice",          bg=hex"17202a", el=hex"1c2833", ac=hex"5dade2", tx=hex"e0e8ef", br=hex"2e4053" },
+        { n="Ember",        bg=hex"0f0b0a", el=hex"1a1210", ac=hex"ff5722", tx=hex"ffffff", br=hex"2d1f1a" },
+    }
+
+    local themeMap = {}
+    local themeNames = {}
+    for _, t in ipairs(builtInThemes) do
+        themeMap[t.n] = t
+        table.insert(themeNames, t.n)
+    end
+
+    local function GetAllThemeNames()
+        local names = {}
+        for _, n in ipairs(themeNames) do table.insert(names, n) end
+        pcall(function()
+            if listfiles then
+                for _, f in ipairs(listfiles(themeDir)) do
+                    if f:sub(-5):lower() == ".json" then
+                        local nm = f:match("([^/\\]+)%.json$")
+                        if nm then table.insert(names, nm .. " (Custom)") end
+                    end
+                end
+            end
+        end)
+        return names
+    end
+
+    local function ApplyTheme(v)
+        local t = themeMap[v]
+        if t then
+            self.Theme.Background    = t.bg
+            self.Theme.Sidebar       = t.bg
+            self.Theme.Content       = t.el
+            self.Theme.SidebarActive = t.el
+            self.Theme.Element       = t.el:Lerp(Color3.new(1,1,1), 0.05)
+            self.Theme.ElementHover  = t.el:Lerp(Color3.new(1,1,1), 0.10)
+            self.Theme.Border        = t.br
+            self.Theme.ToggleOff     = t.br
+            self.Theme.InputBg       = t.el
+            self.Theme.Accent        = t.ac
+            self.Theme.AccentHover   = t.ac:Lerp(Color3.new(1,1,1), 0.15)
+            self.Theme.Toggle        = t.ac
+            self.Theme.Text          = t.tx
+            self.Theme.TextDim       = t.tx:Lerp(Color3.new(0,0,0), 0.3)
+            self.Theme.TextMuted     = t.tx:Lerp(Color3.new(0,0,0), 0.5)
+            if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end
+        else
+            local jsonName = v:gsub(" %(Custom%)$", "")
+            pcall(function()
+                local path = themeDir .. "/" .. jsonName .. ".json"
+                if isfile(path) then
+                    local H = game:GetService("HttpService")
+                    local d = H:JSONDecode(readfile(path))
+                    if d then
+                        self.Theme.Background = Color3.fromHex(d.BackgroundColor or "101014")
+                        self.Theme.Element    = Color3.fromHex(d.MainColor        or "1c1c24")
+                        self.Theme.Accent     = Color3.fromHex(d.AccentColor      or "9b9baa")
+                        self.Theme.Text       = Color3.fromHex(d.FontColor        or "e1e1e8")
+                        self.Theme.Border     = Color3.fromHex(d.OutlineColor     or "2d2d38")
+                        self.Theme.ToggleOff  = Color3.fromHex(d.ToggleOffColor   or "2d2d38")
+                        self.Theme.Sidebar       = self.Theme.Background
+                        self.Theme.SidebarActive = self.Theme.Element
+                        self.Theme.Toggle        = self.Theme.Accent
+                        self.Theme.AccentHover   = self.Theme.Accent:Lerp(Color3.new(1,1,1), 0.15)
+                        self.Theme.TextDim       = self.Theme.Text:Lerp(Color3.new(0,0,0), 0.3)
+                        self.Theme.TextMuted     = self.Theme.Text:Lerp(Color3.new(0,0,0), 0.5)
+                        if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end
+                    end
+                end
+            end)
         end
-    })
-    mgrRight:AddDivider()
-    mgrRight:AddToggle({
-        Name = "Auto-load Config",
-        Flag = "BuiltIn_AutoLoad",
-        Default = false,
-        Tooltip = "Automatically load the 'autoload' config on startup",
-        Callback = function(v)
-            if v then
-                Library:LoadConfig(folder .. "_autoload")
+    end
+
+    mgrLeft:AddDropdown({ Name="Theme", Flag="BuiltIn_ThemePreset",
+        Options=GetAllThemeNames(), Default=savedDefault or "Default",
+        Callback=function(v) ApplyTheme(v) end })
+    if savedDefault then task.defer(function() ApplyTheme(savedDefault) end) end
+
+    mgrLeft:AddButton({ Name="Set as Default", Callback=function()
+        local cur = self.Options["BuiltIn_ThemePreset"]
+        if cur and cur.Value then
+            pcall(writefile, themeDir.."/default.txt", cur.Value)
+            self:Notify({Title="Theme Manager",Content="Default: "..cur.Value,Type="success",Duration=3})
+        end
+    end})
+    mgrLeft:AddButton({ Name="Reset to Default", Callback=function()
+        pcall(delfile, themeDir.."/default.txt")
+        ApplyTheme("Default")
+        if self.Options["BuiltIn_ThemePreset"] then self.Options["BuiltIn_ThemePreset"]:SetValue("Default") end
+        self:Notify({Title="Theme Manager",Content="Reset to Default",Type="info",Duration=3})
+    end})
+
+    mgrLeft:AddDivider("Theme Creator")
+
+    mgrLeft:AddColorPicker({Name="Accent Color",    Default=self.Theme.Accent,              Flag="ThemeCreator_Accent",
+        Callback=function(c) self.Theme.Accent=c; self.Theme.AccentHover=c:Lerp(Color3.new(1,1,1),0.15); self.Theme.Toggle=c; if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end end})
+    mgrLeft:AddColorPicker({Name="Background Color",Default=self.Theme.Background,           Flag="ThemeCreator_Background",
+        Callback=function(c) self.Theme.Background=c; self.Theme.Sidebar=c; if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end end})
+    mgrLeft:AddColorPicker({Name="Content Color",   Default=self.Theme.Content or self.Theme.Element, Flag="ThemeCreator_Content",
+        Callback=function(c) self.Theme.Content=c; self.Theme.SidebarActive=c; self.Theme.Element=c:Lerp(Color3.new(1,1,1),0.05); self.Theme.ElementHover=c:Lerp(Color3.new(1,1,1),0.10); if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end end})
+    mgrLeft:AddColorPicker({Name="Border Color",    Default=self.Theme.Border,               Flag="ThemeCreator_Border",
+        Callback=function(c) self.Theme.Border=c; if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end end})
+    mgrLeft:AddColorPicker({Name="Text Color",      Default=self.Theme.Text,                 Flag="ThemeCreator_Text",
+        Callback=function(c) self.Theme.Text=c; self.Theme.TextDim=c:Lerp(Color3.new(0,0,0),0.3); self.Theme.TextMuted=c:Lerp(Color3.new(0,0,0),0.5); if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end end})
+    mgrLeft:AddColorPicker({Name="Toggle Off Color",Default=self.Theme.ToggleOff,            Flag="ThemeCreator_ToggleOff",
+        Callback=function(c) self.Theme.ToggleOff=c; if self.UpdateColorsUsingRegistry then self:UpdateColorsUsingRegistry() end end})
+    mgrLeft:AddTextbox({Name="Theme Name", Default="MyTheme", Placeholder="Enter theme name...", Flag="ThemeCreator_Name"})
+    mgrLeft:AddButton({Name="Save Custom Theme", Callback=function()
+        local name = (self.Options["ThemeCreator_Name"] and self.Options["ThemeCreator_Name"].Value) or "MyTheme"
+        if name == "" then name = "MyTheme" end
+        local H = game:GetService("HttpService")
+        local scheme = {
+            BackgroundColor=(self.Theme.Background):ToHex(), MainColor=(self.Theme.Content or self.Theme.Element):ToHex(),
+            AccentColor=self.Theme.Accent:ToHex(), OutlineColor=self.Theme.Border:ToHex(),
+            FontColor=self.Theme.Text:ToHex(), ToggleOffColor=self.Theme.ToggleOff:ToHex(),
+        }
+        pcall(function() if not isfolder(themeDir) then makefolder(themeDir) end; writefile(themeDir.."/"..name..".json", H:JSONEncode(scheme)) end)
+        if self.Options["BuiltIn_ThemePreset"] then self.Options["BuiltIn_ThemePreset"]:Refresh(GetAllThemeNames(), false) end
+        self:Notify({Title="Theme Manager",Content="Saved: "..name,Type="success",Duration=3})
+    end})
+
+    -- ── Save Manager ─────────────────────────────────────────────────
+    local saveFolder   = folderName or "SeisenHub"
+    local saveDir      = saveFolder .. "/Saved"
+    local Players_     = game:GetService("Players")
+    local HttpService_ = game:GetService("HttpService")
+    pcall(function()
+        if not isfolder(saveFolder) then makefolder(saveFolder) end
+        if not isfolder(saveDir)    then makefolder(saveDir)    end
+    end)
+
+    local smIgnore = {
+        SaveManager_ConfigName=true, SaveManager_ConfigList=true,
+        SaveManager_AccountExclusive=true, SaveManager_ApplyAutoload=true,
+        BuiltIn_ThemePreset=true, ThemeCreator_Accent=true,
+        ThemeCreator_Background=true, ThemeCreator_Content=true,
+        ThemeCreator_Border=true, ThemeCreator_Text=true,
+        ThemeCreator_ToggleOff=true, ThemeCreator_Name=true,
+    }
+
+    local function RefreshConfigList()
+        local list = {}
+        pcall(function()
+            if listfiles then
+                for _, f in ipairs(listfiles(saveDir)) do
+                    if f:sub(-5) == ".json" then
+                        local nm = f:match("([^/\\]+)%.json$"); if nm then table.insert(list, nm) end
+                    end
+                end
+            end
+        end)
+        return list
+    end
+
+    local function GetAutoloadInfo()
+        local uid = tostring(Players_.LocalPlayer.UserId)
+        local ok1,n1=pcall(function() if isfile(saveDir.."/autoload_"..uid..".txt") then return readfile(saveDir.."/autoload_"..uid..".txt") end end)
+        if ok1 and n1 and n1~="" then return n1,"Account" end
+        local ok2,n2=pcall(function() if isfile(saveDir.."/autoload.txt") then return readfile(saveDir.."/autoload.txt") end end)
+        if ok2 and n2 and n2~="" then return n2,"Normal" end
+        return "none","None"
+    end
+
+    local function Notify(title,msg,t) self:Notify({Title=title,Content=msg,Type=t or "info",Duration=4}) end
+
+    local function SaveConfig(name)
+        if not name or name:gsub(" ","")=="" then return false,"empty name" end
+        pcall(function() if not isfolder(saveDir) then makefolder(saveDir) end end)
+        local data={objects={},exclusive=false,userId=Players_.LocalPlayer.UserId}
+        local excl=self.Toggles and self.Toggles["SaveManager_AccountExclusive"]
+        if excl then data.exclusive=excl.Value end
+        for idx,toggle in pairs(self.Toggles or {}) do
+            if not smIgnore[idx] then
+                local kb=(toggle.Keybind and toggle.Keybind~=Enum.KeyCode.Unknown) and toggle.Keybind.Name or nil
+                table.insert(data.objects,{type="Toggle",idx=idx,value=toggle.Value,keybind=kb})
             end
         end
-    })
-    mgrRight:AddButton({
-        Name = "Set as Auto-load",
-        Callback = function()
-            local name = (Library.Options["BuiltIn_ConfigName"] and Library.Options["BuiltIn_ConfigName"].Value) or "default"
-            local safeName = tostring(name):gsub("[^%w_%-]", "_")
-            Library:SaveConfig(folder .. "_autoload")
-            Library:Notify({ Title = "Auto-load Set", Content = "'" .. safeName .. "' will load on startup", Type = "success", Duration = 3 })
+        for idx,opt in pairs(self.Options or {}) do
+            if not smIgnore[idx] and opt.Type then
+                if     opt.Type=="Slider"      then table.insert(data.objects,{type="Slider",idx=idx,value=tostring(opt.Value)})
+                elseif opt.Type=="Dropdown"    then table.insert(data.objects,{type="Dropdown",idx=idx,value=opt.Value,multi=opt.Multi})
+                elseif opt.Type=="ColorPicker" then table.insert(data.objects,{type="ColorPicker",idx=idx,value=opt.Value and opt.Value:ToHex() or "ffffff"})
+                elseif opt.Type=="Input" or opt.Type=="Textbox" then table.insert(data.objects,{type="Input",idx=idx,text=opt.Value})
+                elseif opt.Type=="Keybind" then
+                    local kn=(opt.Value and opt.Value~=Enum.KeyCode.Unknown) and opt.Value.Name or "Unknown"
+                    table.insert(data.objects,{type="Keybind",idx=idx,value=kn})
+                end
+            end
         end
-    })
+        local ok,encoded=pcall(HttpService_.JSONEncode,HttpService_,data)
+        if not ok then return false,"encode error" end
+        pcall(writefile, saveDir.."/"..name..".json", encoded)
+        return true
+    end
+
+    local function LoadConfig(name)
+        if not name or name=="" then return false,"empty name" end
+        local path=saveDir.."/"..name..".json"
+        local ok,exists=pcall(function() return isfile(path) end)
+        if not ok or not exists then return false,"file not found" end
+        local ok2,decoded=pcall(function() return HttpService_:JSONDecode(readfile(path)) end)
+        if not ok2 or not decoded then return false,"decode error" end
+        if decoded.exclusive and decoded.userId~=Players_.LocalPlayer.UserId then return false,"exclusive to another account" end
+        for _,entry in pairs(decoded.objects or {}) do
+            task.spawn(function() pcall(function()
+                if entry.type=="Toggle" then
+                    local t=self.Toggles and self.Toggles[entry.idx]; if t and t.SetValue then t:SetValue(entry.value) end
+                    if entry.keybind and t and t.SetKeybind then local k=Enum.KeyCode[entry.keybind]; if k then t:SetKeybind(k) end end
+                elseif entry.type=="Slider" then
+                    local o=self.Options and self.Options[entry.idx]; if o and o.SetValue then o:SetValue(tonumber(entry.value)) end
+                elseif entry.type=="Dropdown" then
+                    local o=self.Options and self.Options[entry.idx]; if o and o.SetValue then o:SetValue(entry.value) end
+                elseif entry.type=="Keybind" then
+                    local o=self.Options and self.Options[entry.idx]; if o and o.SetValue then o:SetValue(Enum.KeyCode[entry.value] or Enum.KeyCode.Unknown) end
+                elseif entry.type=="ColorPicker" then
+                    local o=self.Options and self.Options[entry.idx]; if o and o.SetValue then o:SetValue(Color3.fromHex(entry.value)) end
+                elseif entry.type=="Input" then
+                    local o=self.Options and self.Options[entry.idx]; if o and o.SetValue and type(entry.text)=="string" then o:SetValue(entry.text) end
+                end
+            end) end)
+        end
+        return true
+    end
+
+    mgrRight:AddLabel({Text="Folder: "..saveFolder})
+    mgrRight:AddTextbox({Name="Config Name",Flag="SaveManager_ConfigName",Default="",Placeholder="Enter config name..."})
+    mgrRight:AddToggle({Name="Account Exclusive",Flag="SaveManager_AccountExclusive",Default=false,Tooltip="Config only loads for your account"})
+    mgrRight:AddToggle({Name="Account Autoload", Flag="SaveManager_ApplyAutoload",   Default=false,Tooltip="Set as account autoload on every save"})
+
+    mgrRight:AddButton({Name="Create Config", Callback=function()
+        local name=self.Options["SaveManager_ConfigName"] and self.Options["SaveManager_ConfigName"].Value or ""
+        if name:gsub(" ","")=="" then Notify("Save Manager","Name cannot be empty","error"); return end
+        local ok,err=SaveConfig(name); if not ok then Notify("Save Manager","Save failed: "..tostring(err),"error"); return end
+        if self.Toggles["SaveManager_ApplyAutoload"] and self.Toggles["SaveManager_ApplyAutoload"].Value then
+            local uid=tostring(Players_.LocalPlayer.UserId); pcall(writefile, saveDir.."/autoload_"..uid..".txt", name)
+        end
+        Notify("Save Manager","Created: "..name,"success")
+        if self.Options["SaveManager_ConfigList"] then self.Options["SaveManager_ConfigList"]:Refresh(RefreshConfigList(),true) end
+    end})
+
+    mgrRight:AddDivider()
+    mgrRight:AddDropdown({Name="Config List",Options=RefreshConfigList(),Flag="SaveManager_ConfigList",Callback=function() end})
+
+    mgrRight:AddButton({Name="Load Config", Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        local ok,err=LoadConfig(name); if not ok then Notify("Save Manager","Load failed: "..tostring(err),"error"); return end
+        Notify("Save Manager","Loaded: "..name,"success")
+    end})
+    mgrRight:AddButton({Name="Overwrite Config", Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        local ok,err=SaveConfig(name); if not ok then Notify("Save Manager","Overwrite failed: "..tostring(err),"error"); return end
+        Notify("Save Manager","Overwritten: "..name,"success")
+    end})
+    mgrRight:AddButton({Name="Delete Config", Risky=true, Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        pcall(delfile, saveDir.."/"..name..".json")
+        Notify("Save Manager","Deleted: "..name,"info")
+        if self.Options["SaveManager_ConfigList"] then self.Options["SaveManager_ConfigList"]:Refresh(RefreshConfigList(),true) end
+    end})
+    mgrRight:AddButton({Name="Refresh List", Callback=function()
+        if self.Options["SaveManager_ConfigList"] then self.Options["SaveManager_ConfigList"]:Refresh(RefreshConfigList(),true) end
+    end})
+
+    mgrRight:AddDivider()
+    local alCfg,alType=GetAutoloadInfo()
+    local autoloadLbl=mgrRight:AddLabel({Text="Autoload: "..alCfg.." ("..alType..")"})
+    local function RefreshAutoloadLabel() local c,t=GetAutoloadInfo(); if autoloadLbl and autoloadLbl.SetText then autoloadLbl:SetText("Autoload: "..c.." ("..t..")") end end
+
+    mgrRight:AddButton({Name="Set as Normal Autoload", Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        if name=="" then Notify("Save Manager","Select a config first","error"); return end
+        pcall(writefile, saveDir.."/autoload.txt", name)
+        Notify("Save Manager","Normal autoload → "..name,"success"); RefreshAutoloadLabel()
+    end})
+    mgrRight:AddButton({Name="Set as Account Autoload", Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        if name=="" then Notify("Save Manager","Select a config first","error"); return end
+        local uid=tostring(Players_.LocalPlayer.UserId); pcall(writefile, saveDir.."/autoload_"..uid..".txt", name)
+        Notify("Save Manager","Account autoload → "..name,"success"); RefreshAutoloadLabel()
+    end})
+    mgrRight:AddButton({Name="Reset Autoloads", Risky=true, Callback=function()
+        local uid=tostring(Players_.LocalPlayer.UserId)
+        pcall(delfile, saveDir.."/autoload.txt"); pcall(delfile, saveDir.."/autoload_"..uid..".txt")
+        Notify("Save Manager","All autoloads cleared","info"); RefreshAutoloadLabel()
+    end})
+
+    -- Startup auto-load
+    task.defer(function()
+        local name,_=GetAutoloadInfo()
+        if name and name~="none" and name~="" then
+            local ok,err=LoadConfig(name)
+            if ok then print("[SaveManager] Auto-loaded:",name) else print("[SaveManager] Auto-load failed:",err) end
+        end
+    end)
 
     return mgrTab
 end
