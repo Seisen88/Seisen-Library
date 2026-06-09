@@ -4609,6 +4609,128 @@ function Library:_BuildConfigTab(window)
         end
     })
 
+    -- Auto-Rejoin
+    local autoRejoin = false
+    local autoRejoinConn1 = nil
+    local autoRejoinConn2 = nil
+
+    local function doRejoin()
+        Library:Notify({
+            Title = "Auto-Rejoin",
+            Content = "Rejoining in 5 seconds...",
+            Duration = 5,
+            Type = "warning"
+        })
+        task.wait(5)
+        local TeleportService = game:GetService("TeleportService")
+        local Players = game:GetService("Players")
+        if #Players:GetPlayers() <= 1 then
+            pcall(function()
+                TeleportService:Teleport(game.PlaceId, LocalPlayer)
+            end)
+        else
+            pcall(function()
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+            end)
+        end
+    end
+
+    configRight:AddToggle({
+        Name = "Auto-Rejoin",
+        Default = false,
+        Flag = "BuiltIn_AutoRejoin",
+        Tooltip = "Automatically rejoin the game when disconnected or kicked",
+        Callback = function(v)
+            autoRejoin = v
+            if autoRejoin then
+                local CoreGui = game:GetService("CoreGui")
+                local promptOverlay = CoreGui:FindFirstChild("RobloxPromptGui") and CoreGui.RobloxPromptGui:FindFirstChild("promptOverlay")
+                if promptOverlay then
+                    local function check(child)
+                        if autoRejoin and (child.Name == "ErrorPrompt" or child:FindFirstChild("ErrorTitle") or child:FindFirstChild("ErrorMessage")) then
+                            doRejoin()
+                        end
+                    end
+                    for _, child in ipairs(promptOverlay:GetChildren()) do
+                        check(child)
+                    end
+                    autoRejoinConn1 = promptOverlay.ChildAdded:Connect(check)
+                end
+                
+                local GuiService = game:GetService("GuiService")
+                autoRejoinConn2 = GuiService.ErrorMessageChanged:Connect(function(message)
+                    if autoRejoin and message ~= "" then
+                        doRejoin()
+                    end
+                end)
+            else
+                if autoRejoinConn1 then
+                    autoRejoinConn1:Disconnect()
+                    autoRejoinConn1 = nil
+                end
+                if autoRejoinConn2 then
+                    autoRejoinConn2:Disconnect()
+                    autoRejoinConn2 = nil
+                end
+            end
+        end
+    })
+
+    -- Performance Monitor Section
+    local configPerf = configTab:AddRightSection("Performance", "activity")
+
+    local fpsGraph = configPerf:AddGraph({
+        Name = "Client FPS",
+        Height = 80,
+        MaxValues = 15
+    })
+
+    local perfLabel = configPerf:AddLabel({
+        Text = "Memory: -- MB | Instances: --"
+    })
+
+    -- FPS calculations
+    local lastTime = os.clock()
+    local fpsCount = 0
+    local currentFps = 60
+    local fpsConnection
+    fpsConnection = RunService.RenderStepped:Connect(function()
+        if not perfLabel.Instance or not perfLabel.Instance.Parent then
+            if fpsConnection then
+                fpsConnection:Disconnect()
+                fpsConnection = nil
+            end
+            return
+        end
+        fpsCount = fpsCount + 1
+        local now = os.clock()
+        if now - lastTime >= 1 then
+            currentFps = fpsCount
+            fpsCount = 0
+            lastTime = now
+        end
+    end)
+
+    task.spawn(function()
+        while task.wait(1) do
+            if not perfLabel.Instance or not perfLabel.Instance.Parent then
+                break
+            end
+            fpsGraph:AddPoint(currentFps)
+            
+            local mem = 0
+            pcall(function()
+                mem = math.round(game:GetService("Stats"):GetTotalMemoryUsageMb())
+            end)
+            local insts = 0
+            pcall(function()
+                insts = #workspace:GetDescendants()
+            end)
+            
+            perfLabel:SetText(string.format("Memory: %d MB | Instances: %d", mem, insts))
+        end
+    end)
+
     self.PlayerSettings = configLeft
     self.UISettings     = configRight
     self.SettingsTab    = configTab

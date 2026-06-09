@@ -172,38 +172,63 @@ local ThemeManager = {} do
 
     function ThemeManager:ApplyTheme(themeName)
         local data = self.BuiltInThemes[themeName]
-        if not data or not self.Library then return end
+        local scheme
 
-        local scheme = data[2]
-        
-        -- Update Library.Theme
-        self.Library.Theme.Background = Color3.fromHex(scheme.BackgroundColor)
-        self.Library.Theme.Sidebar = Color3.fromHex(scheme.BackgroundColor)
-        self.Library.Theme.Content = Color3.fromHex(scheme.MainColor)
-        
-        if self.Library.IsNew then
-            self.Library.Theme.Element = Color3.fromHex(scheme.MainColor):Lerp(Color3.new(1, 1, 1), 0.05)
-            self.Library.Theme.ElementHover = Color3.fromHex(scheme.MainColor):Lerp(Color3.new(1, 1, 1), 0.10)
-            self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor)
-            self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor)
+        if data then
+            scheme = data[2]
         else
-            self.Library.Theme.Element = Color3.fromHex(scheme.OutlineColor)
-            self.Library.Theme.ElementHover = Color3.fromHex(scheme.OutlineColor):Lerp(Color3.new(1, 1, 1), 0.1)
-            self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor)
-            self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor)
+            local path = self.Folder .. "/Themes/" .. themeName .. ".json"
+            if isfile and isfile(path) then
+                local success, content = pcall(readfile, path)
+                if success then
+                    local decoded = HttpService:JSONDecode(content)
+                    if decoded then
+                        scheme = decoded
+                    end
+                end
+            end
         end
-        
-        self.Library.Theme.Accent = Color3.fromHex(scheme.AccentColor)
-        self.Library.Theme.AccentHover = Color3.fromHex(scheme.AccentColor):Lerp(Color3.new(1,1,1), 0.15)
-        self.Library.Theme.Text = Color3.fromHex(scheme.FontColor)
-        self.Library.Theme.TextDim = Color3.fromHex(scheme.FontColor):Lerp(Color3.new(0,0,0), 0.3)
-        self.Library.Theme.TextMuted = Color3.fromHex(scheme.FontColor):Lerp(Color3.new(0,0,0), 0.5)
-        self.Library.Theme.Toggle = Color3.fromHex(scheme.AccentColor)
-        self.Library.Theme.SidebarActive = Color3.fromHex(scheme.MainColor)
 
-        -- Update UI using registry
+        if not scheme or not self.Library then return end
+
+        self.Library.Theme.Background = Color3.fromHex(scheme.BackgroundColor or scheme.Background)
+        self.Library.Theme.Sidebar = Color3.fromHex(scheme.BackgroundColor or scheme.Background)
+        self.Library.Theme.Content = Color3.fromHex(scheme.MainColor or scheme.Content)
+
+        if self.Library.IsNew then
+            self.Library.Theme.Element = Color3.fromHex(scheme.MainColor or scheme.Content):Lerp(Color3.new(1, 1, 1), 0.05)
+            self.Library.Theme.ElementHover = Color3.fromHex(scheme.MainColor or scheme.Content):Lerp(Color3.new(1, 1, 1), 0.10)
+            self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor or scheme.Border)
+            self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor or scheme.Border)
+        else
+            self.Library.Theme.Element = Color3.fromHex(scheme.OutlineColor or scheme.Border)
+            self.Library.Theme.ElementHover = Color3.fromHex(scheme.OutlineColor or scheme.Border):Lerp(Color3.new(1, 1, 1), 0.1)
+            self.Library.Theme.Border = Color3.fromHex(scheme.OutlineColor or scheme.Border)
+            self.Library.Theme.ToggleOff = Color3.fromHex(scheme.OutlineColor or scheme.Border)
+        end
+
+        self.Library.Theme.Accent = Color3.fromHex(scheme.AccentColor or scheme.Accent)
+        self.Library.Theme.AccentHover = Color3.fromHex(scheme.AccentColor or scheme.Accent):Lerp(Color3.new(1,1,1), 0.15)
+        self.Library.Theme.Text = Color3.fromHex(scheme.FontColor or scheme.Text)
+        self.Library.Theme.TextDim = Color3.fromHex(scheme.FontColor or scheme.Text):Lerp(Color3.new(0,0,0), 0.3)
+        self.Library.Theme.TextMuted = Color3.fromHex(scheme.FontColor or scheme.Text):Lerp(Color3.new(0,0,0), 0.5)
+        self.Library.Theme.Toggle = Color3.fromHex(scheme.AccentColor or scheme.Accent)
+        self.Library.Theme.SidebarActive = Color3.fromHex(scheme.MainColor or scheme.Content)
+
         if self.Library.UpdateColorsUsingRegistry then
             self.Library:UpdateColorsUsingRegistry()
+        end
+
+        if self.Library.Options then
+            local prefix = "ThemeCreator_"
+            local keys = {"Accent", "Background", "Content", "Border", "Text", "ToggleOff"}
+            for _, k in ipairs(keys) do
+                local opt = self.Library.Options[prefix .. k]
+                if opt and opt.SetValue then
+                    local colorVal = self.Library.Theme[k == "Content" and "Content" or k]
+                    pcall(function() opt:SetValue(colorVal) end)
+                end
+            end
         end
 
         print("[ThemeManager] Applied theme:", themeName)
@@ -218,8 +243,10 @@ local ThemeManager = {} do
         local path = self.Folder .. "/Themes/default.txt"
         if isfile and isfile(path) then
             local success, content = pcall(readfile, path)
-            if success and self.BuiltInThemes[content] then
-                return content
+            if success then
+                if self.BuiltInThemes[content] or isfile(self.Folder .. "/Themes/" .. content .. ".json") then
+                    return content
+                end
             end
         end
         return nil
@@ -230,17 +257,30 @@ local ThemeManager = {} do
 
         local section = tab:CreateSection({ Name = "Themes", Side = "Left" })
 
-        -- Get sorted theme names
         local themeNames = {}
         for name, data in pairs(self.BuiltInThemes) do
             table.insert(themeNames, {name = name, order = data[1]})
         end
         table.sort(themeNames, function(a, b) return a.order < b.order end)
-        
+
         local sortedNames = {}
         for _, t in ipairs(themeNames) do
             table.insert(sortedNames, t.name)
         end
+
+        pcall(function()
+            if listfiles then
+                local files = listfiles(self.Folder .. "/Themes")
+                for _, file in ipairs(files) do
+                    if file:sub(-5):lower() == ".json" then
+                        local filename = file:match("([^/\\]+)%.json$")
+                        if filename then
+                            table.insert(sortedNames, filename)
+                        end
+                    end
+                end
+            end
+        end)
 
         local defaultTheme = self:LoadDefault()
 
@@ -277,7 +317,104 @@ local ThemeManager = {} do
             end
         })
 
-        -- Apply default theme on load only if one was saved
+        local creator = tab:CreateSection({ Name = "Theme Customizer", Side = "Right" })
+
+        creator:AddColorPicker({
+            Name = "Accent Color",
+            Default = self.Library.Theme.Accent,
+            Flag = "ThemeCreator_Accent",
+            Callback = function(color)
+                self.Library.Theme.Accent = color
+                self.Library.Theme.AccentHover = color:Lerp(Color3.new(1,1,1), 0.15)
+                self.Library.Theme.Toggle = color
+                self.Library:UpdateColorsUsingRegistry()
+            end
+        })
+        creator:AddColorPicker({
+            Name = "Background Color",
+            Default = self.Library.Theme.Background,
+            Flag = "ThemeCreator_Background",
+            Callback = function(color)
+                self.Library.Theme.Background = color
+                self.Library.Theme.Sidebar = color
+                self.Library:UpdateColorsUsingRegistry()
+            end
+        })
+        creator:AddColorPicker({
+            Name = "Content Color",
+            Default = self.Library.Theme.Content,
+            Flag = "ThemeCreator_Content",
+            Callback = function(color)
+                self.Library.Theme.Content = color
+                self.Library.Theme.SidebarActive = color
+                if self.Library.IsNew then
+                    self.Library.Theme.Element = color:Lerp(Color3.new(1, 1, 1), 0.05)
+                    self.Library.Theme.ElementHover = color:Lerp(Color3.new(1, 1, 1), 0.10)
+                end
+                self.Library:UpdateColorsUsingRegistry()
+            end
+        })
+        creator:AddColorPicker({
+            Name = "Border Color",
+            Default = self.Library.Theme.Border,
+            Flag = "ThemeCreator_Border",
+            Callback = function(color)
+                self.Library.Theme.Border = color
+                self.Library:UpdateColorsUsingRegistry()
+            end
+        })
+        creator:AddColorPicker({
+            Name = "Text Color",
+            Default = self.Library.Theme.Text,
+            Flag = "ThemeCreator_Text",
+            Callback = function(color)
+                self.Library.Theme.Text = color
+                self.Library.Theme.TextDim = color:Lerp(Color3.new(0,0,0), 0.3)
+                self.Library.Theme.TextMuted = color:Lerp(Color3.new(0,0,0), 0.5)
+                self.Library:UpdateColorsUsingRegistry()
+            end
+        })
+        creator:AddColorPicker({
+            Name = "Toggle Off Color",
+            Default = self.Library.Theme.ToggleOff,
+            Flag = "ThemeCreator_ToggleOff",
+            Callback = function(color)
+                self.Library.Theme.ToggleOff = color
+                self.Library:UpdateColorsUsingRegistry()
+            end
+        })
+
+        creator:AddTextbox({
+            Name = "Theme Name",
+            Default = "MyTheme",
+            Placeholder = "Enter theme name...",
+            Flag = "ThemeCreator_Name"
+        })
+
+        creator:AddButton({
+            Name = "Save Custom Theme",
+            Callback = function()
+                local name = "MyTheme"
+                if self.Library.Options.ThemeCreator_Name then
+                    name = self.Library.Options.ThemeCreator_Name.Value
+                end
+                if name == "" then name = "MyTheme" end
+
+                local scheme = {
+                    BackgroundColor = self.Library.Theme.Background:ToHex(),
+                    MainColor = self.Library.Theme.Content:ToHex(),
+                    AccentColor = self.Library.Theme.Accent:ToHex(),
+                    OutlineColor = self.Library.Theme.Border:ToHex(),
+                    FontColor = self.Library.Theme.Text:ToHex(),
+                    ToggleOffColor = self.Library.Theme.ToggleOff:ToHex()
+                }
+
+                self:BuildFolderTree()
+                pcall(writefile, self.Folder .. "/Themes/" .. name .. ".json", HttpService:JSONEncode(scheme))
+                print("[ThemeManager] Saved custom theme:", name)
+            end
+        })
+
         if defaultTheme then
             self:ApplyTheme(defaultTheme)
         end
