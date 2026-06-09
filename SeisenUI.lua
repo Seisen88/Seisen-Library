@@ -13,6 +13,8 @@ local IconsLoaded, Icons = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/addons/source.lua"))()
 end)
 
+local ShortKey
+
 local Library = {
     Toggles = {}, Options = {}, Labels = {}, Flags = {},
     Registry = {}, OpenDropdowns = {},
@@ -322,7 +324,7 @@ local KEY_SHORT = {
     Tab="TAB", Delete="DEL", Insert="INS",
     Home="HOME", End="END", PageUp="PGup", PageDown="PGdn",
 }
-local function ShortKey(key)
+function ShortKey(key)
     if not key or key == Enum.KeyCode.Unknown then return "NONE" end
     return KEY_SHORT[key.Name] or key.Name:upper():sub(1, 7)
 end
