@@ -2979,30 +2979,23 @@ end
 -- ── Toggle (show/hide) ────────────────────────────────────────────
 function Library:Toggle()
     if not self.ScreenGui or Library.IntroOngoing then return end
-    local mw = self._mainWindow
     local ms = self._mainWindowScale
-    if not mw or not ms then
+    if not ms then
         self.ScreenGui.Enabled = not self.ScreenGui.Enabled
         return
     end
-    -- Pre-create tweens once so Toggle() never allocates on the hot path
     if not self._toggleHideTween then
         self._toggleHideTween = TweenService:Create(ms,
-            TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Scale = 0 })
-        self._toggleHideTween.Completed:Connect(function()
-            if mw and mw.Parent and ms.Scale < 0.01 then mw.Visible = false end
-        end)
+            TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In),  { Scale = 0 })
         self._toggleShowTween = TweenService:Create(ms,
             TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Scale = 1 })
     end
-    if mw.Visible then
+    if ms.Scale > 0.01 then
+        self._toggleShowTween:Cancel()
         self._toggleHideTween:Play()
     else
-        ms.Scale = 0
-        mw.Visible = true
-        -- Defer by one frame so Roblox finishes the Visible layout pass
-        -- before the tween begins — prevents the frame-drop spike
-        task.defer(function() self._toggleShowTween:Play() end)
+        self._toggleHideTween:Cancel()
+        self._toggleShowTween:Play()
     end
 end
 
