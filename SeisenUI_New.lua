@@ -3664,6 +3664,7 @@ function Library:CreateWindow(options)
         tween:Play()
         tween.Completed:Wait()
         Library.IntroOngoing = false
+        if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
     end)
 
     -- ── Tab & sidebar API ─────────────────────────────────────────
@@ -5679,12 +5680,11 @@ function Library:BuildKeybindPanel()
             if entry.row.Visible then any = true break end
         end
         emptyHint.Visible = not any
-        
-        local showPanel = true
-        if self.Toggles and self.Toggles["BuiltIn_ShowKeybinds"] then
-            showPanel = self.Toggles["BuiltIn_ShowKeybinds"].Value
-        end
-        panel.Visible = showPanel and any
+        local showPanel = self.Toggles
+            and self.Toggles["BuiltIn_ShowKeybinds"]
+            and self.Toggles["BuiltIn_ShowKeybinds"].Value
+            or false
+        panel.Visible = showPanel and any and not Library.IntroOngoing
     end
     self._refreshKeybindEmptyHint = refreshEmptyHint
     refreshEmptyHint()
