@@ -1085,8 +1085,12 @@ function Library:CreateDropdown(parent, options)
 
     local value      = isMulti and {} or (default or (items[1] or nil))
     if isMulti and default then
-        if type(default) == "table" then value = default
-        else value = { default } end
+        if type(default) == "table" then
+            for k, v in pairs(default) do
+                if type(k) == "number" and type(v) == "string" then value[v] = true
+                elseif type(k) == "string" and v then value[k] = true end
+            end
+        else value[default] = true end
     end
 
     local ITEM_H  = 26
@@ -1270,7 +1274,12 @@ function Library:CreateDropdown(parent, options)
         SetValue = function(s, val)
             if isMulti then
                 value = {}
-                if type(val) == "table" then for k, v in pairs(val) do if v then value[k] = true end end end
+                if type(val) == "table" then
+                    for k, v in pairs(val) do
+                        if type(k) == "number" and type(v) == "string" then value[v] = true
+                        elseif type(k) == "string" and v then value[k] = true end
+                    end
+                end
             else value = val end
             s.Value = value; fieldLabel.Text = getDisplayText(); rebuildItems(items); callback(value)
         end,
