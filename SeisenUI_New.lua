@@ -4323,6 +4323,13 @@ function Library:CreateSection(parent, name, iconName)
         return Library:CreateGridLayout(f, opts)
     end
 
+    function S:AddRaw(opts)
+        local el = opts.Element or opts
+        el.LayoutOrder = nextOrder()
+        el.Size = UDim2.new(1, 0, 0, opts.Height or 42)
+        el.Parent = container
+    end
+
     -- SaveManager compatibility: tab:CreateSection({Name,Side})
     -- already handled in Tab:CreateSection above; expose on Section too
     function S:CreateSection(opts)
@@ -5000,6 +5007,139 @@ end
 -- PHASE 7 · Widget · Profile · Keybind panel · Final wiring
 -- ================================================================
 
+-- ── Supported Games tab builder ──────────────────────────────────
+function Library:_BuildGamesTab(window)
+    self:_EnsureBuiltInSection(window)
+    local theme = self.Theme
+
+    local GameNameMap = {
+        ["7882829745"] = "Anime Eternal",
+        ["8469926548"] = "Anime Fight",
+        ["9774981774"] = "Anime Re:Ranger X",
+        ["7074860883"] = "Arise Crossover",
+        ["111958650"]  = "Arsenal",
+        ["8220767002"] = "Bee Garden",
+        ["5803093656"] = "Blue Heater 2",
+        ["7541395924"] = "Build an Island",
+        ["8066283370"] = "Build a Zoo",
+        ["8820222330"] = "Dig a Brainrot",
+        ["7468338447"] = "Dig to Earth",
+        ["7546582051"] = "Dungeon Heroes",
+        ["8328640632"] = "Farm It",
+        ["6701277882"] = "Fish It",
+        ["9509842868"] = "Garden Horizon",
+        ["5995470825"] = "Hypershot",
+        ["9529182643"] = "Levelbound",
+        ["8316902627"] = "Plant vs Brainrot",
+        ["8662243497"] = "Raft 101 Survival",
+        ["6867859535"] = "RE:XL",
+        ["7094518649"] = "Restaurant Tycoon 3",
+        ["9792947201"] = "Slime RNG",
+        ["9073775318"] = "Smile Seas",
+        ["9802644580"] = "Summon Heroes",
+        ["4093155512"] = "Swordburst 3",
+        ["7671049560"] = "The Forge",
+        ["15532962360"] = "Wizard Alchemy",
+        ["15033562371"] = "Sailor Peace",
+        ["14906736505"] = "Anime Ranger",
+    }
+
+    task.spawn(function()
+        local Repo = "https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/"
+        local ok,  Games        = pcall(function() return loadstring(game:HttpGet(Repo .. "gamelist.lua"))()        end)
+        local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet(Repo .. "discontinued.lua"))()   end)
+        Games        = ok  and Games        or {}
+        Discontinued = ok2 and Discontinued or {}
+
+        local continuedList, discontinuedList = {}, {}
+        for id, url in pairs(Games) do
+            local name = GameNameMap[tostring(id)] or tostring(id)
+            if Discontinued and Discontinued[id] then
+                table.insert(discontinuedList, { id = id, url = url, name = name })
+            else
+                table.insert(continuedList,    { id = id, url = url, name = name })
+            end
+        end
+        for id, v in pairs(Discontinued or {}) do
+            if v and not Games[id] then
+                table.insert(discontinuedList, { id = id, url = nil, name = GameNameMap[tostring(id)] or tostring(id) })
+            end
+        end
+
+        local function sortByName(a, b) return a.name < b.name end
+        table.sort(continuedList,    sortByName)
+        table.sort(discontinuedList, sortByName)
+
+        local gamesTab = window:AddTab("Games", "gamepad-2", true)
+        local left     = gamesTab:AddLeftSection("Supported",    "check-circle")
+        local right    = gamesTab:AddRightSection("Discontinued", "x-circle")
+
+        local function makeCard(g, isDiscontinued)
+            local baseColor = theme.Element
+            local row = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 48),
+                BackgroundColor3 = baseColor,
+                BackgroundTransparency = 0.08,
+                BorderSizePixel = 0,
+                ClipsDescendants = true,
+            }, {
+                Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                Create("UIStroke", { Color = theme.Border, Thickness = 1 }),
+            })
+            local thumb = Create("ImageLabel", {
+                Size = UDim2.new(1, -4, 1, -4),
+                Position = UDim2.new(0, 2, 0, 2),
+                BackgroundTransparency = 1,
+                Image = "rbxthumb://type=GameIcon&id=" .. tostring(g.id) .. "&w=150&h=150",
+                ImageTransparency = 0.34,
+                ScaleType = Enum.ScaleType.Crop,
+                ZIndex = 1, Parent = row
+            }, { Create("UICorner", { CornerRadius = UDim.new(0, 5) }) })
+            local overlay = Create("Frame", {
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundColor3 = theme.Accent,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0, ZIndex = 2, Parent = row
+            }, { Create("UICorner", { CornerRadius = UDim.new(0, 6) }) })
+            Create("TextLabel", {
+                Size = UDim2.new(1, -10, 1, 0),
+                Position = UDim2.new(0, 5, 0, 0),
+                BackgroundTransparency = 1,
+                Text = g.name,
+                TextColor3 = isDiscontinued and Color3.fromRGB(255, 210, 210) or Color3.fromRGB(255, 255, 255),
+                Font = Enum.Font.GothamBold,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                TextYAlignment = Enum.TextYAlignment.Center,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextStrokeTransparency = 0.3,
+                ZIndex = 3, Parent = row
+            })
+            local stroke = row:FindFirstChildOfClass("UIStroke")
+            row.MouseEnter:Connect(function()
+                Tween(row,     { BackgroundColor3 = theme.Accent, BackgroundTransparency = 0.6 }, 0.12)
+                Tween(overlay, { BackgroundTransparency = 0.6 }, 0.12)
+                Tween(thumb,   { ImageTransparency = 0.12 },     0.12)
+                if stroke then Tween(stroke, { Transparency = 0 }, 0.12) end
+            end)
+            row.MouseLeave:Connect(function()
+                Tween(row,     { BackgroundColor3 = baseColor, BackgroundTransparency = 0.08 }, 0.12)
+                Tween(overlay, { BackgroundTransparency = 1 },  0.12)
+                Tween(thumb,   { ImageTransparency = 0.34 },    0.12)
+                if stroke then Tween(stroke, { Transparency = 0.1 }, 0.12) end
+            end)
+            return row
+        end
+
+        for _, g in ipairs(continuedList) do
+            left:AddRaw({ Element = makeCard(g, false), Height = 52 })
+        end
+        for _, g in ipairs(discontinuedList) do
+            right:AddRaw({ Element = makeCard(g, true), Height = 52 })
+        end
+    end)
+end
+
 -- ── Managers tab builder ─────────────────────────────────────────
 function Library:_BuildManagersTab(window, folderName)
     self:_EnsureBuiltInSection(window)
@@ -5584,6 +5724,7 @@ do
         end
         if options and options.Manager then
             local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
+            self:_BuildGamesTab(win)
             self:_BuildManagersTab(win, folderName)
             -- Auto-load config if enabled
             task.defer(function()
