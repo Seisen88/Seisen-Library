@@ -2979,24 +2979,7 @@ end
 -- ── Toggle (show/hide) ────────────────────────────────────────────
 function Library:Toggle()
     if not self.ScreenGui or Library.IntroOngoing then return end
-    local ms = self._mainWindowScale
-    if not ms then
-        self.ScreenGui.Enabled = not self.ScreenGui.Enabled
-        return
-    end
-    if not self._toggleHideTween then
-        self._toggleHideTween = TweenService:Create(ms,
-            TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In),  { Scale = 0 })
-        self._toggleShowTween = TweenService:Create(ms,
-            TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Scale = 1 })
-    end
-    if ms.Scale > 0.01 then
-        self._toggleShowTween:Cancel()
-        self._toggleHideTween:Play()
-    else
-        self._toggleHideTween:Cancel()
-        self._toggleShowTween:Play()
-    end
+    self.ScreenGui.Enabled = not self.ScreenGui.Enabled
 end
 
 -- ── MakeDraggable ─────────────────────────────────────────────────
