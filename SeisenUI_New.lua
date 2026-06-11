@@ -5045,9 +5045,8 @@ function Library:_BuildGamesTab(window)
     }
 
     task.spawn(function()
-        local Repo = "https://raw.githubusercontent.com/Seisen88/Seisen-Library/main/"
-        local ok,  Games        = pcall(function() return loadstring(game:HttpGet(Repo .. "gamelist.lua"))()        end)
-        local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet(Repo .. "discontinued.lua"))()   end)
+        local ok,  Games        = pcall(function() return loadstring(game:HttpGet("https://raw.githubusercontent.com/Mentos4/roblox/main/gamelist.lua"))()       end)
+        local ok2, Discontinued = pcall(function() return loadstring(game:HttpGet("https://raw.githubusercontent.com/Mentos4/roblox/main/discontinued.lua"))()  end)
         Games        = ok  and Games        or {}
         Discontinued = ok2 and Discontinued or {}
 
