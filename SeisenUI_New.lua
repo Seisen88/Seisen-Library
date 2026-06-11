@@ -3054,6 +3054,7 @@ function Library:CreateWindow(options)
     local managerUI    = options.Manager or false
     local scriptUpdate = options.ScriptUpdate or false
     local folderName   = options.Folder or winName
+    local isPremium    = options.Premium or false
     self.ToggleKeybind = keybind
     self._windowVersion = version
 
@@ -3161,8 +3162,9 @@ function Library:CreateWindow(options)
     self:RegisterElement(sidebarClip, "Sidebar")
 
     -- ── Header bar inside sidebar (Roblox Player Profile) ──────────
+    local sideHeaderH = isPremium and 74 or 58
     local sideHeader = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 58),
+        Size = UDim2.new(1, 0, 0, sideHeaderH),
         BackgroundTransparency = 1, Parent = sidebar
     })
 
@@ -3220,6 +3222,25 @@ function Library:CreateWindow(options)
     })
     self:RegisterElement(gameLbl, "TextMuted", "TextColor3")
 
+    -- Premium badge
+    if isPremium then
+        local premBadge = Create("Frame", {
+            Size = UDim2.new(0, 62, 0, 12),
+            Position = UDim2.new(0, 48, 0, 48),
+            BackgroundColor3 = Color3.fromRGB(255, 193, 7),
+            BorderSizePixel = 0, Parent = sideHeader
+        }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+        Create("TextLabel", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = "★  PREMIUM",
+            TextColor3 = Color3.fromRGB(30, 20, 0),
+            Font = Enum.Font.GothamBold, TextSize = 7,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Parent = premBadge
+        })
+    end
+
     -- Privacy toggle: click avatar to hide/show name+username
     logoFrame.MouseButton1Click:Connect(function()
         nameHidden = not nameHidden
@@ -3237,7 +3258,7 @@ function Library:CreateWindow(options)
     -- ── Sidebar Search Box ──────────────────────────────────────────
     local searchFrame = Create("Frame", {
         Name = "SearchFrame",
-        Size = UDim2.new(1, -16, 0, 26), Position = UDim2.new(0, 8, 0, 60),
+        Size = UDim2.new(1, -16, 0, 26), Position = UDim2.new(0, 8, 0, sideHeaderH + 2),
         BackgroundColor3 = self.Theme.InputBg, Parent = sidebar
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
@@ -3278,8 +3299,9 @@ function Library:CreateWindow(options)
     end)
 
     -- ── Sidebar tab list ──────────────────────────────────────────
+    local sideScrollTop = sideHeaderH + 36
     local sideScroll = Create("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 1, -94), Position = UDim2.new(0, 0, 0, 94),
+        Size = UDim2.new(1, 0, 1, -sideScrollTop), Position = UDim2.new(0, 0, 0, sideScrollTop),
         BackgroundTransparency = 1, ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0), Parent = sidebar
     }, {
