@@ -240,9 +240,8 @@ function Library:LoadConfig(name)
         if s == "false" then return false end
         local n = tonumber(s)
         if n then return n end
-        local c3 = s:match('"__c3":%[(%d+),(%d+),(%d+)%]')
-        if c3 then
-            local r, g, b = s:match('"__c3":%[(%d+),(%d+),(%d+)%]')
+        local r, g, b = s:match('"__c3":%[(%d+),(%d+),(%d+)%]')
+        if r then
             return Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
         end
         if s:sub(1,1) == "[" then
@@ -495,35 +494,6 @@ function Library:Notify(notifyOpts)
     Tween(bar,        { BackgroundTransparency = 0 }, nDuration)
 
     task.delay(nDuration, dismiss)
-end
-
--- ── Drag helper ──────────────────────────────────────────────────
-local function MakeDraggable(handle, frame, onClick)
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local dragging = true
-            local dragStart = input.Position
-            local startPos  = frame.Position
-            local hasMoved  = false
-            local inputChanged, inputEnded
-            inputChanged = UserInputService.InputChanged:Connect(function(i)
-                if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                    local delta = i.Position - dragStart
-                    if delta.Magnitude > 5 then
-                        hasMoved = true
-                        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-                    end
-                end
-            end)
-            inputEnded = UserInputService.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                    inputChanged:Disconnect(); inputEnded:Disconnect()
-                    if onClick and not hasMoved then onClick() end
-                end
-            end)
-        end
-    end)
 end
 
 -- ── Tooltip ───────────────────────────────────────────────────────
@@ -1058,14 +1028,12 @@ function Library:CreateKeybind(parent, options)
 
     local function updateClearBtn() clearBtn.Visible = (currentKey ~= Enum.KeyCode.Unknown) end
 
-    local function updateKeybindClearBtn() clearBtn.Visible = (currentKey ~= Enum.KeyCode.Unknown) end
-
     local keybindObj = {
         Value = currentKey, Type = "Keybind",
         SetValue = function(s, key)
             currentKey = key; s.Value = key
             keyButton.Text = ShortKey(key)
-            updateKeybindClearBtn()
+            updateClearBtn()
             callback(key)
         end
     }
@@ -1298,7 +1266,7 @@ function Library:CreateDropdown(parent, options)
     end)
 
     local dropObj = {
-        Value = isMulti and value or value, Type = "Dropdown", Multi = isMulti,
+        Value = value, Type = "Dropdown", Multi = isMulti,
         SetValue = function(s, val)
             if isMulti then
                 value = {}
@@ -2504,7 +2472,6 @@ end
 
 -- ── Analytics Graph ────────────────────────────────────────────────
 function Library:CreateGraph(parent, options)
-    local Library   = self
     local opts      = options or {}
     local graphName = opts.Name or "Graph"
     local height    = opts.Height or 80
@@ -3958,8 +3925,6 @@ function Library:CreateWindow(options)
             local col = (side == "Right") and rightCol or leftCol
             return Library:CreateSection(col, sectionName, sectionIconName)
         end
-        Tab.AddSection = Tab.CreateSection
-
         function Tab:SetNotification(val)
             if not val or val == 0 or val == "" then
                 badge.Visible = false
@@ -3976,7 +3941,6 @@ function Library:CreateWindow(options)
         return Tab
     end
 
-    Window.CreateTab = Window.AddTab
     function Window:Notify(opts)
         Library:Notify(opts)
     end
