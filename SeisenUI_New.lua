@@ -5008,11 +5008,12 @@ function Library:_BuildManagersTab(window, folderName)
     local mgrRight = mgrTab:AddRightSection("Configs", "save")
 
     -- ── Theme Manager ────────────────────────────────────────────────
-    local themeFolder = folderName or "SeisenHub"
-    local themeDir    = themeFolder .. "/Themes"
+    local seisenRoot  = "Seisen"
+    local themeDir    = seisenRoot .. "/Theme/" .. (folderName or "Default")
     pcall(function()
-        if not isfolder(themeFolder) then makefolder(themeFolder) end
-        if not isfolder(themeDir)    then makefolder(themeDir)    end
+        if not isfolder(seisenRoot)               then makefolder(seisenRoot)               end
+        if not isfolder(seisenRoot .. "/Theme")   then makefolder(seisenRoot .. "/Theme")   end
+        if not isfolder(themeDir)                 then makefolder(themeDir)                 end
     end)
 
     local savedDefault = nil
@@ -5181,13 +5182,13 @@ function Library:_BuildManagersTab(window, folderName)
     end})
 
     -- ── Save Manager ─────────────────────────────────────────────────
-    local saveFolder   = folderName or "SeisenHub"
-    local saveDir      = saveFolder .. "/Saved"
+    local saveDir      = seisenRoot .. "/Saved/" .. (folderName or "Default")
     local Players_     = game:GetService("Players")
     local HttpService_ = game:GetService("HttpService")
     pcall(function()
-        if not isfolder(saveFolder) then makefolder(saveFolder) end
-        if not isfolder(saveDir)    then makefolder(saveDir)    end
+        if not isfolder(seisenRoot)               then makefolder(seisenRoot)               end
+        if not isfolder(seisenRoot .. "/Saved")   then makefolder(seisenRoot .. "/Saved")   end
+        if not isfolder(saveDir)                  then makefolder(saveDir)                  end
     end)
 
     local smIgnore = {
@@ -5283,7 +5284,7 @@ function Library:_BuildManagersTab(window, folderName)
         return true
     end
 
-    mgrRight:AddLabel({Text="Folder: "..saveFolder})
+    mgrRight:AddLabel({Text="Folder: "..saveDir})
     mgrRight:AddTextbox({Name="Config Name",Flag="SaveManager_ConfigName",Default="",Placeholder="Enter config name..."})
     mgrRight:AddToggle({Name="Account Exclusive",Flag="SaveManager_AccountExclusive",Default=false,Tooltip="Config only loads for your account"})
     mgrRight:AddToggle({Name="Account Autoload", Flag="SaveManager_ApplyAutoload",   Default=false,Tooltip="Set as account autoload on every save"})
