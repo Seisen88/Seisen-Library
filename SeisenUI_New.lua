@@ -5008,6 +5008,13 @@ function Library:_BuildGamesTab(window)
     self:_EnsureBuiltInSection(window)
     local theme = self.Theme
 
+    -- Sidebar btn registered synchronously so collapse/expand works immediately
+    local gamesTab = window:AddTab("Games", "gamepad-2", true)
+    local left     = gamesTab:AddLeftSection("Supported",    "check-circle")
+    local right    = gamesTab:AddRightSection("Discontinued", "x-circle")
+    left:AddLabel({ Text = "Supported games:" })
+    right:AddLabel({ Text = "Discontinued games:" })
+
     local GameNameMap = {
         ["7882829745"] = "Anime Eternal",
         ["8469926548"] = "Anime Fight",
@@ -5035,9 +5042,8 @@ function Library:_BuildGamesTab(window)
         ["9802644580"] = "Summon Heroes",
         ["4093155512"] = "Swordburst 3",
         ["7671049560"] = "The Forge",
-        ["15532962360"] = "Wizard Alchemy",
-        ["15033562371"] = "Sailor Peace",
-        ["14906736505"] = "Anime Ranger",
+        ["10039338037"] = "Build a Ring Farm",
+        ["10006104044"] = "Wizard Alchemy",
     }
 
     task.spawn(function()
@@ -5064,12 +5070,6 @@ function Library:_BuildGamesTab(window)
         local function sortByName(a, b) return a.name < b.name end
         table.sort(continuedList,    sortByName)
         table.sort(discontinuedList, sortByName)
-
-        local gamesTab = window:AddTab("Games", "gamepad-2", true)
-        local left     = gamesTab:AddLeftSection("Supported",    "check-circle")
-        local right    = gamesTab:AddRightSection("Discontinued", "x-circle")
-        left:AddLabel({ Text = "Supported games:" })
-        right:AddLabel({ Text = "Discontinued games:" })
 
         local function makeCard(g, isDiscontinued)
             local baseColor = theme.Element
