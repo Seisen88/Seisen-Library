@@ -3307,8 +3307,11 @@ function Library:CreateWindow(options)
     local sideScrollTop = sideHeaderH + 36
     local sideScroll = Create("ScrollingFrame", {
         Size = UDim2.new(1, 0, 1, -sideScrollTop), Position = UDim2.new(0, 0, 0, sideScrollTop),
-        BackgroundTransparency = 1, ScrollBarThickness = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0), Parent = sidebar
+        BackgroundTransparency = 1, ScrollBarThickness = 2,
+        ScrollBarImageColor3 = Library.Theme.Border,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        Parent = sidebar
     }, {
         Create("UIListLayout", {
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -5065,6 +5068,8 @@ function Library:_BuildGamesTab(window)
         local gamesTab = window:AddTab("Games", "gamepad-2", true)
         local left     = gamesTab:AddLeftSection("Supported",    "check-circle")
         local right    = gamesTab:AddRightSection("Discontinued", "x-circle")
+        left:AddLabel({ Text = "Supported games:" })
+        right:AddLabel({ Text = "Discontinued games:" })
 
         local function makeCard(g, isDiscontinued)
             local baseColor = theme.Element
@@ -5714,9 +5719,11 @@ do
         if options and options.ConfigSettings then
             self:_BuildConfigTab(win)
         end
+        if options and options.SupportedGames then
+            self:_BuildGamesTab(win)
+        end
         if options and options.Manager then
             local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
-            self:_BuildGamesTab(win)
             self:_BuildManagersTab(win, folderName)
             -- Auto-load config if enabled
             task.defer(function()
