@@ -343,11 +343,14 @@ function Library:Notify(notifyOpts)
 
     -- Build container once
     if not self.NotificationContainer then
-        local guiParent = RunService:IsStudio() and LocalPlayer.PlayerGui or game.CoreGui
         local sg = Instance.new("ScreenGui")
         sg.Name = "SeisenNotify"; sg.ResetOnSpawn = false
         sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        sg.DisplayOrder = 10; sg.Parent = guiParent
+        sg.DisplayOrder = 10
+        pcall(function() sg.Parent = game:GetService("CoreGui") end)
+        if not sg.Parent then
+            sg.Parent = LocalPlayer:FindFirstChildOfClass("PlayerGui") or game:GetService("StarterGui")
+        end
         self.NotificationContainer = Create("Frame", {
             Name = "NotificationContainer",
             Size = UDim2.new(0, 310, 1, 0),
