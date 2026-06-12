@@ -2955,6 +2955,12 @@ function Library:Unload()
         pcall(function() self.ScreenGui:Destroy() end)
         self.ScreenGui = nil
     end
+
+    -- Destroy widget ScreenGui
+    if self._widgetGui then
+        pcall(function() self._widgetGui:Destroy() end)
+        self._widgetGui = nil
+    end
     
     -- Destroy Notification container ScreenGui if it exists
     if self.NotificationContainer then
@@ -6186,13 +6192,28 @@ function Library:CreateWidget(options)
         width = 220
     end
 
+    -- Separate always-on ScreenGui so the widget stays visible when the library is hidden
+    if not self._widgetGui then
+        self._widgetGui = Instance.new("ScreenGui")
+        self._widgetGui.Name = "SeisenWidget"
+        self._widgetGui.ResetOnSpawn = false
+        self._widgetGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        self._widgetGui.DisplayOrder = (self.ScreenGui and self.ScreenGui.DisplayOrder or 10) + 1
+        pcall(function()
+            self._widgetGui.Parent = game:GetService("CoreGui")
+        end)
+        if not self._widgetGui.Parent then
+            self._widgetGui.Parent = LocalPlayer:FindFirstChildOfClass("PlayerGui") or game:GetService("StarterGui")
+        end
+    end
+
     local widget = Create("Frame", {
         Name = "Widget",
         Size = UDim2.new(0, width, 0, 52),
         Position = UDim2.new(0, 12, 0, 12),
         BackgroundColor3 = self.Theme.Element,
         BorderSizePixel = 0, ZIndex = 10,
-        Parent = self.ScreenGui
+        Parent = self._widgetGui
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 12) }),
         Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
@@ -6275,7 +6296,9 @@ function Library:CreateWidget(options)
     self.WidgetConnections = self.WidgetConnections or {}
     table.insert(self.WidgetConnections, statsConn)
 
-    MakeDraggable(widget, widget)
+    MakeDraggable(widget, widget, function()
+        Library:Toggle()
+    end)
 
     return { Instance = widget, _statsConn = statsConn }
 end
