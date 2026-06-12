@@ -95,18 +95,6 @@ function Library:RegisterKeybindRow(name, getKeyFn, isToggle, getValueFn)
     update()
     row.Parent = container
     table.insert(self.KeybindRows, { update = update, row = row })
-    task.defer(function()
-        local key = getKeyFn()
-        if key and key ~= Enum.KeyCode.Unknown then
-            if self.KeybindFrame and not self.KeybindFrame.Visible then
-                self.KeybindFrame.Visible = true
-                if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
-                if self.Toggles and self.Toggles["BuiltIn_ShowKeybinds"] then
-                    self.Toggles["BuiltIn_ShowKeybinds"].Value = true
-                end
-            end
-        end
-    end)
     return update
 end
 
