@@ -3070,8 +3070,10 @@ function Library:CreateWindow(options)
     if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
     self.ScreenGui = gui
 
-    -- Dynamic Mobile Detection
-    self.IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    -- Mobile detection: match old library — MouseEnabled is reliable (phones have no mouse);
+    -- KeyboardEnabled can be true on mobile in some executor environments so avoid it
+    local _camVp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(0,0)
+    self.IsMobile = _camVp.X < 800 or (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
 
     -- UIScale for SetScale support & Responsive Auto-scaling
     local scale = Instance.new("UIScale"); scale.Scale = 1; scale.Parent = gui
