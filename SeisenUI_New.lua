@@ -3810,7 +3810,8 @@ function Library:CreateWindow(options)
             Name = name, Size = UDim2.new(1, 0, 1, -38),
             Position = UDim2.new(0, 0, 0, 38),
             BackgroundTransparency = 1, BorderSizePixel = 0,
-            ScrollBarThickness = 3, ScrollBarImageColor3 = Library.Theme.Accent,
+            ScrollBarThickness = 4, ScrollBarImageColor3 = Library.Theme.Accent,
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
             CanvasSize = UDim2.new(0, 0, 0, 0),
             Visible = false, Parent = content
         }, {
@@ -3823,12 +3824,6 @@ function Library:CreateWindow(options)
             Create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) })
         })
         Library:RegisterElement(page, "Accent", "ScrollBarImageColor3")
-
-        -- Auto-grow canvas
-        local ll = page:FindFirstChildWhichIsA("UIListLayout")
-        ll.Changed:Connect(function()
-            page.CanvasSize = UDim2.new(0, 0, 0, ll.AbsoluteContentSize.Y + 16)
-        end)
 
         -- Sidebar pill button
         local btn = Create("TextButton", {
