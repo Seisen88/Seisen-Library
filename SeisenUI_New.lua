@@ -46,7 +46,8 @@ local Library = {
     },
     ToggleKeybind = nil,
     IsMobile = false,
-    IsNew = true
+    IsNew = true,
+    NotificationsEnabled = true,
 }
 
 -- ── Keybind panel row ────────────────────────────────────────────
@@ -319,6 +320,7 @@ end
 -- ── Notifications ────────────────────────────────────────────────
 -- Charcoal card with a top accent bar and coloured stroke.
 function Library:Notify(notifyOpts)
+    if not self.NotificationsEnabled then return end
     local nTitle    = notifyOpts.Title    or "Notification"
     local nContent  = notifyOpts.Content  or ""
     local nDuration = notifyOpts.Duration or 3
@@ -3565,7 +3567,7 @@ function Library:CreateWindow(options)
 
     -- ── Toggle keybind ────────────────────────────────────────────
     local toggleKeybindConn = UserInputService.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == keybind then
+        if not processed and input.KeyCode == self.ToggleKeybind then
             self:Toggle()
         end
     end)
@@ -5862,6 +5864,36 @@ function Library:_BuildManagersTab(window, folderName)
         self:Notify({Title="Theme Manager",Content="Saved: "..name,Type="success",Duration=3})
     end})
 
+    -- ── UI Settings ──────────────────────────────────────────────────
+    mgrLeft:AddDivider("UI Settings")
+
+    mgrLeft:AddSlider({
+        Name = "UI Scale", Min = 50, Max = 150, Default = math.floor((self._baseScale or 1) * 100),
+        Increment = 5, Suffix = "%", Flag = "BuiltIn_UIScale",
+        Tooltip = "Manually adjust the UI size. 100% = default.",
+        Callback = function(v)
+            self:SetScale(v / 100)
+        end,
+    })
+
+    mgrLeft:AddKeybind({
+        Name = "Toggle UI Key", Default = self.ToggleKeybind or Enum.KeyCode.LeftAlt,
+        Flag = "BuiltIn_ToggleKey",
+        Tooltip = "Key that shows / hides the UI.",
+        Callback = function(k)
+            self.ToggleKeybind = k
+        end,
+    })
+
+    mgrLeft:AddToggle({
+        Name = "Show Notifications", Default = self.NotificationsEnabled ~= false,
+        Flag = "BuiltIn_NotifyEnabled",
+        Tooltip = "Enable or disable all popup notifications.",
+        Callback = function(v)
+            self.NotificationsEnabled = v
+        end,
+    })
+
     -- ── Save Manager ─────────────────────────────────────────────────
     local saveDir      = seisenRoot .. "/Saved/" .. (folderName or "Default")
     local Players_     = game:GetService("Players")
@@ -5877,6 +5909,7 @@ function Library:_BuildManagersTab(window, folderName)
         SaveManager_AccountExclusive=true, SaveManager_ApplyAutoload=true,
         SaveManager_RenameInput=true, SaveManager_ConfigNote=true,
         SaveManager_ImportInput=true,
+        BuiltIn_UIScale=true, BuiltIn_ToggleKey=true, BuiltIn_NotifyEnabled=true,
         BuiltIn_ThemePreset=true, ThemeCreator_Accent=true,
         ThemeCreator_Background=true, ThemeCreator_Content=true,
         ThemeCreator_Border=true, ThemeCreator_Text=true,
