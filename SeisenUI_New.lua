@@ -1649,11 +1649,10 @@ function Library:CreateViewport(parent, options)
 end
 
 -- ── DependencyBox ─────────────────────────────────────────────────
--- Hides/shows based on another toggle's value
+-- Hides/shows based on another toggle's value (or multiple flags via table)
 function Library:CreateDependencyBox(parent, options)
     local dependsOn   = options.DependsOn
     local invert      = options.Invert or false
-    local children    = {}
 
     local box = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
@@ -1663,17 +1662,29 @@ function Library:CreateDependencyBox(parent, options)
         Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) })
     })
 
-    local function update(v)
-        local show = invert and not v or v
-        box.Visible = show
+    -- Normalize: accept a string or a table of flag names
+    local flags = type(dependsOn) == "table" and dependsOn or (dependsOn and {dependsOn} or {})
+
+    local function check()
+        local allTrue = true
+        for _, flag in ipairs(flags) do
+            if not (self.Toggles[flag] and self.Toggles[flag].Value) then
+                allTrue = false
+                break
+            end
+        end
+        box.Visible = invert and not allTrue or allTrue
     end
-    if dependsOn and self.Toggles[dependsOn] then
-        update(self.Toggles[dependsOn].Value)
-        local orig = self.Toggles[dependsOn].SetValue
-        self.Toggles[dependsOn].SetValue = function(s, val)
-            orig(s, val); update(val)
+
+    for _, flag in ipairs(flags) do
+        if self.Toggles[flag] then
+            local orig = self.Toggles[flag].SetValue
+            self.Toggles[flag].SetValue = function(s, val)
+                orig(s, val); check()
+            end
         end
     end
+    check()
 
     return { Instance = box, Frame = box }
 end
@@ -2536,6 +2547,12 @@ function Library:CreateGraph(parent, options)
     end
 
     function graphObj:Render()
+        local totalSpace = canvas.AbsoluteSize.X
+        if totalSpace == 0 then
+            task.defer(function() self:Render() end)
+            return
+        end
+
         for _, child in ipairs(canvas:GetChildren()) do
             if child:IsA("Frame") then
                 child:Destroy()
@@ -2547,10 +2564,6 @@ function Library:CreateGraph(parent, options)
             if v > maxVal then maxVal = v end
         end
 
-        local totalSpace = canvas.AbsoluteSize.X
-        if totalSpace == 0 then
-            totalSpace = 180
-        end
         totalSpace = totalSpace - 12 -- padding (left/right 6px)
 
         local numBars = maxValues
@@ -3994,6 +4007,506 @@ function Library:CreateWindow(options)
 end
 
 -- ================================================================
+-- PHASE 4.5 · New Elements
+-- ================================================================
+
+-- ── CreateList ────────────────────────────────────────────────────
+-- Scrollable push/pop log.
+-- opts: Name, MaxItems (def 50), Height (def 100), Flag
+function Library:CreateList(parent, options)
+    local listName = options.Name or "Log"
+    local maxItems = options.MaxItems or 50
+    local height   = options.Height or 100
+    local flag     = options.Flag
+
+    local rows = {}
+
+    local wrapper = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, height + 18),
+        BackgroundTransparency = 1, Parent = parent
+    })
+    Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1,
+        Text = listName, TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.Gotham, TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left, Parent = wrapper
+    })
+    local scroll = Create("ScrollingFrame", {
+        Size = UDim2.new(1, 0, 0, height),
+        Position = UDim2.new(0, 0, 0, 16),
+        BackgroundColor3 = self.Theme.InputBg,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = self.Theme.Accent,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Parent = wrapper
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+        Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+        Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) }),
+        Create("UIPadding", {
+            PaddingLeft   = UDim.new(0, 6), PaddingRight  = UDim.new(0, 6),
+            PaddingTop    = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4)
+        })
+    })
+    self:RegisterElement(scroll, "InputBg")
+    self:RegisterElement(scroll:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+
+    local layout = scroll:FindFirstChildWhichIsA("UIListLayout")
+
+    local listObj = {}
+
+    function listObj:Push(text, color)
+        local lbl = Create("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 14),
+            BackgroundTransparency = 1,
+            Text = tostring(text),
+            TextColor3 = color or Library.Theme.Text,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            LayoutOrder = #rows + 1,
+            Parent = scroll
+        })
+        table.insert(rows, lbl)
+        if #rows > maxItems then
+            local oldest = table.remove(rows, 1)
+            oldest:Destroy()
+        end
+        local contentH = layout.AbsoluteContentSize.Y + 8
+        scroll.CanvasSize = UDim2.new(0, 0, 0, contentH)
+        scroll.CanvasPosition = Vector2.new(0, math.max(0, contentH - height))
+    end
+
+    function listObj:Clear()
+        for _, r in ipairs(rows) do r:Destroy() end
+        rows = {}
+        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    end
+
+    function listObj:SetText(text)
+        self:Clear()
+        self:Push(text)
+    end
+
+    if flag then self.Flags[flag] = listObj end
+    return listObj
+end
+
+-- ── CreateRangeSlider ─────────────────────────────────────────────
+-- Dual-handle slider returning {Min, Max}.
+-- opts: Name, Min, Max, DefaultMin, DefaultMax, Increment, Suffix, Flag, Callback
+function Library:CreateRangeSlider(parent, options)
+    local rsName    = options.Name or "Range"
+    local minVal    = options.Min or 0
+    local maxVal    = options.Max or 100
+    local defMin    = options.DefaultMin ~= nil and options.DefaultMin or minVal
+    local defMax    = options.DefaultMax ~= nil and options.DefaultMax or maxVal
+    local increment = options.Increment or 1
+    local suffix    = options.Suffix or ""
+    local flag      = options.Flag
+    local callback  = options.Callback or function() end
+
+    local curMin = defMin
+    local curMax = defMax
+
+    local container = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundTransparency = 1, Parent = parent
+    })
+
+    local nameLbl = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1,
+        Text = rsName, TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.Gotham, TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left, Parent = container
+    })
+    self:RegisterElement(nameLbl, "TextDim", "TextColor3")
+
+    local valLbl = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1,
+        Text = "", TextColor3 = self.Theme.Text,
+        Font = Enum.Font.GothamBold, TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Right, Parent = container
+    })
+    self:RegisterElement(valLbl, "Text", "TextColor3")
+
+    local track = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 4),
+        Position = UDim2.new(0, 0, 0, 22),
+        BackgroundColor3 = self.Theme.Border,
+        BorderSizePixel = 0, Parent = container
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(1, 0) })
+    })
+    self:RegisterElement(track, "Border")
+
+    local fill = Create("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = self.Theme.Accent,
+        BorderSizePixel = 0, Parent = track
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(1, 0) })
+    })
+    self:RegisterElement(fill, "Accent")
+
+    local function makeHandle()
+        local h = Create("Frame", {
+            Size = UDim2.new(0, 12, 0, 12),
+            Position = UDim2.new(0, -6, 0.5, -6),
+            BackgroundColor3 = self.Theme.Text,
+            BorderSizePixel = 0, ZIndex = 4, Parent = track
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+            Create("UIStroke", { Color = self.Theme.Accent, Thickness = 2 })
+        })
+        self:RegisterElement(h, "Text")
+        self:RegisterElement(h:FindFirstChildWhichIsA("UIStroke"), "Accent", "Color")
+        return h
+    end
+
+    local minHandle = makeHandle()
+    local maxHandle = makeHandle()
+    maxHandle.ZIndex = 5
+
+    local function snap(v)
+        if increment > 0 then
+            v = math.round(v / increment) * increment
+        end
+        return math.clamp(v, minVal, maxVal)
+    end
+
+    local function valToFrac(v) return (v - minVal) / math.max(maxVal - minVal, 0.0001) end
+    local function fracToVal(f) return snap(minVal + f * (maxVal - minVal)) end
+
+    local function updateUI()
+        local lo = valToFrac(curMin)
+        local hi = valToFrac(curMax)
+        minHandle.Position = UDim2.new(lo, -6, 0.5, -6)
+        maxHandle.Position = UDim2.new(hi, -6, 0.5, -6)
+        fill.Position = UDim2.new(lo, 0, 0, 0)
+        fill.Size     = UDim2.new(hi - lo, 0, 1, 0)
+        valLbl.Text   = tostring(curMin) .. suffix .. " — " .. tostring(curMax) .. suffix
+    end
+
+    local uis = game:GetService("UserInputService")
+
+    local function startDrag(isMin)
+        local conn1, conn2
+        conn1 = uis.InputChanged:Connect(function(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseMovement
+            and input.UserInputType ~= Enum.UserInputType.Touch then return end
+            local abs = track.AbsoluteSize.X
+            if abs == 0 then return end
+            local relX = input.Position.X - track.AbsolutePosition.X
+            local v    = fracToVal(math.clamp(relX / abs, 0, 1))
+            if isMin then
+                curMin = math.min(v, curMax)
+            else
+                curMax = math.max(v, curMin)
+            end
+            updateUI()
+            callback({ Min = curMin, Max = curMax })
+        end)
+        conn2 = uis.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+                conn1:Disconnect(); conn2:Disconnect()
+            end
+        end)
+    end
+
+    minHandle.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then startDrag(true) end
+    end)
+    maxHandle.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then startDrag(false) end
+    end)
+
+    updateUI()
+
+    local rsObj = { Value = { Min = curMin, Max = curMax } }
+    function rsObj:SetValue(lo, hi)
+        curMin = snap(lo); curMax = snap(hi)
+        rsObj.Value = { Min = curMin, Max = curMax }
+        updateUI()
+        callback(rsObj.Value)
+    end
+
+    if flag then self.Flags[flag] = rsObj end
+    return rsObj
+end
+
+-- ── CreateAccordion ───────────────────────────────────────────────
+-- Collapsible section with chevron toggle.
+-- opts: Name, Open (default false), Callback(isOpen)
+function Library:CreateAccordion(parent, options)
+    local accName   = options.Name or "Section"
+    local startOpen = options.Open == true
+    local callback  = options.Callback or function() end
+
+    local isOpen = startOpen
+
+    local wrapper = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 0),
+        BackgroundColor3 = self.Theme.Element,
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Parent = parent
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(0, 8) }),
+        Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
+    })
+    self:RegisterElement(wrapper, "Element")
+    self:RegisterElement(wrapper:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+
+    local header = Create("TextButton", {
+        Size = UDim2.new(1, 0, 0, 28),
+        BackgroundColor3 = self.Theme.InputBg,
+        BorderSizePixel = 0,
+        Text = "", AutoButtonColor = false,
+        Parent = wrapper
+    }, {
+        Create("UICorner", { CornerRadius = UDim.new(0, 8) })
+    })
+    self:RegisterElement(header, "InputBg")
+
+    local titleLbl = Create("TextLabel", {
+        Size = UDim2.new(1, -36, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text = accName,
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = header
+    })
+    self:RegisterElement(titleLbl, "Text", "TextColor3")
+
+    local chevron = Create("TextLabel", {
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(1, -26, 0.5, -10),
+        BackgroundTransparency = 1,
+        Text = "▶",
+        TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.GothamBold,
+        TextSize = 10,
+        Parent = header
+    })
+    self:RegisterElement(chevron, "TextDim", "TextColor3")
+
+    local body = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 0),
+        Position = UDim2.new(0, 0, 0, 28),
+        BackgroundTransparency = 1,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Visible = false,
+        Parent = wrapper
+    }, {
+        Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }),
+        Create("UIPadding", {
+            PaddingLeft   = UDim.new(0, 8), PaddingRight  = UDim.new(0, 8),
+            PaddingTop    = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)
+        })
+    })
+
+    local function setOpen(v)
+        isOpen   = v
+        body.Visible = v
+        chevron.Text = v and "▼" or "▶"
+        callback(v)
+    end
+
+    header.MouseButton1Click:Connect(function()
+        setOpen(not isOpen)
+    end)
+
+    setOpen(startOpen)
+
+    local accObj = { Instance = body }
+    function accObj:SetOpen(v) setOpen(v) end
+    function accObj:Toggle()   setOpen(not isOpen) end
+    return accObj
+end
+
+-- ── CreateRadioGroup ──────────────────────────────────────────────
+-- Inline mutually exclusive pill buttons.
+-- opts: Name, Options (string array), Default, Flag, Callback(selected)
+function Library:CreateRadioGroup(parent, options)
+    local rgName   = options.Name or "Radio"
+    local opts     = options.Options or {}
+    local default  = options.Default or (opts[1] or "")
+    local flag     = options.Flag
+    local callback = options.Callback or function() end
+
+    local selected = default
+    local buttons  = {}
+
+    local wrapper = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 0),
+        BackgroundTransparency = 1,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Parent = parent
+    })
+
+    local nameLbl = Create("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1,
+        Text = rgName, TextColor3 = self.Theme.TextDim,
+        Font = Enum.Font.Gotham, TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left, Parent = wrapper
+    })
+    self:RegisterElement(nameLbl, "TextDim", "TextColor3")
+
+    local row = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 26),
+        Position = UDim2.new(0, 0, 0, 16),
+        BackgroundTransparency = 1,
+        Parent = wrapper
+    }, {
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 4)
+        })
+    })
+
+    local function updateButtons()
+        for n, btn in pairs(buttons) do
+            local active = (n == selected)
+            btn.BackgroundColor3 = active and Library.Theme.Accent or Library.Theme.InputBg
+            btn.TextColor3 = active and Color3.new(1, 1, 1) or Library.Theme.TextDim
+        end
+    end
+
+    for i, optName in ipairs(opts) do
+        local n = optName
+        local btn = Create("TextButton", {
+            Size = UDim2.new(0, 0, 1, 0),
+            AutomaticSize = Enum.AutomaticSize.X,
+            BackgroundColor3 = self.Theme.InputBg,
+            Text = n,
+            TextColor3 = self.Theme.TextDim,
+            Font = Enum.Font.GothamBold,
+            TextSize = 11,
+            BorderSizePixel = 0,
+            AutoButtonColor = false,
+            LayoutOrder = i,
+            Parent = row
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+            Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+            Create("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) })
+        })
+        self:RegisterElement(btn, "InputBg")
+        self:RegisterElement(btn:FindFirstChildWhichIsA("UIStroke"), "Border", "Color")
+        buttons[n] = btn
+
+        btn.MouseButton1Click:Connect(function()
+            selected = n
+            updateButtons()
+            callback(selected)
+        end)
+    end
+
+    updateButtons()
+
+    local rgObj = { Value = selected }
+    function rgObj:SetValue(v)
+        selected = v
+        rgObj.Value = v
+        updateButtons()
+        callback(v)
+    end
+
+    if flag then self.Flags[flag] = rgObj end
+    return rgObj
+end
+
+-- ── CreateLiveLabel ───────────────────────────────────────────────
+-- Auto-polling label; calls GetValue() every Interval seconds.
+-- opts: Name, GetValue (→string), Interval (def 1), Prefix, Suffix
+function Library:CreateLiveLabel(parent, options)
+    local llName   = options.Name or ""
+    local getValue = options.GetValue or function() return "—" end
+    local interval = options.Interval or 1
+    local prefix   = options.Prefix or ""
+    local suffix   = options.Suffix or ""
+
+    local row = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 18),
+        BackgroundTransparency = 1,
+        Parent = parent
+    }, {
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            Padding = UDim.new(0, 4)
+        })
+    })
+
+    if llName ~= "" then
+        local nameL = Create("TextLabel", {
+            Size = UDim2.new(0, 0, 1, 0),
+            AutomaticSize = Enum.AutomaticSize.X,
+            BackgroundTransparency = 1,
+            Text = llName .. ":",
+            TextColor3 = self.Theme.TextDim,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            LayoutOrder = 1,
+            Parent = row
+        })
+        self:RegisterElement(nameL, "TextDim", "TextColor3")
+    end
+
+    local valL = Create("TextLabel", {
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundTransparency = 1,
+        Text = prefix .. "—" .. suffix,
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 11,
+        LayoutOrder = 2,
+        Parent = row
+    })
+    self:RegisterElement(valL, "Text", "TextColor3")
+
+    local running = true
+
+    task.spawn(function()
+        while running and row:IsDescendantOf(game) do
+            local ok, val = pcall(getValue)
+            if ok then valL.Text = prefix .. tostring(val) .. suffix end
+            task.wait(interval)
+        end
+        running = false
+    end)
+
+    local llObj = {}
+    function llObj:SetInterval(s) interval = s end
+    function llObj:Stop()  running = false end
+    function llObj:Start()
+        if running then return end
+        running = true
+        task.spawn(function()
+            while running and row:IsDescendantOf(game) do
+                local ok, val = pcall(getValue)
+                if ok then valL.Text = prefix .. tostring(val) .. suffix end
+                task.wait(interval)
+            end
+            running = false
+        end)
+    end
+
+    return llObj
+end
+
+-- ================================================================
 -- PHASE 5 · Section System + AddXxx methods
 -- ================================================================
 
@@ -4314,6 +4827,46 @@ function Library:CreateSection(parent, name, iconName)
     -- already handled in Tab:CreateSection above; expose on Section too
     function S:CreateSection(opts)
         return Library:CreateSection(container, opts and opts.Name or "Section", nil)
+    end
+
+    function S:AddList(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateList(f, opts)
+    end
+
+    function S:AddRangeSlider(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateRangeSlider(f, opts)
+    end
+
+    function S:AddAccordion(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateAccordion(f, opts)
+    end
+
+    function S:AddRadioGroup(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateRadioGroup(f, opts)
+    end
+
+    function S:AddLiveLabel(opts)
+        local f = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = nextOrder(), Parent = container
+        })
+        return Library:CreateLiveLabel(f, opts)
     end
 
     return S
@@ -5418,7 +5971,11 @@ function Library:_BuildManagersTab(window, folderName)
             local uid=tostring(Players_.LocalPlayer.UserId); pcall(writefile, saveDir.."/autoload_"..uid..".txt", name)
         end
         Notify("Save Manager","Created: "..name,"success")
-        if self.Options["SaveManager_ConfigList"] then self.Options["SaveManager_ConfigList"]:Refresh(RefreshConfigList(),true) end
+        local savedName = name
+        task.defer(function()
+            local dd = self.Options["SaveManager_ConfigList"]
+            if dd then dd:Refresh(RefreshConfigList(), false); dd:SetValue(savedName) end
+        end)
     end})
 
     mgrRight:AddDivider()
@@ -5467,8 +6024,8 @@ function Library:_BuildManagersTab(window, folderName)
         Notify("Save Manager","All autoloads cleared","info"); RefreshAutoloadLabel()
     end})
 
-    -- Startup auto-load
-    task.defer(function()
+    -- Startup auto-load — delay so the user script finishes registering all elements first
+    task.delay(0.5, function()
         local name,_=GetAutoloadInfo()
         if name and name~="none" and name~="" then
             local ok,err=LoadConfig(name)
