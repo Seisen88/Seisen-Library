@@ -5456,6 +5456,36 @@ function Library:_BuildConfigTab(window)
         end
     })
 
+    -- UI Settings Section
+    local configUI = configTab:AddLeftSection("UI Settings", "settings")
+
+    configUI:AddSlider({
+        Name = "UI Scale", Min = 50, Max = 150, Default = math.floor((self._baseScale or 1) * 100),
+        Increment = 5, Suffix = "%", Flag = "BuiltIn_UIScale",
+        Tooltip = "Manually adjust the UI size. 100% = default.",
+        Callback = function(v)
+            self:SetScale(v / 100)
+        end,
+    })
+
+    configUI:AddKeybind({
+        Name = "Toggle UI Key", Default = self.ToggleKeybind or Enum.KeyCode.LeftAlt,
+        Flag = "BuiltIn_ToggleKey",
+        Tooltip = "Key that shows / hides the UI.",
+        Callback = function(k)
+            self.ToggleKeybind = k
+        end,
+    })
+
+    configUI:AddToggle({
+        Name = "Show Notifications", Default = self.NotificationsEnabled ~= false,
+        Flag = "BuiltIn_NotifyEnabled",
+        Tooltip = "Enable or disable all popup notifications.",
+        Callback = function(v)
+            self.NotificationsEnabled = v
+        end,
+    })
+
     -- Performance Monitor Section
     local configPerf = configTab:AddRightSection("Performance", "activity")
 
@@ -5686,7 +5716,7 @@ end
 -- ── Managers tab builder ─────────────────────────────────────────
 function Library:_BuildManagersTab(window, folderName)
     self:_EnsureBuiltInSection(window)
-    local mgrTab   = window:AddTab("Settings", "settings", true)
+    local mgrTab   = window:AddTab("Manager", "settings", true)
     local mgrLeft  = mgrTab:AddLeftSection("Theme",   "palette")
     local mgrRight = mgrTab:AddRightSection("Configs", "save")
 
@@ -5863,36 +5893,6 @@ function Library:_BuildManagersTab(window, folderName)
         if self.Options["BuiltIn_ThemePreset"] then self.Options["BuiltIn_ThemePreset"]:Refresh(GetAllThemeNames(), false) end
         self:Notify({Title="Theme Manager",Content="Saved: "..name,Type="success",Duration=3})
     end})
-
-    -- ── UI Settings ──────────────────────────────────────────────────
-    mgrLeft:AddDivider("UI Settings")
-
-    mgrLeft:AddSlider({
-        Name = "UI Scale", Min = 50, Max = 150, Default = math.floor((self._baseScale or 1) * 100),
-        Increment = 5, Suffix = "%", Flag = "BuiltIn_UIScale",
-        Tooltip = "Manually adjust the UI size. 100% = default.",
-        Callback = function(v)
-            self:SetScale(v / 100)
-        end,
-    })
-
-    mgrLeft:AddKeybind({
-        Name = "Toggle UI Key", Default = self.ToggleKeybind or Enum.KeyCode.LeftAlt,
-        Flag = "BuiltIn_ToggleKey",
-        Tooltip = "Key that shows / hides the UI.",
-        Callback = function(k)
-            self.ToggleKeybind = k
-        end,
-    })
-
-    mgrLeft:AddToggle({
-        Name = "Show Notifications", Default = self.NotificationsEnabled ~= false,
-        Flag = "BuiltIn_NotifyEnabled",
-        Tooltip = "Enable or disable all popup notifications.",
-        Callback = function(v)
-            self.NotificationsEnabled = v
-        end,
-    })
 
     -- ── Save Manager ─────────────────────────────────────────────────
     local saveDir      = seisenRoot .. "/Saved/" .. (folderName or "Default")
