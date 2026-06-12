@@ -3079,29 +3079,44 @@ function Library:CreateWindow(options)
     self._baseScale = options and options.Scale or 1
 
     local function autoAdjustScale()
-        local viewportSize = gui.AbsoluteSize
-        if viewportSize.X == 0 or viewportSize.Y == 0 then return end
-        
+        -- Camera viewport is always populated and works on mobile; fall back to gui size
+        local vp = gui.AbsoluteSize
+        if vp.X == 0 or vp.Y == 0 then
+            pcall(function()
+                if workspace.CurrentCamera then vp = workspace.CurrentCamera.ViewportSize end
+            end)
+        end
+        if vp.X == 0 or vp.Y == 0 then return end
+
         local WIN_W = options and options.Width or 680
         local WIN_H = options and options.Height or 480
-        
-        -- Add margins to ensure the UI stays fully visible on device edges
         local margin = 32
-        local targetW = WIN_W + margin
-        local targetH = WIN_H + margin
-        
-        local scaleX = viewportSize.X / targetW
-        local scaleY = viewportSize.Y / targetH
-        local maxScale = math.min(scaleX, scaleY)
-        
-        -- Down-scale proportionally if the screen is too small, and apply user scale multiplier
-        local finalScale = math.min(1, maxScale) * (self._baseScale or 1)
+        local scaleX = vp.X / (WIN_W + margin)
+        local scaleY = vp.Y / (WIN_H + margin)
+        local finalScale = math.min(1, math.min(scaleX, scaleY)) * (self._baseScale or 1)
         scale.Scale = math.clamp(finalScale, 0.45, 2.0)
     end
     self._autoAdjustScale = autoAdjustScale
 
     gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(autoAdjustScale)
-    task.defer(autoAdjustScale)
+    -- Camera viewport is more reliable on mobile and also fires on orientation change
+    pcall(function()
+        if workspace.CurrentCamera then
+            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(autoAdjustScale)
+        end
+        workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+            if workspace.CurrentCamera then
+                workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(autoAdjustScale)
+            end
+            autoAdjustScale()
+        end)
+    end)
+    -- Retry until the layout engine reports a real size (executor environments can be slow)
+    task.spawn(function()
+        local tries = 0
+        repeat task.wait() tries = tries + 1 until gui.AbsoluteSize.X > 0 or tries > 30
+        autoAdjustScale()
+    end)
 
     -- ── Notification container ───────────────────────────────────
     local notifContainer = Create("Frame", {
