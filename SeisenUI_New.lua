@@ -5875,6 +5875,8 @@ function Library:_BuildManagersTab(window, folderName)
     local smIgnore = {
         SaveManager_ConfigName=true, SaveManager_ConfigList=true,
         SaveManager_AccountExclusive=true, SaveManager_ApplyAutoload=true,
+        SaveManager_RenameInput=true, SaveManager_ConfigNote=true,
+        SaveManager_ImportInput=true,
         BuiltIn_ThemePreset=true, ThemeCreator_Accent=true,
         ThemeCreator_Background=true, ThemeCreator_Content=true,
         ThemeCreator_Border=true, ThemeCreator_Text=true,
@@ -5965,6 +5967,26 @@ function Library:_BuildManagersTab(window, folderName)
         return true
     end
 
+    local notesDir = saveDir.."/notes"
+    pcall(function() if not isfolder(notesDir) then makefolder(notesDir) end end)
+
+    local function LoadNote(name)
+        if not name or name=="" then return "" end
+        local ok,v=pcall(function() if isfile(notesDir.."/"..name..".txt") then return readfile(notesDir.."/"..name..".txt") end end)
+        return (ok and v) or ""
+    end
+    local function SaveNote(name, note)
+        if not name or name=="" then return end
+        pcall(function() if not isfolder(notesDir) then makefolder(notesDir) end; writefile(notesDir.."/"..name..".txt", note or "") end)
+    end
+
+    -- Forward ref so the dropdown callback can update the note box after it is created
+    local _noteRef = {}
+    local function RefreshDD(selectName)
+        local dd=self.Options["SaveManager_ConfigList"]
+        if dd then dd:Refresh(RefreshConfigList(),false); if selectName then dd:SetValue(selectName) end end
+    end
+
     mgrRight:AddLabel({Text="Folder: "..saveDir})
     mgrRight:AddTextbox({Name="Config Name",Flag="SaveManager_ConfigName",Default="",Placeholder="Enter config name..."})
     mgrRight:AddToggle({Name="Account Exclusive",Flag="SaveManager_AccountExclusive",Default=false,Tooltip="Config only loads for your account"})
@@ -5986,7 +6008,9 @@ function Library:_BuildManagersTab(window, folderName)
     end})
 
     mgrRight:AddDivider()
-    mgrRight:AddDropdown({Name="Config List",Options=RefreshConfigList(),Flag="SaveManager_ConfigList",Callback=function() end})
+    mgrRight:AddDropdown({Name="Config List",Options=RefreshConfigList(),Flag="SaveManager_ConfigList",Callback=function(v)
+        if _noteRef.obj then _noteRef.obj:SetValue(LoadNote(v or "")) end
+    end})
 
     mgrRight:AddButton({Name="Load Config", Callback=function()
         local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
@@ -6000,12 +6024,88 @@ function Library:_BuildManagersTab(window, folderName)
     end})
     mgrRight:AddButton({Name="Delete Config", Risky=true, Callback=function()
         local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        if name=="" then Notify("Save Manager","Select a config first","error"); return end
         pcall(delfile, saveDir.."/"..name..".json")
+        pcall(delfile, notesDir.."/"..name..".txt")
         Notify("Save Manager","Deleted: "..name,"info")
+        if _noteRef.obj then _noteRef.obj:SetValue("") end
         if self.Options["SaveManager_ConfigList"] then self.Options["SaveManager_ConfigList"]:Refresh(RefreshConfigList(),true) end
     end})
     mgrRight:AddButton({Name="Refresh List", Callback=function()
         if self.Options["SaveManager_ConfigList"] then self.Options["SaveManager_ConfigList"]:Refresh(RefreshConfigList(),true) end
+    end})
+
+    -- ── Config Management (Rename / Duplicate) ───────────────────
+    mgrRight:AddDivider("Config Management")
+    mgrRight:AddTextbox({Name="New Name",Flag="SaveManager_RenameInput",Default="",Placeholder="Enter new config name..."})
+
+    mgrRight:AddButton({Name="Rename Config", Callback=function()
+        local oldName=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        local newName=self.Options["SaveManager_RenameInput"] and self.Options["SaveManager_RenameInput"].Value or ""
+        if oldName=="" then Notify("Save Manager","Select a config to rename","error"); return end
+        if newName:gsub(" ","")=="" then Notify("Save Manager","New name cannot be empty","error"); return end
+        local oldPath=saveDir.."/"..oldName..".json"
+        local ok,content=pcall(function() return readfile(oldPath) end)
+        if not ok or not content then Notify("Save Manager","Could not read config","error"); return end
+        pcall(writefile, saveDir.."/"..newName..".json", content)
+        local note=LoadNote(oldName)
+        if note~="" then SaveNote(newName, note) end
+        pcall(delfile, oldPath); pcall(delfile, notesDir.."/"..oldName..".txt")
+        Notify("Save Manager","Renamed → "..newName,"success")
+        task.defer(function() RefreshDD(newName) end)
+    end})
+
+    mgrRight:AddButton({Name="Duplicate Config", Callback=function()
+        local srcName=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        local newName=self.Options["SaveManager_RenameInput"] and self.Options["SaveManager_RenameInput"].Value or ""
+        if srcName=="" then Notify("Save Manager","Select a config to duplicate","error"); return end
+        if newName:gsub(" ","")=="" then newName=srcName.."_copy" end
+        local ok,content=pcall(function() return readfile(saveDir.."/"..srcName..".json") end)
+        if not ok or not content then Notify("Save Manager","Could not read config","error"); return end
+        pcall(writefile, saveDir.."/"..newName..".json", content)
+        local note=LoadNote(srcName)
+        if note~="" then SaveNote(newName, note) end
+        Notify("Save Manager","Duplicated → "..newName,"success")
+        task.defer(function() RefreshDD(newName) end)
+    end})
+
+    -- ── Clipboard (Export / Import) ──────────────────────────────
+    mgrRight:AddDivider("Clipboard")
+
+    mgrRight:AddButton({Name="Export to Clipboard", Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        if name=="" then Notify("Save Manager","Select a config first","error"); return end
+        local ok,content=pcall(function() return readfile(saveDir.."/"..name..".json") end)
+        if not ok or not content then Notify("Save Manager","Could not read config","error"); return end
+        if setclipboard then pcall(setclipboard, content); Notify("Save Manager","Copied \""..name.."\" to clipboard","success")
+        else Notify("Save Manager","setclipboard not available","error") end
+    end})
+
+    mgrRight:AddTextbox({Name="Import Name",Flag="SaveManager_ImportInput",Default="",Placeholder="Name for imported config..."})
+    mgrRight:AddButton({Name="Import from Clipboard", Callback=function()
+        local name=self.Options["SaveManager_ImportInput"] and self.Options["SaveManager_ImportInput"].Value or ""
+        if name:gsub(" ","")=="" then Notify("Save Manager","Enter a name for the import","error"); return end
+        if not getclipboard then Notify("Save Manager","getclipboard not available","error"); return end
+        local ok,raw=pcall(getclipboard)
+        if not ok or not raw or raw=="" then Notify("Save Manager","Clipboard is empty","error"); return end
+        local ok2,decoded=pcall(function() return HttpService_:JSONDecode(raw) end)
+        if not ok2 or not decoded then Notify("Save Manager","Clipboard is not valid JSON","error"); return end
+        pcall(writefile, saveDir.."/"..name..".json", raw)
+        Notify("Save Manager","Imported as \""..name.."\"","success")
+        task.defer(function() RefreshDD(name) end)
+    end})
+
+    -- ── Config Notes ─────────────────────────────────────────────
+    mgrRight:AddDivider("Config Notes")
+    local noteBox=mgrRight:AddTextbox({Name="Note",Flag="SaveManager_ConfigNote",Default="",Placeholder="Add a note for the selected config..."})
+    _noteRef.obj = noteBox
+
+    mgrRight:AddButton({Name="Save Note", Callback=function()
+        local name=self.Options["SaveManager_ConfigList"] and self.Options["SaveManager_ConfigList"].Value or ""
+        if name=="" then Notify("Save Manager","Select a config first","error"); return end
+        local note=self.Options["SaveManager_ConfigNote"] and self.Options["SaveManager_ConfigNote"].Value or ""
+        SaveNote(name, note)
+        Notify("Save Manager","Note saved for \""..name.."\"","success")
     end})
 
     mgrRight:AddDivider()
