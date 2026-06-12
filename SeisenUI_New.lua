@@ -6192,13 +6192,14 @@ function Library:CreateWidget(options)
         width = 220
     end
 
-    -- Separate always-on ScreenGui so the widget stays visible when the library is hidden
+    -- Separate always-on ScreenGui so the widget stays visible when the library is hidden.
+    -- DisplayOrder is kept BELOW the main library so library controls are never intercepted.
     if not self._widgetGui then
         self._widgetGui = Instance.new("ScreenGui")
         self._widgetGui.Name = "SeisenWidget"
         self._widgetGui.ResetOnSpawn = false
         self._widgetGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        self._widgetGui.DisplayOrder = (self.ScreenGui and self.ScreenGui.DisplayOrder or 10) + 1
+        self._widgetGui.DisplayOrder = math.max(1, (self.ScreenGui and self.ScreenGui.DisplayOrder or 10) - 1)
         pcall(function()
             self._widgetGui.Parent = game:GetService("CoreGui")
         end)
@@ -6296,8 +6297,40 @@ function Library:CreateWidget(options)
     self.WidgetConnections = self.WidgetConnections or {}
     table.insert(self.WidgetConnections, statsConn)
 
-    MakeDraggable(widget, widget, function()
-        Library:Toggle()
+    -- Dragging uses the normal MakeDraggable (no onClick — global InputEnded would fire on any click)
+    MakeDraggable(widget, widget)
+
+    -- Click-to-toggle: use widget's OWN InputBegan/InputEnded so only taps directly on the HUD
+    -- open/close the library. Turning off "Show Performance HUD" toggle never reaches here.
+    local _wDown = false
+    local _wMoved = false
+    local _wDownPos = Vector2.new(0, 0)
+    widget.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            _wDown = true
+            _wMoved = false
+            _wDownPos = Vector2.new(input.Position.X, input.Position.Y)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if _wDown and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = Vector2.new(input.Position.X, input.Position.Y) - _wDownPos
+            if delta.Magnitude > 5 then
+                _wMoved = true
+            end
+        end
+    end)
+    widget.InputEnded:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch) and _wDown then
+            _wDown = false
+            if not _wMoved then
+                Library:Toggle()
+            end
+            _wMoved = false
+        end
     end)
 
     return { Instance = widget, _statsConn = statsConn }
