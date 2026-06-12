@@ -5727,11 +5727,12 @@ function Library:_BuildManagersTab(window, folderName)
     -- ── Theme Manager ────────────────────────────────────────────────
     local seisenRoot  = "Seisen"
     local themeDir    = seisenRoot .. "/Theme/" .. (folderName or "Default")
-    pcall(function()
-        if not isfolder(seisenRoot)               then makefolder(seisenRoot)               end
-        if not isfolder(seisenRoot .. "/Theme")   then makefolder(seisenRoot .. "/Theme")   end
-        if not isfolder(themeDir)                 then makefolder(themeDir)                 end
-    end)
+    -- Use individual pcall per makefolder: Delta throws "canonical" errors from
+    -- isfolder() when the parent doesn't exist yet, so a single pcall would abort
+    -- all remaining folder creation after the first throw.
+    pcall(makefolder, seisenRoot)
+    pcall(makefolder, seisenRoot .. "/Theme")
+    pcall(makefolder, themeDir)
 
     local savedDefault = nil
     pcall(function()
@@ -5893,7 +5894,8 @@ function Library:_BuildManagersTab(window, folderName)
             AccentColor=self.Theme.Accent:ToHex(), OutlineColor=self.Theme.Border:ToHex(),
             FontColor=self.Theme.Text:ToHex(), ToggleOffColor=self.Theme.ToggleOff:ToHex(),
         }
-        pcall(function() if not isfolder(themeDir) then makefolder(themeDir) end; writefile(themeDir.."/"..name..".json", H:JSONEncode(scheme)) end)
+        pcall(makefolder, themeDir)
+        pcall(writefile, themeDir.."/"..name..".json", H:JSONEncode(scheme))
         if self.Options["BuiltIn_ThemePreset"] then self.Options["BuiltIn_ThemePreset"]:Refresh(GetAllThemeNames(), false) end
         self:Notify({Title="Theme Manager",Content="Saved: "..name,Type="success",Duration=3})
     end})
@@ -5902,11 +5904,9 @@ function Library:_BuildManagersTab(window, folderName)
     local saveDir      = seisenRoot .. "/Saved/" .. (folderName or "Default")
     local Players_     = game:GetService("Players")
     local HttpService_ = game:GetService("HttpService")
-    pcall(function()
-        if not isfolder(seisenRoot)               then makefolder(seisenRoot)               end
-        if not isfolder(seisenRoot .. "/Saved")   then makefolder(seisenRoot .. "/Saved")   end
-        if not isfolder(saveDir)                  then makefolder(saveDir)                  end
-    end)
+    pcall(makefolder, seisenRoot)
+    pcall(makefolder, seisenRoot .. "/Saved")
+    pcall(makefolder, saveDir)
 
     local smIgnore = {
         SaveManager_ConfigName=true, SaveManager_ConfigList=true,
@@ -5947,7 +5947,7 @@ function Library:_BuildManagersTab(window, folderName)
 
     local function SaveConfig(name)
         if not name or name:gsub(" ","")=="" then return false,"empty name" end
-        pcall(function() if not isfolder(saveDir) then makefolder(saveDir) end end)
+        pcall(makefolder, saveDir)
         local data={objects={},exclusive=false,userId=Players_.LocalPlayer.UserId}
         local excl=self.Toggles and self.Toggles["SaveManager_AccountExclusive"]
         if excl then data.exclusive=excl.Value end
@@ -6005,7 +6005,7 @@ function Library:_BuildManagersTab(window, folderName)
     end
 
     local notesDir = saveDir.."/notes"
-    pcall(function() if not isfolder(notesDir) then makefolder(notesDir) end end)
+    pcall(makefolder, notesDir)
 
     local function LoadNote(name)
         if not name or name=="" then return "" end
