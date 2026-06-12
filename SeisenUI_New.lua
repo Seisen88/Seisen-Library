@@ -3111,7 +3111,9 @@ function Library:CreateWindow(options)
             autoAdjustScale()
         end)
     end)
-    -- Retry until the layout engine reports a real size (executor environments can be slow)
+    -- Synchronous initial call — camera viewport is always ready when the script runs
+    autoAdjustScale()
+    -- Deferred fallback in case gui.AbsoluteSize wasn't populated yet on the first call
     task.spawn(function()
         local tries = 0
         repeat task.wait() tries = tries + 1 until gui.AbsoluteSize.X > 0 or tries > 30
