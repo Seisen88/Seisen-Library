@@ -1166,12 +1166,12 @@ function Library:CreateDropdown(parent, options)
     local function rebuildItems(list)
         for _, b in pairs(itemButtons) do b:Destroy() end; itemButtons = {}
         panel.CanvasSize = UDim2.new(0, 0, 0, #list * ITEM_H + 4)
-        local newH = math.min(#list, maxVisible) * ITEM_H + 8
+        panelHeight = math.min(#list, maxVisible) * ITEM_H + 8
         if panel.Parent == self._mainWindow then
             local scale = self._windowScale and self._windowScale.Scale or (self._mainWindowScale and self._mainWindowScale.Scale or 1)
-            panel.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, newH)
+            panel.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, panelHeight)
         else
-            panel.Size = UDim2.new(1, 0, 0, newH)
+            panel.Size = UDim2.new(1, 0, 0, panelHeight)
         end
         for i, item in ipairs(list) do
             local isSelected = isMulti and (value[item] == true) or (value == item)
