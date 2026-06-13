@@ -659,6 +659,7 @@ function Library:CreateButton(parent, options)
     btn.MouseButton1Click:Connect(function()
         local btnObj = self.Options[options.Flag]
         if btnObj and btnObj._disabled then return end
+        self:CloseAllDropdowns()
         flashClick()
         if confirmText and not waitingConfirm then
             waitingConfirm = true; btn.Text = confirmText; return
@@ -798,7 +799,7 @@ function Library:CreateToggle(parent, options)
     local switchBtn = Create("TextButton", {
         Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", Parent = toggle
     })
-    switchBtn.MouseButton1Click:Connect(function() toggleObj:SetValue(not state) end)
+    switchBtn.MouseButton1Click:Connect(function() self:CloseAllDropdowns(); toggleObj:SetValue(not state) end)
 
     if hasKeybind then
         local listening = false
@@ -934,6 +935,7 @@ function Library:CreateSlider(parent, options)
     bar.InputBegan:Connect(function(i)
         if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
         if sliderObj._disabled then return end
+        self:CloseAllDropdowns()
         sliding = true; dragTip.Visible = true
         local function applyX(x)
             local pct = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
@@ -1035,6 +1037,7 @@ function Library:CreateKeybind(parent, options)
     local listening = false
     keyButton.MouseButton1Click:Connect(function()
         if listening then return end
+        self:CloseAllDropdowns()
         listening = true; keyButton.Text = "..."; keyButton.TextColor3 = self.Theme.Accent
         local conn
         conn = UserInputService.InputBegan:Connect(function(input, processed)
@@ -1404,6 +1407,7 @@ function Library:CreateCheckbox(parent, options)
     }
     row.MouseButton1Click:Connect(function()
         if cbObj._disabled then return end
+        self:CloseAllDropdowns()
         cbObj:SetValue(not state)
     end)
 
