@@ -1155,6 +1155,7 @@ function Library:CreateDropdown(parent, options)
     end
     fieldLabel.Text = getDisplayText()
 
+    local dropObj  -- forward ref so click handler can sync dropObj.Value
     local itemButtons = {}
     local function rebuildItems(list)
         for _, b in pairs(itemButtons) do b:Destroy() end; itemButtons = {}
@@ -1210,6 +1211,8 @@ function Library:CreateDropdown(parent, options)
                 if isMulti then
                     if value[item] then value[item] = nil else value[item] = true end
                 else value = item end
+                -- Keep dropObj.Value in sync so SaveManager reads the correct value
+                if dropObj then dropObj.Value = value end
                 fieldLabel.Text = getDisplayText()
                 rebuildItems(list)
                 callback(value)
@@ -1262,7 +1265,7 @@ function Library:CreateDropdown(parent, options)
         if not wasOpen then openPanel() end
     end)
 
-    local dropObj = {
+    dropObj = {
         Value = value, Type = "Dropdown", Multi = isMulti,
         SetValue = function(s, val)
             if isMulti then
@@ -6168,8 +6171,10 @@ function Library:_BuildManagersTab(window, folderName)
         Notify("Save Manager","All autoloads cleared","info"); RefreshAutoloadLabel()
     end})
 
-    -- Startup auto-load — delay so the user script finishes registering all elements first
-    task.delay(0.5, function()
+    -- Startup auto-load — wait for intro to finish, then buffer for post-intro element registration
+    task.spawn(function()
+        repeat task.wait(0.1) until not Library.IntroOngoing
+        task.wait(0.5)
         local name,_=GetAutoloadInfo()
         if name and name~="none" and name~="" then
             local ok,err=LoadConfig(name)
