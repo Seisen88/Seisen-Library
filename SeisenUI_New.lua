@@ -3530,8 +3530,13 @@ function Library:CreateWindow(options)
     local maximised = false
     maxBtn.MouseButton1Click:Connect(function()
         maximised = not maximised
-        local nW = maximised and math.floor(WIN_W * 1.28) or WIN_W
-        local nH = maximised and math.floor(WIN_H * 1.28) or WIN_H
+        local sc = (scale.Scale > 0) and scale.Scale or 1
+        local vp = (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize) or Vector2.new(1920, 1080)
+        -- logical canvas size = screen pixels / uiscale; leave a 20px margin on each side
+        local maxW = math.floor(vp.X / sc) - 40
+        local maxH = math.floor(vp.Y / sc) - 40
+        local nW = maximised and math.min(math.floor(WIN_W * 1.28), maxW) or WIN_W
+        local nH = maximised and math.min(math.floor(WIN_H * 1.28), maxH) or WIN_H
         Tween(main, { Size = UDim2.new(0, nW, 0, nH), Position = UDim2.new(0.5, -nW/2, 0.5, -nH/2) }, 0.22)
         Tween(maxBtn, { BackgroundTransparency = maximised and 0.45 or 0 })
     end)
