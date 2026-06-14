@@ -2971,6 +2971,12 @@ function Library:Unload()
         pcall(function() self._widgetGui:Destroy() end)
         self._widgetGui = nil
     end
+
+    -- Destroy mobile toggle ScreenGui
+    if self._mobileToggleGui then
+        pcall(function() self._mobileToggleGui:Destroy() end)
+        self._mobileToggleGui = nil
+    end
     
     -- Destroy Notification container ScreenGui if it exists
     if self.NotificationContainer then
@@ -2999,6 +3005,10 @@ end
 function Library:Toggle()
     if not self.ScreenGui or Library.IntroOngoing then return end
     self.ScreenGui.Enabled = not self.ScreenGui.Enabled
+    -- mobile toggle button: visible only when library is hidden
+    if self._mobileToggleGui then
+        self._mobileToggleGui.Enabled = not self.ScreenGui.Enabled
+    end
 end
 
 -- ── MakeDraggable ─────────────────────────────────────────────────
@@ -3593,6 +3603,73 @@ function Library:CreateWindow(options)
         end
     end)
     table.insert(self.KeybindConnections, toggleKeybindConn)
+
+    -- ── Mobile toggle button ───────────────────────────────────────
+    -- On mobile there is no keyboard so Left Alt never fires. This small
+    -- floating button appears whenever the library is hidden and lets the
+    -- user tap to bring it back, regardless of whether Performance HUD is on.
+    if self.IsMobile then
+        local mtGui = Instance.new("ScreenGui")
+        mtGui.Name           = "SeisenMobileToggle"
+        mtGui.ResetOnSpawn   = false
+        mtGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        mtGui.DisplayOrder   = gui.DisplayOrder + 1
+        mtGui.Enabled        = false  -- starts hidden; shown on first Toggle()
+        pcall(function() mtGui.Parent = game:GetService("CoreGui") end)
+        if not mtGui.Parent then
+            mtGui.Parent = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+        end
+        self._mobileToggleGui = mtGui
+
+        local mtBtn = Create("ImageButton", {
+            Name = "MobileToggleBtn",
+            Size = UDim2.new(0, 48, 0, 48),
+            Position = UDim2.new(1, -64, 0.5, -24),
+            BackgroundColor3 = self.Theme.Accent,
+            AutoButtonColor = false,
+            ZIndex = 10,
+            Parent = mtGui
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+            Create("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 1.5, Transparency = 0.6 })
+        })
+        self:RegisterElement(mtBtn, "Accent")
+
+        Create("TextLabel", {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = "☰",
+            TextColor3 = Color3.new(1, 1, 1),
+            Font = Enum.Font.GothamBold,
+            TextSize = 22,
+            ZIndex = 11,
+            Parent = mtBtn
+        })
+
+        MakeDraggable(mtBtn, mtBtn)
+
+        local _mtDown, _mtMoved, _mtDownPos = false, false, Vector2.new(0, 0)
+        mtBtn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch then
+                _mtDown = true; _mtMoved = false
+                _mtDownPos = Vector2.new(input.Position.X, input.Position.Y)
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if _mtDown and input.UserInputType == Enum.UserInputType.Touch then
+                if (Vector2.new(input.Position.X, input.Position.Y) - _mtDownPos).Magnitude > 5 then
+                    _mtMoved = true
+                end
+            end
+        end)
+        mtBtn.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch and _mtDown then
+                _mtDown = false
+                if not _mtMoved then Library:Toggle() end
+                _mtMoved = false
+            end
+        end)
+    end
 
     -- ── Loading screen ────────────────────────────────────────────
     local mainScale = Instance.new("UIScale")
