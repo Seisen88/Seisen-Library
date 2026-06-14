@@ -3895,6 +3895,14 @@ function Library:CreateWindow(options)
         Library:RegisterElement(div, "Border")
     end
 
+    function Window:AddSidebarSpace(height)
+        tabOrder = tabOrder + 1
+        Create("Frame", {
+            Size = UDim2.new(1, 0, 0, type(height) == "number" and height or 8),
+            BackgroundTransparency = 1, LayoutOrder = tabOrder, Parent = sideScroll
+        })
+    end
+
     function Window:AddTab(name, iconName, isBuiltIn)
         local order
         if isBuiltIn then
@@ -3947,7 +3955,7 @@ function Library:CreateWindow(options)
                     Size = UDim2.new(0, 14, 0, 14),
                     Position = UDim2.new(0, 10, 0.5, -7),
                     BackgroundTransparency = 1,
-                    Image = iconData.Image or "",
+                    Image = iconData.Url or "",
                     ImageRectOffset = iconData.ImageRectOffset or Vector2.new(0,0),
                     ImageRectSize = iconData.ImageRectSize or Vector2.new(0,0),
                     ImageColor3 = Library.Theme.TextDim,
@@ -4656,7 +4664,7 @@ function Library:CreateSection(parent, name, iconName)
                 Size = UDim2.new(0, 12, 0, 12),
                 Position = UDim2.new(0, 10, 0.5, -6),
                 BackgroundTransparency = 1,
-                Image = iconData.Image or "",
+                Image = iconData.Url or "",
                 ImageRectOffset = iconData.ImageRectOffset or Vector2.new(0,0),
                 ImageRectSize = iconData.ImageRectSize or Vector2.new(0,0),
                 ImageColor3 = self.Theme.Accent, Parent = header
