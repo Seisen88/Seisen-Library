@@ -262,6 +262,29 @@ function Library:CloseAllDropdowns()
         pcall(closeFn)
     end
     self.OpenDropdowns = {}
+    if self._dropdownVeil then
+        self._dropdownVeil.Visible = false
+    end
+end
+
+function Library:_showDropdownVeil()
+    if not self._mainWindow then return end
+    if not self._dropdownVeil then
+        local veil = Instance.new("TextButton")
+        veil.Name            = "DropdownVeil"
+        veil.Size            = UDim2.new(1, 0, 1, 0)
+        veil.Position        = UDim2.new(0, 0, 0, 0)
+        veil.BackgroundTransparency = 1
+        veil.Text            = ""
+        veil.AutoButtonColor = false
+        veil.ZIndex          = 49
+        veil.Parent          = self._mainWindow
+        veil.MouseButton1Click:Connect(function()
+            self:CloseAllDropdowns()
+        end)
+        self._dropdownVeil = veil
+    end
+    self._dropdownVeil.Visible = true
 end
 
 -- ── Icon helpers ─────────────────────────────────────────────────
@@ -1228,6 +1251,7 @@ function Library:CreateDropdown(parent, options)
     local isOpen = false
     local function openPanel()
         isOpen = true
+        self:_showDropdownVeil()
         if self._mainWindow then
             panel.Parent = self._mainWindow
             local scale = self._windowScale and self._windowScale.Scale or (self._mainWindowScale and self._mainWindowScale.Scale or 1)
