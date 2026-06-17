@@ -1194,56 +1194,77 @@ function Library:CreateDropdown(parent, options)
             panel.Size = UDim2.new(1, 0, 0, panelHeight)
         end
         for i, item in ipairs(list) do
-            local isSelected = isMulti and (value[item] == true) or (value == item)
-            local btn = Create("TextButton", {
-                Size = UDim2.new(1, 0, 0, ITEM_H - 2),
-                BackgroundColor3 = isSelected and self.Theme.AccentDark or self.Theme.Element,
-                Text = "", AutoButtonColor = false, LayoutOrder = i, ZIndex = 52, Parent = panel
-            }, {
-                Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
-                Create("TextLabel", {
-                    Size = UDim2.new(1, isMulti and -26 or -10, 1, 0), Position = UDim2.new(0, 10, 0, 0),
-                    BackgroundTransparency = 1, Text = tostring(item),
-                    TextColor3 = isSelected and self.Theme.Accent or self.Theme.Text,
-                    Font = Enum.Font.Gotham, TextSize = 12,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 53
-                })
-            })
-            if isMulti then
-                Create("Frame", {
-                    Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(1, -20, 0.5, -7),
-                    BackgroundColor3 = isSelected and self.Theme.Accent or self.Theme.InputBg,
-                    ZIndex = 53, Parent = btn
+            local itemStr = tostring(item)
+            local isDivider = itemStr:match("^%-%-%-") ~= nil
+            if isDivider then
+                local div = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, ITEM_H - 2),
+                    BackgroundTransparency = 1, LayoutOrder = i, ZIndex = 52, Parent = panel
                 }, {
-                    Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
-                    Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
-                    (isSelected and Create("TextLabel", {
-                        Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1,
-                        Text = "✓", TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 10, ZIndex = 54
-                    }) or nil)
+                    Create("TextLabel", {
+                        Size = UDim2.new(1, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        Text = itemStr,
+                        TextColor3 = self.Theme.TextDim,
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 10,
+                        TextXAlignment = Enum.TextXAlignment.Center,
+                        ZIndex = 53
+                    })
                 })
-            end
-            btn.MouseEnter:Connect(function()
-                if not (isMulti and value[item]) and value ~= item then
-                    Tween(btn, { BackgroundColor3 = self.Theme.ElementHover })
-                end
-            end)
-            btn.MouseLeave:Connect(function()
-                local isSel = isMulti and (value[item] == true) or (value == item)
-                Tween(btn, { BackgroundColor3 = isSel and self.Theme.AccentDark or self.Theme.Element })
-            end)
-            btn.MouseButton1Click:Connect(function()
+                table.insert(itemButtons, div)
+            else
+                local isSelected = isMulti and (value[item] == true) or (value == item)
+                local btn = Create("TextButton", {
+                    Size = UDim2.new(1, 0, 0, ITEM_H - 2),
+                    BackgroundColor3 = isSelected and self.Theme.AccentDark or self.Theme.Element,
+                    Text = "", AutoButtonColor = false, LayoutOrder = i, ZIndex = 52, Parent = panel
+                }, {
+                    Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                    Create("TextLabel", {
+                        Size = UDim2.new(1, isMulti and -26 or -10, 1, 0), Position = UDim2.new(0, 10, 0, 0),
+                        BackgroundTransparency = 1, Text = itemStr,
+                        TextColor3 = isSelected and self.Theme.Accent or self.Theme.Text,
+                        Font = Enum.Font.Gotham, TextSize = 12,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 53
+                    })
+                })
                 if isMulti then
-                    if value[item] then value[item] = nil else value[item] = true end
-                else value = item end
-                -- Keep dropObj.Value in sync so SaveManager reads the correct value
-                if dropObj then dropObj.Value = value end
-                fieldLabel.Text = getDisplayText()
-                rebuildItems(list)
-                callback(value)
-            end)
-            table.insert(itemButtons, btn)
+                    Create("Frame", {
+                        Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(1, -20, 0.5, -7),
+                        BackgroundColor3 = isSelected and self.Theme.Accent or self.Theme.InputBg,
+                        ZIndex = 53, Parent = btn
+                    }, {
+                        Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                        Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+                        (isSelected and Create("TextLabel", {
+                            Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1,
+                            Text = "✓", TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 10, ZIndex = 54
+                        }) or nil)
+                    })
+                end
+                btn.MouseEnter:Connect(function()
+                    if not (isMulti and value[item]) and value ~= item then
+                        Tween(btn, { BackgroundColor3 = self.Theme.ElementHover })
+                    end
+                end)
+                btn.MouseLeave:Connect(function()
+                    local isSel = isMulti and (value[item] == true) or (value == item)
+                    Tween(btn, { BackgroundColor3 = isSel and self.Theme.AccentDark or self.Theme.Element })
+                end)
+                btn.MouseButton1Click:Connect(function()
+                    if isMulti then
+                        if value[item] then value[item] = nil else value[item] = true end
+                    else value = item end
+                    -- Keep dropObj.Value in sync so SaveManager reads the correct value
+                    if dropObj then dropObj.Value = value end
+                    fieldLabel.Text = getDisplayText()
+                    rebuildItems(list)
+                    callback(value)
+                end)
+                table.insert(itemButtons, btn)
+            end
         end
     end
     rebuildItems(items)
