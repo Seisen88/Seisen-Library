@@ -4476,6 +4476,7 @@ function Library:CreateWindow(options)
         local function closePanel()
             if closed then return end
             closed = true
+            Window._closeChangelog = nil
             Tween(overlay, { BackgroundTransparency = 1 }, 0.2)
             Tween(panel, { Position = UDim2.new(1, PANEL_W + 10, 0.5, 0) }, 0.25)
             task.delay(0.28, function()
@@ -4484,6 +4485,7 @@ function Library:CreateWindow(options)
                 if onClose then onClose() end
             end)
         end
+        Window._closeChangelog = closePanel
 
         gotItBtn.MouseButton1Click:Connect(closePanel)
         closeBtn.MouseButton1Click:Connect(closePanel)
@@ -5944,17 +5946,23 @@ function Library:_BuildConfigTab(window)
         Name    = "Show Changelog",
         Default = false,
         Flag    = "BuiltIn_ShowChangelog",
-        Tooltip = "Open the version changelog panel.",
+        Tooltip = "Toggle the version changelog panel open or closed.",
         Callback = function(v)
-            if v and window._pendingChangelog then
-                window:_renderChangelog(window._pendingChangelog, nil)
-            end
-            -- reset toggle back to off after opening
-            task.delay(0.1, function()
-                if Library.Toggles and Library.Toggles["BuiltIn_ShowChangelog"] then
-                    Library.Toggles["BuiltIn_ShowChangelog"]:SetValue(false)
+            if v then
+                if window._pendingChangelog then
+                    window:_renderChangelog(window._pendingChangelog, function()
+                        -- panel closed (X or auto-close) → sync toggle back to off
+                        if Library.Toggles and Library.Toggles["BuiltIn_ShowChangelog"] then
+                            Library.Toggles["BuiltIn_ShowChangelog"]:SetValue(false)
+                        end
+                    end, false)
                 end
-            end)
+            else
+                -- toggle turned off → close the panel if it's open
+                if window._closeChangelog then
+                    window._closeChangelog()
+                end
+            end
         end,
     })
 
