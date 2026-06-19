@@ -4200,10 +4200,22 @@ function Library:CreateWindow(options)
     end
 
     -- Internal renderer. onClose (optional) is called after the panel animates out.
+    -- Rows use pre-calculated fixed heights to avoid circular AutomaticSize dependency
+    -- (accent bar Size.Y=1 scale inside an auto-sized parent deadlocks at zero height).
     function Window:_renderChangelog(entries, onClose)
-        local PANEL_W = 280
-        local PANEL_H = 420
-        local ACCENT  = Library.Theme.Accent or Color3.fromRGB(139, 92, 246)
+        local PANEL_W    = 280
+        local PANEL_H    = 420
+        local ACCENT     = Library.Theme.Accent or Color3.fromRGB(139, 92, 246)
+        local LINE_H     = 16  -- px per change line
+        local HEADER_H   = 52  -- px for version header row
+        local AUTO_CLOSE = 4   -- seconds before auto-close
+
+        -- Pre-calculate each row's pixel height so we can use fixed sizes
+        -- (avoids circular AutomaticSize: accent bar 1-scale inside auto-Y parent)
+        local function rowHeight(entry)
+            local n = entry.Changes and #entry.Changes or 0
+            return HEADER_H + n * LINE_H + (n > 0 and 12 or 0) + 1
+        end
 
         -- Dim overlay
         local overlay = Create("Frame", {
@@ -4230,23 +4242,20 @@ function Library:CreateWindow(options)
             Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 0) }),
         })
 
-        -- Header row
+        -- Header
         local header = Create("Frame", {
             Size = UDim2.new(1, 0, 0, 48),
             BackgroundTransparency = 1,
             LayoutOrder = 1, ZIndex = 252, Parent = panel,
         }, {
-            Create("UIPadding", {
-                PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 12),
-            }),
+            Create("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 12) }),
         })
         Create("TextLabel", {
             Size = UDim2.new(1, -56, 1, 0),
             BackgroundTransparency = 1,
             Text = "Versions",
             TextColor3 = Library.Theme.Text or Color3.new(1, 1, 1),
-            Font = Enum.Font.GothamBold,
-            TextSize = 15,
+            Font = Enum.Font.GothamBold, TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 253, Parent = header,
         })
@@ -4256,13 +4265,10 @@ function Library:CreateWindow(options)
             BackgroundColor3 = Library.Theme.InputBg or Color3.fromRGB(30, 30, 40),
             Text = "✕",
             TextColor3 = Library.Theme.TextDim or Color3.fromRGB(150, 150, 170),
-            Font = Enum.Font.GothamBold,
-            TextSize = 11,
+            Font = Enum.Font.GothamBold, TextSize = 11,
             AutoButtonColor = false,
             ZIndex = 253, Parent = header,
-        }, {
-            Create("UICorner", { CornerRadius = UDim.new(0, 7) }),
-        })
+        }, { Create("UICorner", { CornerRadius = UDim.new(0, 7) }) })
 
         -- Divider under header
         Create("Frame", {
@@ -4272,9 +4278,9 @@ function Library:CreateWindow(options)
             LayoutOrder = 2, ZIndex = 252, Parent = panel,
         })
 
-        -- Scrolling list (leaves room for footer)
+        -- Scroll (fixed height leaving room for footer: 48 header + 1 div + 1 div + 46 footer = 96)
         local scroll = Create("ScrollingFrame", {
-            Size = UDim2.new(1, 0, 1, -98),
+            Size = UDim2.new(1, 0, 1, -96),
             BackgroundTransparency = 1,
             ScrollBarThickness = 3,
             ScrollBarImageColor3 = ACCENT,
@@ -4288,50 +4294,39 @@ function Library:CreateWindow(options)
 
         for i, entry in ipairs(entries) do
             local isLatest = (i == 1)
-            local rowBg = isLatest
-                and (Library.Theme.SidebarActive or Color3.fromRGB(45, 35, 70))
-                or  Color3.fromRGB(0, 0, 0)
+            local rH = rowHeight(entry)
+            local indL = isLatest and 18 or 14
 
+            -- Row: fixed height, no AutomaticSize — accent bar is absolutely positioned safely
             local row = Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 0),
-                AutomaticSize = Enum.AutomaticSize.Y,
-                BackgroundColor3 = rowBg,
+                Size = UDim2.new(1, 0, 0, rH),
+                BackgroundColor3 = isLatest
+                    and (Library.Theme.SidebarActive or Color3.fromRGB(45, 35, 70))
+                    or  Color3.fromRGB(0, 0, 0),
                 BackgroundTransparency = isLatest and 0 or 1,
                 BorderSizePixel = 0,
                 LayoutOrder = i, ZIndex = 253, Parent = scroll,
-            }, {
-                Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 0) }),
             })
 
+            -- Left accent bar — absolutely positioned, no layout participation
             if isLatest then
                 Create("Frame", {
                     Size = UDim2.new(0, 3, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
                     BackgroundColor3 = ACCENT,
                     BorderSizePixel = 0,
                     ZIndex = 255, Parent = row,
                 })
             end
 
-            local verRow = Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 52),
-                BackgroundTransparency = 1,
-                LayoutOrder = 1, ZIndex = 254, Parent = row,
-            }, {
-                Create("UIPadding", {
-                    PaddingLeft  = UDim.new(0, isLatest and 18 or 14),
-                    PaddingRight = UDim.new(0, 12),
-                }),
-            })
-
+            -- Version header (icon + name + date + checkmark) — top 52px
             local iconCircle = Create("Frame", {
                 Size = UDim2.new(0, 32, 0, 32),
-                Position = UDim2.new(0, 0, 0.5, -16),
+                Position = UDim2.new(0, indL, 0, 10),
                 BackgroundColor3 = isLatest and ACCENT or (Library.Theme.InputBg or Color3.fromRGB(35, 35, 50)),
                 BackgroundTransparency = isLatest and 0.75 or 0,
-                ZIndex = 254, Parent = verRow,
-            }, {
-                Create("UICorner", { CornerRadius = UDim.new(0, 9) }),
-            })
+                ZIndex = 254, Parent = row,
+            }, { Create("UICorner", { CornerRadius = UDim.new(0, 9) }) })
             local iconImg = Create("ImageLabel", {
                 Size = UDim2.new(0, 16, 0, 16),
                 AnchorPoint = Vector2.new(0.5, 0.5),
@@ -4343,77 +4338,66 @@ function Library:CreateWindow(options)
             Library:ApplyIcon(iconImg, "clipboard-list")
 
             Create("TextLabel", {
-                Size = UDim2.new(1, -84, 0, 20),
-                Position = UDim2.new(0, 40, 0, 8),
+                Size = UDim2.new(1, -(indL + 44 + 12), 0, 18),
+                Position = UDim2.new(0, indL + 40, 0, 9),
                 BackgroundTransparency = 1,
                 Text = isLatest and ("New  |  " .. (entry.Version or "")) or (entry.Version or ""),
                 TextColor3 = Library.Theme.Text or Color3.new(1, 1, 1),
-                Font = Enum.Font.GothamBold,
-                TextSize = 12,
+                Font = Enum.Font.GothamBold, TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 255, Parent = verRow,
+                ZIndex = 255, Parent = row,
             })
             if entry.Date then
                 Create("TextLabel", {
-                    Size = UDim2.new(1, -84, 0, 14),
-                    Position = UDim2.new(0, 40, 0, 28),
+                    Size = UDim2.new(1, -(indL + 44 + 12), 0, 14),
+                    Position = UDim2.new(0, indL + 40, 0, 28),
                     BackgroundTransparency = 1,
                     Text = entry.Date,
                     TextColor3 = Library.Theme.TextDim or Color3.fromRGB(130, 130, 160),
-                    Font = Enum.Font.Gotham,
-                    TextSize = 10,
+                    Font = Enum.Font.Gotham, TextSize = 10,
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 255, Parent = verRow,
+                    ZIndex = 255, Parent = row,
                 })
             end
             if isLatest then
                 Create("TextLabel", {
                     Size = UDim2.new(0, 20, 0, 20),
-                    Position = UDim2.new(1, -20, 0.5, -10),
+                    Position = UDim2.new(1, -24, 0, 16),
                     BackgroundTransparency = 1,
                     Text = "✓",
                     TextColor3 = ACCENT,
-                    Font = Enum.Font.GothamBold,
-                    TextSize = 14,
-                    ZIndex = 255, Parent = verRow,
+                    Font = Enum.Font.GothamBold, TextSize = 14,
+                    ZIndex = 255, Parent = row,
                 })
             end
 
+            -- Change lines — stacked below the header area
             if entry.Changes and #entry.Changes > 0 then
-                for ci, change in ipairs(entry.Changes) do
-                    local changeLine = Create("Frame", {
-                        Size = UDim2.new(1, 0, 0, 0),
-                        AutomaticSize = Enum.AutomaticSize.Y,
-                        BackgroundTransparency = 1,
-                        LayoutOrder = ci + 1, ZIndex = 254, Parent = row,
-                    }, {
-                        Create("UIPadding", {
-                            PaddingLeft   = UDim.new(0, isLatest and 56 or 52),
-                            PaddingRight  = UDim.new(0, 14),
-                            PaddingBottom = UDim.new(0, ci == #entry.Changes and 10 or 2),
-                        }),
-                    })
+                local yOff = HEADER_H
+                for _, change in ipairs(entry.Changes) do
                     Create("TextLabel", {
-                        Size = UDim2.new(1, 0, 0, 0),
-                        AutomaticSize = Enum.AutomaticSize.Y,
+                        Size = UDim2.new(1, -(indL + 40 + 14), 0, LINE_H),
+                        Position = UDim2.new(0, indL + 40, 0, yOff),
                         BackgroundTransparency = 1,
                         Text = "• " .. change,
                         TextColor3 = Library.Theme.TextDim or Color3.fromRGB(140, 140, 165),
-                        Font = Enum.Font.Gotham,
-                        TextSize = 11,
+                        Font = Enum.Font.Gotham, TextSize = 11,
                         TextXAlignment = Enum.TextXAlignment.Left,
                         TextWrapped = true,
-                        ZIndex = 255, Parent = changeLine,
+                        ZIndex = 255, Parent = row,
                     })
+                    yOff = yOff + LINE_H
                 end
             end
 
+            -- Bottom divider
             Create("Frame", {
                 Size = UDim2.new(1, 0, 0, 1),
+                Position = UDim2.new(0, 0, 1, -1),
                 BackgroundColor3 = Library.Theme.Border or Color3.fromRGB(50, 50, 70),
                 BackgroundTransparency = 0.5,
                 BorderSizePixel = 0,
-                LayoutOrder = 99, ZIndex = 253, Parent = row,
+                ZIndex = 254, Parent = row,
             })
         end
 
@@ -4437,7 +4421,6 @@ function Library:CreateWindow(options)
             }),
         })
 
-        -- "Show on startup" toggle pill
         local showEnabled = clEnabled()
         local togglePill = Create("Frame", {
             Size = UDim2.new(0, 28, 0, 16),
@@ -4445,33 +4428,27 @@ function Library:CreateWindow(options)
             BackgroundColor3 = showEnabled and ACCENT or (Library.Theme.InputBg or Color3.fromRGB(40, 40, 55)),
             BorderSizePixel = 0,
             ZIndex = 253, Parent = footer,
-        }, {
-            Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-        })
+        }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
         local toggleKnob = Create("Frame", {
             Size = UDim2.new(0, 10, 0, 10),
             Position = showEnabled and UDim2.new(1, -13, 0.5, -5) or UDim2.new(0, 3, 0.5, -5),
             BackgroundColor3 = Color3.new(1, 1, 1),
             BorderSizePixel = 0,
             ZIndex = 254, Parent = togglePill,
-        }, {
-            Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-        })
+        }, { Create("UICorner", { CornerRadius = UDim.new(1, 0) }) })
         Create("TextLabel", {
             Size = UDim2.new(1, -40, 1, 0),
             Position = UDim2.new(0, 36, 0, 0),
             BackgroundTransparency = 1,
             Text = "Show on startup",
             TextColor3 = Library.Theme.TextDim or Color3.fromRGB(140, 140, 165),
-            Font = Enum.Font.Gotham,
-            TextSize = 11,
+            Font = Enum.Font.Gotham, TextSize = 11,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 253, Parent = footer,
         })
         local toggleBtn = Create("TextButton", {
             Size = UDim2.new(0, 130, 1, 0),
-            BackgroundTransparency = 1,
-            Text = "",
+            BackgroundTransparency = 1, Text = "",
             ZIndex = 255, Parent = footer,
         })
         toggleBtn.MouseButton1Click:Connect(function()
@@ -4481,20 +4458,16 @@ function Library:CreateWindow(options)
             Tween(toggleKnob, { Position = showEnabled and UDim2.new(1, -13, 0.5, -5) or UDim2.new(0, 3, 0.5, -5) }, 0.15)
         end)
 
-        -- "Got it" button
         local gotItBtn = Create("TextButton", {
             Size = UDim2.new(0, 72, 1, -2),
             Position = UDim2.new(1, -72, 0, 0),
             BackgroundColor3 = ACCENT,
             Text = "Got it",
             TextColor3 = Color3.new(1, 1, 1),
-            Font = Enum.Font.GothamMedium,
-            TextSize = 11,
+            Font = Enum.Font.GothamMedium, TextSize = 11,
             AutoButtonColor = false,
             ZIndex = 253, Parent = footer,
-        }, {
-            Create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-        })
+        }, { Create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
 
         -- Animate in
         Tween(overlay, { BackgroundTransparency = 0.6 }, 0.2)
@@ -4515,6 +4488,9 @@ function Library:CreateWindow(options)
 
         gotItBtn.MouseButton1Click:Connect(closePanel)
         closeBtn.MouseButton1Click:Connect(closePanel)
+
+        -- Auto-close after AUTO_CLOSE seconds so the main window appears without input
+        task.delay(AUTO_CLOSE, closePanel)
     end
 
     return Window
