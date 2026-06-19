@@ -5941,12 +5941,20 @@ function Library:_BuildConfigTab(window)
     -- Changelog Section
     configRight:AddDivider()
     configRight:AddToggle({
-        Name    = "Show Changelog on Startup",
-        Default = window._clEnabled and window._clEnabled() or true,
+        Name    = "Show Changelog",
+        Default = false,
         Flag    = "BuiltIn_ShowChangelog",
-        Tooltip = "Show the version changelog panel automatically every time the script loads.",
+        Tooltip = "Open the version changelog panel.",
         Callback = function(v)
-            if window._clSetEnabled then window._clSetEnabled(v) end
+            if v and window._pendingChangelog then
+                window:_renderChangelog(window._pendingChangelog, nil)
+            end
+            -- reset toggle back to off after opening
+            task.delay(0.1, function()
+                if Library.Toggles and Library.Toggles["BuiltIn_ShowChangelog"] then
+                    Library.Toggles["BuiltIn_ShowChangelog"]:SetValue(false)
+                end
+            end)
         end,
     })
 
