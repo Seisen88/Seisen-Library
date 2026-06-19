@@ -3127,13 +3127,10 @@ function Library:CreateWindow(options)
         return not (ok and v == "false")
     end
     local function clSetEnabled(v)
-        pcall(function()
-            if not isfolder("Seisen Hub") then makefolder("Seisen Hub") end
-            if not isfolder("Seisen Hub/" .. folderName) then
-                makefolder("Seisen Hub/" .. folderName)
-            end
-            writefile(CLPREF_PATH, v and "true" or "false")
-        end)
+        -- makefolder each level individually so missing parents don't block writefile
+        pcall(makefolder, "Seisen Hub")
+        pcall(makefolder, "Seisen Hub/" .. folderName)
+        pcall(writefile, CLPREF_PATH, v and "true" or "false")
     end
 
     -- ── ScreenGui ────────────────────────────────────────────────
@@ -4185,6 +4182,10 @@ function Library:CreateWindow(options)
     -- ── Changelog panel ──────────────────────────────────────────
     -- entries: array of { Version = "v1.2.0", Date = "Jun 20, 2026", Changes = { "...", ... } }
     -- The first entry is treated as the latest (highlighted with accent).
+
+    -- Expose pref helpers on Window so _BuildConfigTab can wire the toggle
+    Window._clEnabled    = clEnabled
+    Window._clSetEnabled = clSetEnabled
 
     -- Store entries and trigger; if called before intro finishes the intro
     -- intercept picks it up. If called after intro, render immediately.
@@ -5935,6 +5936,18 @@ function Library:_BuildConfigTab(window)
                 end
             end)
         end
+    })
+
+    -- Changelog Section
+    configRight:AddDivider()
+    configRight:AddToggle({
+        Name    = "Show Changelog on Startup",
+        Default = window._clEnabled and window._clEnabled() or true,
+        Flag    = "BuiltIn_ShowChangelog",
+        Tooltip = "Show the version changelog panel automatically every time the script loads.",
+        Callback = function(v)
+            if window._clSetEnabled then window._clSetEnabled(v) end
+        end,
     })
 
     -- UI Settings Section
