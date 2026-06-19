@@ -3792,6 +3792,9 @@ function Library:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 1101, Parent = loadScreen
     })
 
+    -- Declared here so the intro spawn can reference it during Phase 4
+    local Window = {}
+
     task.spawn(function()
         -- Key System gate (runs before splash if Key/Keys option set)
         if options.Key or options.Keys then
@@ -3883,8 +3886,6 @@ function Library:CreateWindow(options)
     end
 
     -- ── Window object ─────────────────────────────────────────────
-    local Window = {}
-
     function Window:AddSidebarSection(label, isBuiltIn)
         local order
         if isBuiltIn then
