@@ -3121,15 +3121,13 @@ function Library:CreateWindow(options)
     self._windowVersion = version
 
     -- ── Changelog pref (persisted via writefile/readfile) ────────
-    local CLPREF_PATH = "Seisen Hub/" .. folderName .. "/changelog_show.txt"
+    -- Flat file in executor workspace — no folder creation needed for max compatibility
+    local CLPREF_PATH = "SeisenHub_" .. folderName .. "_cl.txt"
     local function clEnabled()
         local ok, v = pcall(readfile, CLPREF_PATH)
         return not (ok and v == "false")
     end
     local function clSetEnabled(v)
-        -- makefolder each level individually so missing parents don't block writefile
-        pcall(makefolder, "Seisen Hub")
-        pcall(makefolder, "Seisen Hub/" .. folderName)
         pcall(writefile, CLPREF_PATH, v and "true" or "false")
     end
 
