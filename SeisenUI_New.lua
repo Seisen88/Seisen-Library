@@ -3847,7 +3847,7 @@ function Library:CreateWindow(options)
             if self._refreshKeybindEmptyHint then self._refreshKeybindEmptyHint() end
         end
         if Window._pendingChangelog and clEnabled() then
-            Window:_renderChangelog(Window._pendingChangelog, revealMain)
+            Window:_renderChangelog(Window._pendingChangelog, revealMain, true)
         else
             revealMain()
         end
@@ -4201,13 +4201,13 @@ function Library:CreateWindow(options)
     -- Internal renderer. onClose (optional) is called after the panel animates out.
     -- Rows use pre-calculated fixed heights to avoid circular AutomaticSize dependency
     -- (accent bar Size.Y=1 scale inside an auto-sized parent deadlocks at zero height).
-    function Window:_renderChangelog(entries, onClose)
+    function Window:_renderChangelog(entries, onClose, autoClose)
         local PANEL_W    = 280
         local PANEL_H    = 420
         local ACCENT     = Library.Theme.Accent or Color3.fromRGB(139, 92, 246)
         local LINE_H     = 16  -- px per change line
         local HEADER_H   = 52  -- px for version header row
-        local AUTO_CLOSE = 4   -- seconds before auto-close
+        local AUTO_CLOSE = 4   -- seconds before auto-close (startup only)
 
         -- Pre-calculate each row's pixel height so we can use fixed sizes
         -- (avoids circular AutomaticSize: accent bar 1-scale inside auto-Y parent)
@@ -4488,8 +4488,10 @@ function Library:CreateWindow(options)
         gotItBtn.MouseButton1Click:Connect(closePanel)
         closeBtn.MouseButton1Click:Connect(closePanel)
 
-        -- Auto-close after AUTO_CLOSE seconds so the main window appears without input
-        task.delay(AUTO_CLOSE, closePanel)
+        -- Auto-close only on startup path (autoClose = true)
+        if autoClose then
+            task.delay(AUTO_CLOSE, closePanel)
+        end
     end
 
     return Window
