@@ -1112,6 +1112,10 @@ function Library:CreateDropdown(parent, options)
         else value[default] = true end
     end
 
+    local isSearch  = options.Search or false
+    local allItems  = {table.unpack(items)}
+    local SEARCH_H  = isSearch and 30 or 0
+
     local ITEM_H  = 26
     local DROP_H  = 32
 
@@ -1157,21 +1161,54 @@ function Library:CreateDropdown(parent, options)
 
     -- Panel
     local panelHeight = math.min(#items, maxVisible) * ITEM_H + 8
-    local panel = Create("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 0, panelHeight),
+
+    local panelWrap = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, panelHeight + SEARCH_H),
         Position = UDim2.new(0, 0, 0, DROP_H + 2),
         BackgroundColor3 = self.Theme.Element,
-        BorderSizePixel = 0, ScrollBarThickness = 3,
-        ScrollBarImageColor3 = self.Theme.Accent,
-        CanvasSize = UDim2.new(0, 0, 0, #items * ITEM_H + 4),
+        BorderSizePixel = 0, ClipsDescendants = true,
         Visible = false, ZIndex = 50, Parent = container
     }, {
         Create("UICorner", { CornerRadius = UDim.new(0, 8) }),
         Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 }),
+    })
+    self:RegisterElement(panelWrap, "Element")
+
+    local searchBox = nil
+    if isSearch then
+        local sFrame = Create("Frame", {
+            Size = UDim2.new(1, -8, 0, 22),
+            Position = UDim2.new(0, 4, 0, 4),
+            BackgroundColor3 = self.Theme.InputBg,
+            ZIndex = 52, Parent = panelWrap
+        }, {
+            Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+            Create("UIStroke", { Color = self.Theme.Border, Thickness = 1 })
+        })
+        self:RegisterElement(sFrame, "InputBg")
+        searchBox = Create("TextBox", {
+            Size = UDim2.new(1, -8, 1, 0), Position = UDim2.new(0, 6, 0, 0),
+            BackgroundTransparency = 1, Text = "",
+            PlaceholderText = "Search...", PlaceholderColor3 = self.Theme.TextMuted,
+            TextColor3 = self.Theme.Text, Font = Enum.Font.Gotham, TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false,
+            ZIndex = 53, Parent = sFrame
+        })
+        self:RegisterElement(searchBox, "Text", "TextColor3")
+    end
+
+    local panel = Create("ScrollingFrame", {
+        Size = UDim2.new(1, 0, 0, panelHeight),
+        Position = UDim2.new(0, 0, 0, SEARCH_H),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0, ScrollBarThickness = 3,
+        ScrollBarImageColor3 = self.Theme.Accent,
+        CanvasSize = UDim2.new(0, 0, 0, #items * ITEM_H + 4),
+        ZIndex = 51, Parent = panelWrap
+    }, {
         Create("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 6) }),
         Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) })
     })
-    self:RegisterElement(panel, "Element")
 
     local function getDisplayText()
         if isMulti then
@@ -1187,10 +1224,12 @@ function Library:CreateDropdown(parent, options)
         for _, b in pairs(itemButtons) do b:Destroy() end; itemButtons = {}
         panel.CanvasSize = UDim2.new(0, 0, 0, #list * ITEM_H + 4)
         panelHeight = math.min(#list, maxVisible) * ITEM_H + 8
-        if panel.Parent == self._mainWindow then
+        if panelWrap.Parent == self._mainWindow then
             local scale = self._windowScale and self._windowScale.Scale or (self._mainWindowScale and self._mainWindowScale.Scale or 1)
-            panel.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, panelHeight)
+            panelWrap.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, panelHeight + SEARCH_H)
+            panel.Size = UDim2.new(1, 0, 0, panelHeight)
         else
+            panelWrap.Size = UDim2.new(1, 0, 0, panelHeight + SEARCH_H)
             panel.Size = UDim2.new(1, 0, 0, panelHeight)
         end
         for i, item in ipairs(list) do
@@ -1269,28 +1308,44 @@ function Library:CreateDropdown(parent, options)
     end
     rebuildItems(items)
 
+    if searchBox then
+        searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+            local q = searchBox.Text:lower()
+            local filtered = {}
+            for _, it in ipairs(allItems) do
+                if q == "" or tostring(it):lower():find(q, 1, true) then
+                    table.insert(filtered, it)
+                end
+            end
+            rebuildItems(filtered)
+        end)
+    end
+
     local isOpen = false
     local function openPanel()
         isOpen = true
         self:_showDropdownVeil()
+        if searchBox then searchBox.Text = "" rebuildItems(allItems) end
         if self._mainWindow then
-            panel.Parent = self._mainWindow
+            panelWrap.Parent = self._mainWindow
             local scale = self._windowScale and self._windowScale.Scale or (self._mainWindowScale and self._mainWindowScale.Scale or 1)
-            panel.Position = UDim2.fromOffset(
+            panelWrap.Position = UDim2.fromOffset(
                 (field.AbsolutePosition.X - self._mainWindow.AbsolutePosition.X) / scale,
                 (field.AbsolutePosition.Y - self._mainWindow.AbsolutePosition.Y) / scale + DROP_H + 2
             )
-            panel.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, panelHeight)
+            panelWrap.Size = UDim2.new(0, field.AbsoluteSize.X / scale, 0, panelHeight + SEARCH_H)
+            panel.Size = UDim2.new(1, 0, 0, panelHeight)
         end
-        panel.Visible = true
+        panelWrap.Visible = true
         Tween(chevron, { ImageColor3 = self.Theme.Accent })
         Tween(fieldStroke, { Color = self.Theme.Accent })
         table.insert(self.OpenDropdowns, function()
             if isOpen then
                 isOpen = false
-                panel.Visible = false
-                panel.Parent = container
-                panel.Position = UDim2.new(0, 0, 0, DROP_H + 2)
+                panelWrap.Visible = false
+                panelWrap.Parent = container
+                panelWrap.Position = UDim2.new(0, 0, 0, DROP_H + 2)
+                panelWrap.Size = UDim2.new(1, 0, 0, panelHeight + SEARCH_H)
                 panel.Size = UDim2.new(1, 0, 0, panelHeight)
                 Tween(chevron, { ImageColor3 = self.Theme.TextDim })
                 Tween(fieldStroke, { Color = self.Theme.Border })
@@ -1299,9 +1354,10 @@ function Library:CreateDropdown(parent, options)
     end
     local function closePanel()
         isOpen = false
-        panel.Visible = false
-        panel.Parent = container
-        panel.Position = UDim2.new(0, 0, 0, DROP_H + 2)
+        panelWrap.Visible = false
+        panelWrap.Parent = container
+        panelWrap.Position = UDim2.new(0, 0, 0, DROP_H + 2)
+        panelWrap.Size = UDim2.new(1, 0, 0, panelHeight + SEARCH_H)
         panel.Size = UDim2.new(1, 0, 0, panelHeight)
         Tween(chevron, { ImageColor3 = self.Theme.TextDim })
         Tween(fieldStroke, { Color = self.Theme.Border })
@@ -1328,7 +1384,9 @@ function Library:CreateDropdown(parent, options)
             s.Value = value; fieldLabel.Text = getDisplayText(); rebuildItems(items); callback(value)
         end,
         Refresh = function(s, newList, reset)
-            items = newList; if reset then value = isMulti and {} or nil end
+            items = newList; allItems = {table.unpack(newList)}
+            if reset then value = isMulti and {} or nil end
+            if searchBox then searchBox.Text = "" end
             s.Value = value; fieldLabel.Text = getDisplayText(); rebuildItems(newList)
         end,
     }
@@ -1336,7 +1394,16 @@ function Library:CreateDropdown(parent, options)
     table.insert(self.Registry, {
         Callback = function()
             if container and container.Parent then
-                rebuildItems(items)
+                local q = searchBox and searchBox.Text:lower() or ""
+                if q ~= "" then
+                    local filtered = {}
+                    for _, it in ipairs(allItems) do
+                        if tostring(it):lower():find(q, 1, true) then table.insert(filtered, it) end
+                    end
+                    rebuildItems(filtered)
+                else
+                    rebuildItems(items)
+                end
             end
         end
     })
