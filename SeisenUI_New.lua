@@ -3173,7 +3173,7 @@ function Library:CreateWindow(options)
     _G.SeisenInstance = self
     Library.IntroOngoing = true
 
-    local winName      = options.Name or "Seisen Hub"
+    local winName      = options.Name or "Seisen UI"
     local subtitle     = options.SubTitle or ""
     local scriptName   = options.ScriptName or subtitle or ""
     local version      = options.Version or ""
