@@ -5538,19 +5538,89 @@ function Library:_BuildConfigTab(window)
 
     configLeft:AddDivider()
 
-    -- JumpPower Slider
-    configLeft:AddSlider({
-        Name = "JumpPower",
-        Min = 50,
-        Max = 300,
-        Default = 50,
-        Flag = "BuiltIn_JumpPower",
+    -- JumpPower
+    local jumpPowerValue      = 50
+    local jumpPowerConnection = nil
+    local jumpPowerCharConn   = nil
+
+    configLeft:AddToggle({
+        Name    = "JumpPower",
+        Default = false,
+        Flag    = "BuiltIn_JumpPowerToggle",
         Callback = function(v)
             pcall(function()
-                local hum = LocalPlayer.Character.Humanoid
-                hum.UseJumpPower = true
-                hum.JumpPower = v
+                if v then
+                    local char = LocalPlayer.Character
+                    if char then
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if hum then
+                            hum.UseJumpPower = true
+                            hum.JumpPower    = jumpPowerValue
+                        end
+                    end
+                    if not jumpPowerCharConn then
+                        jumpPowerCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
+                            task.wait(0.5)
+                            local hum = char:FindFirstChildOfClass("Humanoid")
+                            if hum then
+                                hum.UseJumpPower = true
+                                hum.JumpPower    = jumpPowerValue
+                            end
+                        end)
+                    end
+                    if not jumpPowerConnection then
+                        jumpPowerConnection = RunService.Heartbeat:Connect(function()
+                            local char = LocalPlayer.Character
+                            if not char then return end
+                            local hum = char:FindFirstChildOfClass("Humanoid")
+                            if hum and hum.JumpPower ~= jumpPowerValue then
+                                hum.UseJumpPower = true
+                                hum.JumpPower    = jumpPowerValue
+                            end
+                        end)
+                    end
+                else
+                    if jumpPowerConnection then
+                        jumpPowerConnection:Disconnect()
+                        jumpPowerConnection = nil
+                    end
+                    if jumpPowerCharConn then
+                        jumpPowerCharConn:Disconnect()
+                        jumpPowerCharConn = nil
+                    end
+                    pcall(function()
+                        local char = LocalPlayer.Character
+                        if not char then return end
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if hum then
+                            hum.UseJumpPower = true
+                            hum.JumpPower    = 50
+                        end
+                    end)
+                end
             end)
+        end
+    })
+
+    configLeft:AddSlider({
+        Name      = "JumpPower Value",
+        Min       = 50,
+        Max       = 300,
+        Default   = 50,
+        Flag      = "BuiltIn_JumpPower",
+        Callback  = function(v)
+            jumpPowerValue = v
+            if jumpPowerConnection then
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if not char then return end
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        hum.UseJumpPower = true
+                        hum.JumpPower    = v
+                    end
+                end)
+            end
         end
     })
 
@@ -5633,6 +5703,79 @@ function Library:_BuildConfigTab(window)
         end
     })
 
+    configLeft:AddDivider()
+
+    -- NoClip
+    local noclipEnabled = false
+    local noclipConn    = nil
+
+    configLeft:AddToggle({
+        Name    = "NoClip",
+        Default = false,
+        Flag    = "BuiltIn_NoClip",
+        Keybind = Enum.KeyCode.N,
+        Tooltip = "Walk through walls (toggle with N)",
+        Callback = function(v)
+            noclipEnabled = v
+            if v then
+                if not noclipConn then
+                    noclipConn = RunService.Stepped:Connect(function()
+                        if not noclipEnabled then return end
+                        local char = LocalPlayer.Character
+                        if not char then return end
+                        for _, part in ipairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
+                    end)
+                end
+            else
+                if noclipConn then
+                    noclipConn:Disconnect()
+                    noclipConn = nil
+                end
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if not char then return end
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then hum.PlatformStand = false end
+                    for _, part in ipairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = true
+                        end
+                    end
+                end)
+            end
+        end
+    })
+
+    -- Infinite Jump
+    local infJumpEnabled = false
+
+    configLeft:AddToggle({
+        Name    = "Infinite Jump",
+        Default = false,
+        Flag    = "BuiltIn_InfiniteJump",
+        Tooltip = "Jump again while airborne",
+        Callback = function(v)
+            infJumpEnabled = v
+        end
+    })
+
+    UserInputService.JumpRequest:Connect(function()
+        if not infJumpEnabled then return end
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum then return end
+        local state = hum:GetState()
+        if state == Enum.HumanoidStateType.Freefall
+        or state == Enum.HumanoidStateType.Jumping then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+
     -- ── Right Column: Misc / UI Settings ────────────────────────────────────
     configRight:AddLabel({ Text = "Script by: Seisen" })
 
@@ -5652,6 +5795,75 @@ function Library:_BuildConfigTab(window)
         Name = "Join Discord",
         Callback = function()
             setclipboard("https://discord.gg/F4sAf6z8Ph")
+        end
+    })
+
+    configRight:AddDivider()
+
+    -- FOV
+    local _origFOV = 70
+    pcall(function() _origFOV = workspace.CurrentCamera.FieldOfView end)
+
+    configRight:AddToggle({
+        Name    = "Custom FOV",
+        Default = false,
+        Flag    = "BuiltIn_FOVToggle",
+        Tooltip = "Override the camera field of view",
+        Callback = function(v)
+            pcall(function()
+                if not v then
+                    workspace.CurrentCamera.FieldOfView = _origFOV
+                end
+            end)
+        end
+    })
+
+    configRight:AddSlider({
+        Name      = "FOV",
+        Min       = 30,
+        Max       = 120,
+        Default   = 70,
+        Increment = 1,
+        Flag      = "BuiltIn_FOV",
+        Tooltip   = "Camera field of view (requires Custom FOV on)",
+        Callback  = function(v)
+            pcall(function()
+                if Library.Toggles["BuiltIn_FOVToggle"] and Library.Toggles["BuiltIn_FOVToggle"].Value then
+                    workspace.CurrentCamera.FieldOfView = v
+                end
+            end)
+        end
+    })
+
+    -- Server Hop
+    configRight:AddButton({
+        Name    = "Server Hop",
+        Tooltip = "Teleport to a different server of the same game",
+        Callback = function()
+            Library:Notify({ Title = "Server Hop", Content = "Finding a new server...", Duration = 3, Type = "info" })
+            task.spawn(function()
+                pcall(function()
+                    local TeleportService = game:GetService("TeleportService")
+                    local HttpService     = game:GetService("HttpService")
+                    local placeId = game.PlaceId
+                    local currentJob = game.JobId
+                    local url = "https://games.roblox.com/v1/games/" .. tostring(placeId) .. "/servers/Public?sortOrder=Asc&limit=100"
+                    local ok, raw = pcall(function() return game:HttpGet(url, true) end)
+                    if ok and raw then
+                        local dok, data = pcall(function() return HttpService:JSONDecode(raw) end)
+                        if dok and data and data.data then
+                            for _, server in ipairs(data.data) do
+                                if server.id ~= currentJob and server.playing < server.maxPlayers then
+                                    TeleportService:TeleportToPlaceInstance(placeId, server.id, LocalPlayer)
+                                    return
+                                end
+                            end
+                        end
+                    end
+                    -- Fallback: new server via Teleport
+                    TeleportService:Teleport(placeId, LocalPlayer)
+                end)
+            end)
         end
     })
 
@@ -5890,12 +6102,35 @@ function Library:_BuildConfigTab(window)
         end
     })
 
+    local _fbOrigBrightness  = 1
+    local _fbOrigClockTime   = 14
+    local _fbOrigAmbient     = Color3.new(0, 0, 0)
+    local _fbOrigOutdoor     = Color3.new(0.5, 0.5, 0.5)
+    pcall(function()
+        local L = game:GetService("Lighting")
+        _fbOrigBrightness = L.Brightness
+        _fbOrigClockTime  = L.ClockTime
+        _fbOrigAmbient    = L.Ambient
+        _fbOrigOutdoor    = L.OutdoorAmbient
+    end)
+
     configRight:AddToggle({
         Name = "Fullbright", Flag = "CFG_Fullbright", Default = false,
+        Tooltip = "Remove all darkness so the world is fully lit",
         Callback = function(v)
             pcall(function()
-                game:GetService("Lighting").Brightness = v and 2 or 1
-                game:GetService("Lighting").ClockTime  = v and 14 or 14
+                local L = game:GetService("Lighting")
+                if v then
+                    L.Brightness     = 2
+                    L.ClockTime      = 14
+                    L.Ambient        = Color3.new(1, 1, 1)
+                    L.OutdoorAmbient = Color3.new(1, 1, 1)
+                else
+                    L.Brightness     = _fbOrigBrightness
+                    L.ClockTime      = _fbOrigClockTime
+                    L.Ambient        = _fbOrigAmbient
+                    L.OutdoorAmbient = _fbOrigOutdoor
+                end
             end)
         end
     })
@@ -6150,6 +6385,303 @@ function Library:_BuildConfigTab(window)
     self.SettingsTab    = configTab
 
     return configTab
+end
+
+-- ── Built-in ESP tab builder ─────────────────────────────────────
+-- Integrates mstudio45's ESP library as a built-in tab.
+-- Scripts can pre-load the ESP via:
+--   getgenv().mstudio45_ESP = loadstring(game:HttpGet(espUrl))()
+-- OR set Library.ESPUrl = "..." before calling AddWindow so the tab
+-- lazy-loads it on first toggle.
+function Library:_BuildESPTab(window)
+    self:_EnsureBuiltInSection(window)
+    local espTab   = window:AddTab("ESP", "eye", true)
+    local espLeft  = espTab:AddLeftSection("Players", "users")
+    local espRight = espTab:AddRightSection("Options", "sliders-horizontal")
+
+    local espLib             = nil
+    local playerESPs         = {}
+    local espEnabled         = false
+    local espHighlight       = true
+    local espNameTag         = true
+    local espDistance        = true
+    local espTracers         = false
+    local espTeamColor       = false
+    local espRainbow         = false
+    local espColor           = Color3.fromRGB(255, 80, 80)
+    local espMaxDist         = 5000
+    local espPlayerAddConn   = nil
+    local espPlayerRemConn   = nil
+    local espCharConns       = {}
+
+    local function getESP()
+        if espLib and not espLib.Destroyed then return espLib end
+        local g = (getgenv and getgenv()) or shared
+        if g.mstudio45_ESP and not g.mstudio45_ESP.Destroyed then
+            espLib = g.mstudio45_ESP
+            return espLib
+        end
+        if self.ESPUrl then
+            local ok, lib = pcall(function()
+                return loadstring(game:HttpGet(self.ESPUrl, true))()
+            end)
+            if ok and lib then
+                espLib = lib
+                return espLib
+            end
+        end
+        return nil
+    end
+
+    local function playerColor(player)
+        if espTeamColor and player.Team then
+            return player.Team.TeamColor.Color
+        end
+        return espColor
+    end
+
+    local function addESP(player)
+        if player == LocalPlayer then return end
+        if playerESPs[player] then return end
+        local lib = getESP()
+        if not lib then return end
+        local char = player.Character
+        if not char then return end
+        local col = playerColor(player)
+        local ok, inst = pcall(function()
+            return lib:Add({
+                Name               = player.Name,
+                Model              = char,
+                ESPType            = "Highlight",
+                MaxDistance        = espMaxDist,
+                Color              = col,
+                FillColor          = col,
+                OutlineColor       = col,
+                FillTransparency   = 0.6,
+                OutlineTransparency = 0,
+                Visible            = espHighlight,
+                Tracer = {
+                    Enabled      = espTracers,
+                    Color        = col,
+                    Thickness    = 1,
+                    Transparency = 0,
+                    From         = "Bottom"
+                }
+            })
+        end)
+        if ok and inst then
+            playerESPs[player] = inst
+        end
+    end
+
+    local function removeESP(player)
+        local inst = playerESPs[player]
+        if inst then
+            pcall(function() inst:Destroy() end)
+            playerESPs[player] = nil
+        end
+    end
+
+    local function clearESPs()
+        for p, _ in pairs(playerESPs) do
+            removeESP(p)
+        end
+    end
+
+    local function enableESP()
+        local lib = getESP()
+        if not lib then
+            self:Notify({ Title = "ESP", Content = "ESP library not found.\nSet Library.ESPUrl or load ESP.lua before enabling.", Duration = 6, Type = "error" })
+            if self.Toggles and self.Toggles["BuiltIn_PlayerESP"] then
+                self.Toggles["BuiltIn_PlayerESP"]:SetValue(false)
+            end
+            return
+        end
+        lib.GlobalConfig.Billboards = espNameTag
+        lib.GlobalConfig.Distance   = espDistance
+        lib.GlobalConfig.Tracers    = espTracers
+        lib.GlobalConfig.Rainbow    = espRainbow
+        for _, p in ipairs(Players:GetPlayers()) do
+            task.spawn(addESP, p)
+        end
+        espPlayerAddConn = Players.PlayerAdded:Connect(function(p)
+            if not espEnabled then return end
+            local charConn
+            charConn = p.CharacterAdded:Connect(function()
+                if not espEnabled then
+                    charConn:Disconnect()
+                    return
+                end
+                removeESP(p)
+                task.wait(0.5)
+                addESP(p)
+            end)
+            espCharConns[p] = charConn
+            task.spawn(addESP, p)
+        end)
+        espPlayerRemConn = Players.PlayerRemoving:Connect(function(p)
+            removeESP(p)
+            if espCharConns[p] then
+                pcall(function() espCharConns[p]:Disconnect() end)
+                espCharConns[p] = nil
+            end
+        end)
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and not espCharConns[p] then
+                local charConn
+                charConn = p.CharacterAdded:Connect(function()
+                    if not espEnabled then
+                        charConn:Disconnect()
+                        return
+                    end
+                    removeESP(p)
+                    task.wait(0.5)
+                    addESP(p)
+                end)
+                espCharConns[p] = charConn
+            end
+        end
+    end
+
+    local function disableESP()
+        if espPlayerAddConn then espPlayerAddConn:Disconnect(); espPlayerAddConn = nil end
+        if espPlayerRemConn then espPlayerRemConn:Disconnect(); espPlayerRemConn = nil end
+        for _, conn in pairs(espCharConns) do
+            pcall(function() conn:Disconnect() end)
+        end
+        espCharConns = {}
+        clearESPs()
+    end
+
+    -- ── Controls ─────────────────────────────────────────────────
+    espLeft:AddToggle({
+        Name    = "Player ESP",
+        Default = false,
+        Flag    = "BuiltIn_PlayerESP",
+        Tooltip = "Highlight all players in the server",
+        Callback = function(v)
+            espEnabled = v
+            if v then enableESP() else disableESP() end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Highlight",
+        Default = true,
+        Flag    = "BuiltIn_ESPHighlight",
+        Tooltip = "Show chams/highlight on players",
+        Callback = function(v)
+            espHighlight = v
+            for _, inst in pairs(playerESPs) do
+                pcall(function()
+                    if v then inst:Show() else inst:Hide() end
+                end)
+            end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Name Tag",
+        Default = true,
+        Flag    = "BuiltIn_ESPNameTag",
+        Tooltip = "Show player name above their head",
+        Callback = function(v)
+            espNameTag = v
+            if espLib then espLib.GlobalConfig.Billboards = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Show Distance",
+        Default = true,
+        Flag    = "BuiltIn_ESPDistance",
+        Tooltip = "Show stud distance in name tag",
+        Callback = function(v)
+            espDistance = v
+            if espLib then espLib.GlobalConfig.Distance = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Tracers",
+        Default = false,
+        Flag    = "BuiltIn_ESPTracers",
+        Tooltip = "Draw a line from the screen to each player",
+        Callback = function(v)
+            espTracers = v
+            if espLib then espLib.GlobalConfig.Tracers = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Team Color",
+        Default = false,
+        Flag    = "BuiltIn_ESPTeamColor",
+        Tooltip = "Use team colors instead of custom color",
+        Callback = function(v)
+            espTeamColor = v
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Rainbow",
+        Default = false,
+        Flag    = "BuiltIn_ESPRainbow",
+        Tooltip = "Cycle ESP color through rainbow",
+        Callback = function(v)
+            espRainbow = v
+            if espLib then espLib.GlobalConfig.Rainbow = v end
+        end
+    })
+
+    -- ── Right options ─────────────────────────────────────────────
+    espRight:AddColorPicker({
+        Name    = "ESP Color",
+        Default = Color3.fromRGB(255, 80, 80),
+        Flag    = "BuiltIn_ESPColor",
+        Callback = function(v)
+            espColor = v
+            if not espTeamColor then
+                for _, inst in pairs(playerESPs) do
+                    pcall(function() inst:SetEveryColor(v, true) end)
+                end
+            end
+        end
+    })
+
+    espRight:AddSlider({
+        Name      = "Max Distance",
+        Min       = 100,
+        Max       = 10000,
+        Default   = 5000,
+        Increment = 100,
+        Flag      = "BuiltIn_ESPMaxDist",
+        Tooltip   = "How far away players are visible",
+        Callback  = function(v)
+            espMaxDist = v
+            for _, inst in pairs(playerESPs) do
+                pcall(function() inst.CurrentSettings.MaxDistance = v end)
+            end
+        end
+    })
+
+    espRight:AddSlider({
+        Name      = "Fill Transparency",
+        Min       = 0,
+        Max       = 100,
+        Default   = 60,
+        Increment = 5,
+        Flag      = "BuiltIn_ESPFillAlpha",
+        Tooltip   = "Highlight fill transparency (0 = solid, 100 = invisible)",
+        Callback  = function(v)
+            local alpha = v / 100
+            for _, inst in pairs(playerESPs) do
+                pcall(function() inst.CurrentSettings.FillTransparency = alpha end)
+            end
+        end
+    })
+
+    return espTab
 end
 
 -- ================================================================
@@ -6848,10 +7380,32 @@ function Library:CreateWidget(options)
     self:RegisterElement(statsLbl, "TextDim", "TextColor3")
 
     -- Stats update loop
+    -- Lightweight per-frame FPS counter: just increments a number, no yielding
+    local _lastFpsTime = os.clock()
+    local _fpsCount    = 0
+    local _currentFps  = 0
+    local fpsConn = RunService.RenderStepped:Connect(function()
+        _fpsCount = _fpsCount + 1
+        local now = os.clock()
+        if now - _lastFpsTime >= 1 then
+            _currentFps = _fpsCount
+            _fpsCount   = 0
+            _lastFpsTime = now
+        end
+    end)
+
+    -- Label update throttled to once per second — avoids GetDescendants() and
+    -- Stats reads on every frame, and removes the old RenderStepped:Wait() yield
+    -- that was blocking the Heartbeat coroutine each tick.
+    local _lastUpdateTime = 0
     local statsConn = RunService.Heartbeat:Connect(function()
+        local now = os.clock()
+        if now - _lastUpdateTime < 1 then return end
+        _lastUpdateTime = now
+
         local parts = {}
         if showFPS then
-            table.insert(parts, math.floor(1 / RunService.RenderStepped:Wait()) .. " FPS")
+            table.insert(parts, _currentFps .. " FPS")
         end
         if showPing then
             local ping = Stats.Network.ServerStatsItem and
@@ -6873,6 +7427,7 @@ function Library:CreateWidget(options)
     end)
 
     self.WidgetConnections = self.WidgetConnections or {}
+    table.insert(self.WidgetConnections, fpsConn)
     table.insert(self.WidgetConnections, statsConn)
 
     -- Dragging uses the normal MakeDraggable (no onClick — global InputEnded would fire on any click)
@@ -7030,6 +7585,9 @@ do
         end
         if options and options.SupportedGames then
             self:_BuildGamesTab(win)
+        end
+        if options and options.ESP then
+            self:_BuildESPTab(win)
         end
         if options and options.Manager then
             local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
