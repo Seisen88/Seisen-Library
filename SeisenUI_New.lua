@@ -5800,9 +5800,18 @@ function Library:_BuildConfigTab(window)
 
     configRight:AddDivider()
 
-    -- FOV
+    -- FOV — use a persistent RenderStepped enforcer so games can't override it
     local _origFOV = 70
     pcall(function() _origFOV = workspace.CurrentCamera.FieldOfView end)
+    local _fovValue   = 70
+    local _fovEnabled = false
+    RunService.RenderStepped:Connect(function()
+        if _fovEnabled then
+            pcall(function()
+                workspace.CurrentCamera.FieldOfView = _fovValue
+            end)
+        end
+    end)
 
     configRight:AddToggle({
         Name    = "Custom FOV",
@@ -5810,11 +5819,12 @@ function Library:_BuildConfigTab(window)
         Flag    = "BuiltIn_FOVToggle",
         Tooltip = "Override the camera field of view",
         Callback = function(v)
-            pcall(function()
-                if not v then
+            _fovEnabled = v
+            if not v then
+                pcall(function()
                     workspace.CurrentCamera.FieldOfView = _origFOV
-                end
-            end)
+                end)
+            end
         end
     })
 
@@ -5825,13 +5835,14 @@ function Library:_BuildConfigTab(window)
         Default   = 70,
         Increment = 1,
         Flag      = "BuiltIn_FOV",
-        Tooltip   = "Camera field of view (requires Custom FOV on)",
+        Tooltip   = "Camera field of view",
         Callback  = function(v)
-            pcall(function()
-                if Library.Toggles["BuiltIn_FOVToggle"] and Library.Toggles["BuiltIn_FOVToggle"].Value then
+            _fovValue = v
+            if _fovEnabled then
+                pcall(function()
                     workspace.CurrentCamera.FieldOfView = v
-                end
-            end)
+                end)
+            end
         end
     })
 
@@ -6406,6 +6417,10 @@ function Library:_BuildESPTab(window)
     local espNameTag         = true
     local espDistance        = true
     local espTracers         = false
+    local espArrow           = false
+    local espBox2D           = false
+    local espBox3D           = false
+    local espSkeleton        = false
     local espTeamColor       = false
     local espRainbow         = false
     local espColor           = Color3.fromRGB(255, 80, 80)
@@ -6466,7 +6481,31 @@ function Library:_BuildESPTab(window)
                     Thickness    = 1,
                     Transparency = 0,
                     From         = "Bottom"
-                }
+                },
+                Arrow = {
+                    Enabled      = espArrow,
+                    Color        = col,
+                    CenterOffset = 300,
+                },
+                Box2D = {
+                    Enabled      = espBox2D,
+                    Color        = col,
+                    Thickness    = 1,
+                    Transparency = 0,
+                    Filled       = false,
+                },
+                Box3D = {
+                    Enabled      = espBox3D,
+                    Color        = col,
+                    Thickness    = 1,
+                    Transparency = 0,
+                },
+                Skeleton = {
+                    Enabled      = espSkeleton,
+                    Color        = col,
+                    Thickness    = 1,
+                    Transparency = 0,
+                },
             })
         end)
         if ok and inst then
@@ -6500,6 +6539,10 @@ function Library:_BuildESPTab(window)
         lib.GlobalConfig.Billboards = espNameTag
         lib.GlobalConfig.Distance   = espDistance
         lib.GlobalConfig.Tracers    = espTracers
+        lib.GlobalConfig.Arrows     = espArrow
+        lib.GlobalConfig.Boxes2D    = espBox2D
+        lib.GlobalConfig.Boxes3D    = espBox3D
+        lib.GlobalConfig.Skeleton   = espSkeleton
         lib.GlobalConfig.Rainbow    = espRainbow
         for _, p in ipairs(Players:GetPlayers()) do
             task.spawn(addESP, p)
@@ -6610,6 +6653,50 @@ function Library:_BuildESPTab(window)
         Callback = function(v)
             espTracers = v
             if espLib then espLib.GlobalConfig.Tracers = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Arrow",
+        Default = false,
+        Flag    = "BuiltIn_ESPArrow",
+        Tooltip = "Show off-screen indicator arrow pointing to players",
+        Callback = function(v)
+            espArrow = v
+            if espLib then espLib.GlobalConfig.Arrows = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Box 2D",
+        Default = false,
+        Flag    = "BuiltIn_ESPBox2D",
+        Tooltip = "Draw a 2D screen-space bounding box around players",
+        Callback = function(v)
+            espBox2D = v
+            if espLib then espLib.GlobalConfig.Boxes2D = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Box 3D",
+        Default = false,
+        Flag    = "BuiltIn_ESPBox3D",
+        Tooltip = "Draw a 3D wireframe box around players in world space",
+        Callback = function(v)
+            espBox3D = v
+            if espLib then espLib.GlobalConfig.Boxes3D = v end
+        end
+    })
+
+    espLeft:AddToggle({
+        Name    = "Skeleton",
+        Default = false,
+        Flag    = "BuiltIn_ESPSkeleton",
+        Tooltip = "Show bone skeleton lines on players",
+        Callback = function(v)
+            espSkeleton = v
+            if espLib then espLib.GlobalConfig.Skeleton = v end
         end
     })
 
@@ -7586,9 +7673,7 @@ do
         if options and options.SupportedGames then
             self:_BuildGamesTab(win)
         end
-        if options and options.ESP then
-            self:_BuildESPTab(win)
-        end
+        self:_BuildESPTab(win)
         if options and options.Manager then
             local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
             self:_BuildManagersTab(win, folderName)
