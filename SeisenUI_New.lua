@@ -7802,7 +7802,16 @@ function Library:_BuildSuggestionsTab(window)
                 local lp       = game:GetService("Players").LocalPlayer
                 local username  = lp and lp.Name or "Unknown"
                 local userId    = lp and tostring(lp.UserId) or "0"
-                local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=420&height=420&format=png"
+                -- Fetch the actual CDN image URL from the Roblox thumbnails API
+                local avatarUrl = ""
+                pcall(function()
+                    local resp = game:HttpGet("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. userId .. "&size=150x150&format=Png&isCircular=false")
+                    local decoded = HS:JSONDecode(resp)
+                    if decoded and decoded.data and decoded.data[1] then
+                        avatarUrl = decoded.data[1].imageUrl or ""
+                    end
+                end)
+                local isoTime = os.date("!%Y-%m-%dT%H:%M:%SZ")
                 local body
                 if suggestCategory == "Vouch" then
                     -- Vouch uses a regular text channel (no thread_name)
@@ -7811,14 +7820,14 @@ function Library:_BuildSuggestionsTab(window)
                         embeds = {{
                             title       = "New vouch for Seisen Hub created!",
                             description = "⭐⭐⭐⭐⭐",
-                            color       = 16711684,
+                            color       = 3447003,
                             thumbnail   = { url = avatarUrl },
                             fields      = {
-                                { name = "Vouch:",      value = suggestText,                  inline = false },
-                                { name = "Vouched by:", value = "@" .. username,              inline = true  },
-                                { name = "Vouched at:", value = os.date("%Y-%m-%d %H:%M:%S"), inline = true  },
+                                { name = "Vouch:",      value = suggestText,     inline = false },
+                                { name = "Vouched by:", value = "@" .. username, inline = true  },
                             },
-                            footer = { text = "Seisen Hub Script" },
+                            timestamp = isoTime,
+                            footer    = { text = "Seisen Hub Script" },
                         }},
                     })
                 elseif suggestCategory == "Bug Report" then
