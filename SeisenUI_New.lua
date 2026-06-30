@@ -6438,11 +6438,12 @@ function Library:_BuildESPTab(window)
             return espLib
         end
         if self.ESPUrl then
-            local ok, lib = pcall(function()
-                return loadstring(game:HttpGet(self.ESPUrl, true))()
+            pcall(function()
+                loadstring(game:HttpGet(self.ESPUrl, true))()
             end)
-            if ok and lib then
-                espLib = lib
+            local g2 = (getgenv and getgenv()) or shared
+            if g2.mstudio45_ESP and not g2.mstudio45_ESP.Destroyed then
+                espLib = g2.mstudio45_ESP
                 return espLib
             end
         end
