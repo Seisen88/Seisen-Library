@@ -1837,7 +1837,9 @@ function Library:CreateSearchableDropdown(parent, options)
     local items    = options.Options or options.Items or {}
     local callback = options.Callback or function() end
     local flag     = options.Flag
+    local isMulti  = options.Multi == true
     local value    = options.Default or nil
+    local selected = {}  -- multi mode: { [itemName] = true }
 
     local container = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 60), BackgroundTransparency = 1, Parent = parent
@@ -1883,11 +1885,42 @@ function Library:CreateSearchableDropdown(parent, options)
     local fieldStroke = searchField:FindFirstChildWhichIsA("UIStroke")
     local resultBtns  = {}
 
+    local function selectedCount()
+        local n = 0
+        for _ in pairs(selected) do n = n + 1 end
+        return n
+    end
+
+    local function updatePlaceholder()
+        local n = selectedCount()
+        searchBox.PlaceholderText = n > 0 and (n .. " creature" .. (n == 1 and "" or "s") .. " selected") or ("Search " .. sdName .. "...")
+    end
+
     local function setResult(item)
-        value = item; searchBox.Text = item or ""; panel.Visible = false
-        container.Size = UDim2.new(1, 0, 0, 44)
-        if fieldStroke then Tween(fieldStroke, { Color = self.Theme.Border }) end
-        callback(value)
+        if isMulti then
+            selected[item] = selected[item] and nil or true
+            updatePlaceholder()
+            callback(selected)
+            -- Refresh buttons to update checkmarks without closing
+            local query = searchBox.Text
+            for _, b in pairs(resultBtns) do
+                local lbl = b:FindFirstChildWhichIsA("TextLabel")
+                if lbl and selected[lbl.Text] then
+                    b.BackgroundColor3 = self.Theme.AccentDark
+                    local ck = b:FindFirstChild("_check")
+                    if ck then ck.Visible = true end
+                else
+                    b.BackgroundColor3 = self.Theme.Element
+                    local ck = b:FindFirstChild("_check")
+                    if ck then ck.Visible = false end
+                end
+            end
+        else
+            value = item; searchBox.Text = item or ""; panel.Visible = false
+            container.Size = UDim2.new(1, 0, 0, 44)
+            if fieldStroke then Tween(fieldStroke, { Color = self.Theme.Border }) end
+            callback(value)
+        end
     end
 
     local function filterItems(query)
@@ -1903,18 +1936,39 @@ function Library:CreateSearchableDropdown(parent, options)
         panel.Size = UDim2.new(1, 0, 0, ph)
         container.Size = UDim2.new(1, 0, 0, 44 + ph + 2)
         for _, it in ipairs(filtered) do
+            local isSelected = isMulti and selected[it]
             local btn = Create("TextButton", {
                 Size = UDim2.new(1, 0, 0, ITEM_H - 2),
-                BackgroundColor3 = self.Theme.Element, Text = tostring(it),
-                TextColor3 = self.Theme.Text, Font = Enum.Font.Gotham, TextSize = 12,
-                TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false,
-                ZIndex = 56, Parent = panel
+                BackgroundColor3 = isSelected and self.Theme.AccentDark or self.Theme.Element,
+                Text = "", AutoButtonColor = false, ZIndex = 56, Parent = panel
             }, {
                 Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
-                Create("UIPadding", { PaddingLeft = UDim.new(0, 8) })
+                Create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) })
             })
-            btn.MouseEnter:Connect(function() Tween(btn, { BackgroundColor3 = self.Theme.ElementHover }) end)
-            btn.MouseLeave:Connect(function() Tween(btn, { BackgroundColor3 = self.Theme.Element }) end)
+            local lbl = Create("TextLabel", {
+                Size = UDim2.new(1, isMulti and -20 or 0, 1, 0),
+                BackgroundTransparency = 1, Text = tostring(it),
+                TextColor3 = self.Theme.Text, Font = Enum.Font.Gotham, TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 57,
+                TextTruncate = Enum.TextTruncate.AtEnd, Parent = btn
+            })
+            if isMulti then
+                local ck = Create("TextLabel", {
+                    Name = "_check",
+                    Size = UDim2.new(0, 16, 1, 0), Position = UDim2.new(1, -16, 0, 0),
+                    BackgroundTransparency = 1, Text = "✓",
+                    TextColor3 = self.Theme.Accent, Font = Enum.Font.GothamBold, TextSize = 11,
+                    Visible = isSelected and true or false, ZIndex = 57, Parent = btn
+                })
+            end
+            btn.MouseEnter:Connect(function()
+                if not (isMulti and selected[it]) then
+                    Tween(btn, { BackgroundColor3 = self.Theme.ElementHover })
+                end
+            end)
+            btn.MouseLeave:Connect(function()
+                Tween(btn, { BackgroundColor3 = (isMulti and selected[it]) and self.Theme.AccentDark or self.Theme.Element })
+            end)
             btn.MouseButton1Click:Connect(function() setResult(it) end)
             table.insert(resultBtns, btn)
         end
@@ -1923,20 +1977,29 @@ function Library:CreateSearchableDropdown(parent, options)
 
     searchBox.Focused:Connect(function()
         if fieldStroke then Tween(fieldStroke, { Color = self.Theme.Accent }) end
+        if isMulti then searchBox.Text = "" end
         filterItems(searchBox.Text)
     end)
     searchBox:GetPropertyChangedSignal("Text"):Connect(function() filterItems(searchBox.Text) end)
     searchBox.FocusLost:Connect(function()
-        task.delay(0.15, function() panel.Visible = false; container.Size = UDim2.new(1, 0, 0, 44)
-            if fieldStroke then Tween(fieldStroke, { Color = self.Theme.Border }) end end)
+        task.delay(0.15, function()
+            panel.Visible = false
+            container.Size = UDim2.new(1, 0, 0, 44)
+            if fieldStroke then Tween(fieldStroke, { Color = self.Theme.Border }) end
+            if isMulti then searchBox.Text = "" end
+        end)
     end)
 
     local sdObj = {
-        Value = value, Type = "Dropdown",
+        Value = isMulti and selected or value, Type = "Dropdown",
         SetValue = function(s, v) setResult(v) end,
         Refresh = function(s, newList, reset)
-            items = newList; if reset then value = nil; searchBox.Text = "" end
-            s.Value = value
+            items = newList
+            if reset then
+                value = nil; selected = {}; searchBox.Text = ""
+                if isMulti then updatePlaceholder() end
+            end
+            s.Value = isMulti and selected or value
         end
     }
     self:ApplyCommonProperties(container, options, sdObj)
