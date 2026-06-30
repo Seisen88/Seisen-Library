@@ -7729,7 +7729,7 @@ function Library:_BuildSuggestionsTab(window)
                         embeds = {{
                             title       = "New vouch for Seisen Hub created!",
                             description = "⭐⭐⭐⭐⭐",
-                            color       = 16766720,
+                            color       = 16711684,
                             thumbnail   = { url = avatarUrl },
                             fields      = {
                                 { name = "Vouch:",      value = suggestText,                       inline = false },
@@ -7740,7 +7740,7 @@ function Library:_BuildSuggestionsTab(window)
                         }},
                     })
                 else
-                    local colors = { ["Suggestion"] = 5793266, ["Bug Report"] = 15548997 }
+                    local colors = { ["Suggestion"] = 16711684, ["Bug Report"] = 16711684 }
                     body = HS:JSONEncode({
                         thread_name = "[" .. suggestCategory .. "] " .. username,
                         username    = "Seisen Hub",
