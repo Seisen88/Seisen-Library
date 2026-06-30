@@ -1447,6 +1447,7 @@ function Library:CreateTextbox(parent, options)
         PlaceholderText = placeholder, PlaceholderColor3 = self.Theme.TextMuted,
         TextColor3 = self.Theme.Text, Font = Enum.Font.Gotham, TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = clearOnFocus,
+        TextTruncate = Enum.TextTruncate.AtEnd, ClipsDescendants = true,
         Parent = field
     })
     self:RegisterElement(textbox, "Text", "TextColor3")
@@ -7695,7 +7696,7 @@ function Library:_BuildSuggestionsTab(window)
 
     suggestSection:AddTextbox({
         Name             = "Message",
-        Placeholder      = "Describe your suggestion, bug, or vouch...",
+        Placeholder      = "Write your message here...",
         Default          = "",
         Flag             = "BuiltIn_SuggestText",
         ClearTextOnFocus = false,
@@ -7705,7 +7706,7 @@ function Library:_BuildSuggestionsTab(window)
 
     suggestSection:AddTextbox({
         Name             = "Error Screenshot URL (Bug Report only)",
-        Placeholder      = "Upload screenshot to Imgur/Gyazo and paste the image URL here...",
+        Placeholder      = "Paste image URL (Imgur, Gyazo...)",
         Default          = "",
         Flag             = "BuiltIn_SuggestError",
         ClearTextOnFocus = false,
