@@ -7673,7 +7673,7 @@ function Library:_BuildSuggestionsTab(window)
     local WEBHOOKS = {
         ["Suggestion"] = "https://ptb.discord.com/api/webhooks/1521484910177812520/wMF5tuZVGvtDcSE20sINPfbTUlzd0sPXcSDWq4GaGdP8HLMNEZhRl6QEYwft5ZRQHxDr",
         ["Bug Report"] = "https://ptb.discord.com/api/webhooks/1521488104735641763/PMruMCYdfEiOh8rlep_4U6TNbYuhR9-uOczrpLOFR9UUYnTHgLyKqiCaoXD83T0_s0k6",
-        ["Vouch"]      = "https://ptb.discord.com/api/webhooks/1521484910177812520/wMF5tuZVGvtDcSE20sINPfbTUlzd0sPXcSDWq4GaGdP8HLMNEZhRl6QEYwft5ZRQHxDr",
+        ["Vouch"]      = "https://ptb.discord.com/api/webhooks/1521488793536827603/gN1N6tMPmdFND71tpIzI0jDjxMa1Y1_8zwviLl5KCi-4j6ptPZ2e99o9IAFyJvVcpR8_",
     }
     local suggestCategory = "Suggestion"
     local suggestText     = ""
