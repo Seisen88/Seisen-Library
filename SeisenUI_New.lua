@@ -21,6 +21,7 @@ local Library = {
     ScreenGui = nil, NotificationContainer = nil,
     Icons = IconsLoaded and Icons or nil,
     KeybindFrame = nil, KeybindRows = {}, KeybindConnections = {},
+    ESPUrl = "https://raw.githubusercontent.com/mstudio45/MSESP/refs/heads/main/source.luau",
     Theme = {
         Background    = Color3.fromRGB(16,  16,  20),
         Sidebar       = Color3.fromRGB(12,  12,  15),
@@ -7672,6 +7673,9 @@ do
         end
         if options and options.SupportedGames then
             self:_BuildGamesTab(win)
+        end
+        if options and options.ESPUrl then
+            self.ESPUrl = options.ESPUrl
         end
         self:_BuildESPTab(win)
         if options and options.Manager then
