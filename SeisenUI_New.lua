@@ -7677,6 +7677,7 @@ function Library:_BuildSuggestionsTab(window)
     }
     local suggestCategory = "Suggestion"
     local suggestText     = ""
+    local suggestError    = ""
 
     suggestSection:AddParagraph({
         Title   = "How it works",
@@ -7702,6 +7703,16 @@ function Library:_BuildSuggestionsTab(window)
         Callback         = function(v) suggestText = v or "" end,
     })
 
+    suggestSection:AddTextbox({
+        Name             = "Console Error (Bug Report only)",
+        Placeholder      = "Paste the error from the developer console (F9) or an image URL...",
+        Default          = "",
+        Flag             = "BuiltIn_SuggestError",
+        ClearTextOnFocus = false,
+        Tooltip          = "Required for Bug Reports. Paste the console error text or a screenshot link.",
+        Callback         = function(v) suggestError = v or "" end,
+    })
+
     suggestSection:AddButton({
         Name    = "Submit",
         Tooltip = "Post to the Discord channel for the selected category.",
@@ -7710,6 +7721,13 @@ function Library:_BuildSuggestionsTab(window)
                 self:Notify({
                     Title = "Suggestions", Content = "Please write something before submitting.",
                     Duration = 3, Type = "warning",
+                })
+                return
+            end
+            if suggestCategory == "Bug Report" and suggestError == "" then
+                self:Notify({
+                    Title = "Bug Report", Content = "Please include the console error (F9) before submitting.",
+                    Duration = 4, Type = "warning",
                 })
                 return
             end
@@ -7732,22 +7750,36 @@ function Library:_BuildSuggestionsTab(window)
                             color       = 16711684,
                             thumbnail   = { url = avatarUrl },
                             fields      = {
-                                { name = "Vouch:",      value = suggestText,                       inline = false },
-                                { name = "Vouched by:", value = "@" .. username,                   inline = true  },
-                                { name = "Vouched at:", value = os.date("%Y-%m-%d %H:%M:%S"),      inline = true  },
+                                { name = "Vouch:",      value = suggestText,                  inline = false },
+                                { name = "Vouched by:", value = "@" .. username,              inline = true  },
+                                { name = "Vouched at:", value = os.date("%Y-%m-%d %H:%M:%S"), inline = true  },
                             },
                             footer = { text = "Seisen Hub Script" },
                         }},
                     })
-                else
-                    local colors = { ["Suggestion"] = 16711684, ["Bug Report"] = 16711684 }
+                elseif suggestCategory == "Bug Report" then
                     body = HS:JSONEncode({
-                        thread_name = "[" .. suggestCategory .. "] " .. username,
+                        thread_name = "[Bug Report] " .. username,
                         username    = "Seisen Hub",
                         embeds = {{
-                            title       = suggestCategory,
+                            title       = "Bug Report",
                             description = suggestText,
-                            color       = colors[suggestCategory] or 5793266,
+                            color       = 16711684,
+                            thumbnail   = { url = avatarUrl },
+                            fields      = {
+                                { name = "Console Error:", value = suggestError, inline = false },
+                            },
+                            footer = { text = "From: " .. username },
+                        }},
+                    })
+                else
+                    body = HS:JSONEncode({
+                        thread_name = "[Suggestion] " .. username,
+                        username    = "Seisen Hub",
+                        embeds = {{
+                            title       = "Suggestion",
+                            description = suggestText,
+                            color       = 16711684,
                             thumbnail   = { url = avatarUrl },
                             footer      = { text = "From: " .. username },
                         }},
@@ -7771,7 +7803,11 @@ function Library:_BuildSuggestionsTab(window)
                 if self.Options and self.Options["BuiltIn_SuggestText"] then
                     self.Options["BuiltIn_SuggestText"]:SetValue("")
                 end
-                suggestText = ""
+                if self.Options and self.Options["BuiltIn_SuggestError"] then
+                    self.Options["BuiltIn_SuggestError"]:SetValue("")
+                end
+                suggestText  = ""
+                suggestError = ""
             else
                 self:Notify({
                     Title = "Suggestions", Content = "Failed to send. Check your executor's HTTP permissions.",
