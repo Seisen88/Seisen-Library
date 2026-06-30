@@ -7662,6 +7662,95 @@ function Library:BuildKeybindPanel()
     MakeDraggable(panel, panel)
 end
 
+-- ================================================================
+-- Suggestions built-in tab
+-- ================================================================
+function Library:_BuildSuggestionsTab(window)
+    self:_EnsureBuiltInSection(window)
+    local suggestTab     = window:AddTab("Suggestions", "message-square", true)
+    local suggestSection = suggestTab:AddLeftSection("Send a Suggestion", "send")
+
+    local SUGGEST_WEBHOOK = "https://ptb.discord.com/api/webhooks/1521484910177812520/wMF5tuZVGvtDcSE20sINPfbTUlzd0sPXcSDWq4GaGdP8HLMNEZhRl6QEYwft5ZRQHxDr"
+    local suggestCategory = "Feature Request"
+    local suggestText     = ""
+
+    suggestSection:AddParagraph({
+        Title   = "How it works",
+        Content = "Pick a category, write your suggestion, then hit Submit. It gets posted directly to our Discord suggestions channel.",
+    })
+
+    suggestSection:AddDropdown({
+        Name     = "Category",
+        Options  = { "Feature Request", "Bug Report", "Balance Feedback", "Other" },
+        Default  = "Feature Request",
+        Flag     = "BuiltIn_SuggestCategory",
+        Tooltip  = "Pick the category that best fits your suggestion.",
+        Callback = function(v) suggestCategory = v or "Feature Request" end,
+    })
+
+    suggestSection:AddTextbox({
+        Name             = "Your Suggestion",
+        Placeholder      = "Describe your idea or issue...",
+        Default          = "",
+        Flag             = "BuiltIn_SuggestText",
+        ClearTextOnFocus = false,
+        Tooltip          = "Write your suggestion here.",
+        Callback         = function(v) suggestText = v or "" end,
+    })
+
+    suggestSection:AddButton({
+        Name    = "Submit",
+        Tooltip = "Post your suggestion to the Discord forum channel.",
+        Callback = function()
+            if suggestText == "" then
+                self:Notify({
+                    Title = "Suggestions", Content = "Please write something before submitting.",
+                    Duration = 3, Type = "warning",
+                })
+                return
+            end
+            local ok = pcall(function()
+                local HS       = game:GetService("HttpService")
+                local username = game:GetService("Players").LocalPlayer.Name
+                local body = HS:JSONEncode({
+                    thread_name = "[" .. suggestCategory .. "] " .. username,
+                    username    = "Seisen Hub",
+                    embeds      = {{
+                        title       = suggestCategory,
+                        description = suggestText,
+                        color       = 5793266,
+                        footer      = { text = "From: " .. username },
+                    }},
+                })
+                local fn = request or (syn and syn.request) or (http and http.request)
+                if fn then
+                    fn({
+                        Url     = SUGGEST_WEBHOOK,
+                        Method  = "POST",
+                        Headers = { ["Content-Type"] = "application/json" },
+                        Body    = body,
+                    })
+                end
+            end)
+            if ok then
+                self:Notify({
+                    Title = "Suggestions", Content = "Suggestion sent! Thank you.",
+                    Duration = 4, Type = "success",
+                })
+                if self.Options and self.Options["BuiltIn_SuggestText"] then
+                    self.Options["BuiltIn_SuggestText"]:SetValue("")
+                end
+                suggestText = ""
+            else
+                self:Notify({
+                    Title = "Suggestions", Content = "Failed to send. Check your executor's HTTP permissions.",
+                    Duration = 5, Type = "error",
+                })
+            end
+        end,
+    })
+end
+
 -- ── Final wiring: patch CreateWindow to attach config tab + manager + version check ─────────
 do
     local _orig = Library.CreateWindow
@@ -7679,6 +7768,7 @@ do
             self.ESPUrl = options.ESPUrl
         end
         self:_BuildESPTab(win)
+        self:_BuildSuggestionsTab(win)
         if options and options.Manager then
             local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
             self:_BuildManagersTab(win, folderName)
