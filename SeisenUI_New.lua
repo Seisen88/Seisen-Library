@@ -5508,13 +5508,12 @@ end
 
 -- Called by CreateWindow if options.ConfigSettings == true
 -- ── Built-in section guard ───────────────────────────────────────
--- Creates the shared "Built-In" sidebar divider+section exactly once,
--- no matter how many built-in tab builders are called.
+-- Adds the divider above the built-in area exactly once. Section labels
+-- are managed by the wiring block so they can be split into categories.
 function Library:_EnsureBuiltInSection(window)
     if self._builtInSectionCreated then return end
     self._builtInSectionCreated = true
     window:AddSidebarDivider(true)
-    window:AddSidebarSection("Built-In", true)
 end
 
 -- Inserts WalkSpeed / JumpPower / Fly / AntiAFK / FPS-boost toggles
@@ -7896,9 +7895,29 @@ do
         local win = _orig(self, options)
         -- Build the keybind panel synchronously so elements can register keybinds
         self:BuildKeybindPanel()
+        -- Ensure the divider above built-in tabs is placed once
+        if not self._builtInSectionCreated then
+            self._builtInSectionCreated = true
+            win:AddSidebarDivider(true)
+        end
+
+        -- ── Config category: Performance + Manager ────────────────
+        win:AddSidebarSection("Config", true)
         if options and options.ConfigSettings then
             self:_BuildConfigTab(win)
         end
+        if options and options.Manager then
+            local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
+            self:_BuildManagersTab(win, folderName)
+            task.defer(function()
+                if self.Toggles and self.Toggles["BuiltIn_AutoLoad"] and self.Toggles["BuiltIn_AutoLoad"].Value then
+                    self:LoadConfig(folderName .. "_autoload")
+                end
+            end)
+        end
+
+        -- ── Extra category: Games + ESP + Suggestions ─────────────
+        win:AddSidebarSection("Extra", true)
         if options and options.SupportedGames then
             self:_BuildGamesTab(win)
         end
@@ -7907,16 +7926,6 @@ do
         end
         self:_BuildESPTab(win)
         self:_BuildSuggestionsTab(win)
-        if options and options.Manager then
-            local folderName = options.Folder or (options.Name or "SeisenHub"):gsub("%s+", "")
-            self:_BuildManagersTab(win, folderName)
-            -- Auto-load config if enabled
-            task.defer(function()
-                if self.Toggles and self.Toggles["BuiltIn_AutoLoad"] and self.Toggles["BuiltIn_AutoLoad"].Value then
-                    self:LoadConfig(folderName .. "_autoload")
-                end
-            end)
-        end
         -- Library version check via GitHub commit message / version.txt
         if options and options.ScriptUpdate then
             local localVer = "v1.0.0"
