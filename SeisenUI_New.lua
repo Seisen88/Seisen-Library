@@ -7670,37 +7670,41 @@ function Library:_BuildSuggestionsTab(window)
     local suggestTab     = window:AddTab("Suggestions", "message-square", true)
     local suggestSection = suggestTab:AddLeftSection("Send a Suggestion", "send")
 
-    local SUGGEST_WEBHOOK = "https://ptb.discord.com/api/webhooks/1521484910177812520/wMF5tuZVGvtDcSE20sINPfbTUlzd0sPXcSDWq4GaGdP8HLMNEZhRl6QEYwft5ZRQHxDr"
-    local suggestCategory = "Feature Request"
+    local WEBHOOKS = {
+        ["Suggestion"] = "https://ptb.discord.com/api/webhooks/1521484910177812520/wMF5tuZVGvtDcSE20sINPfbTUlzd0sPXcSDWq4GaGdP8HLMNEZhRl6QEYwft5ZRQHxDr",
+        ["Bug Report"] = "https://ptb.discord.com/api/webhooks/1521488104735641763/PMruMCYdfEiOh8rlep_4U6TNbYuhR9-uOczrpLOFR9UUYnTHgLyKqiCaoXD83T0_s0k6",
+        ["Vouch"]      = "https://ptb.discord.com/api/webhooks/1521484910177812520/wMF5tuZVGvtDcSE20sINPfbTUlzd0sPXcSDWq4GaGdP8HLMNEZhRl6QEYwft5ZRQHxDr",
+    }
+    local suggestCategory = "Suggestion"
     local suggestText     = ""
 
     suggestSection:AddParagraph({
         Title   = "How it works",
-        Content = "Pick a category, write your suggestion, then hit Submit. It gets posted directly to our Discord suggestions channel.",
+        Content = "Pick a category, write your message, then hit Submit. It gets posted directly to our Discord.",
     })
 
     suggestSection:AddDropdown({
         Name     = "Category",
-        Options  = { "Feature Request", "Bug Report", "Balance Feedback", "Other" },
-        Default  = "Feature Request",
+        Options  = { "Suggestion", "Bug Report", "Vouch" },
+        Default  = "Suggestion",
         Flag     = "BuiltIn_SuggestCategory",
-        Tooltip  = "Pick the category that best fits your suggestion.",
-        Callback = function(v) suggestCategory = v or "Feature Request" end,
+        Tooltip  = "Pick the category that best fits your message.",
+        Callback = function(v) suggestCategory = v or "Suggestion" end,
     })
 
     suggestSection:AddTextbox({
-        Name             = "Your Suggestion",
-        Placeholder      = "Describe your idea or issue...",
+        Name             = "Message",
+        Placeholder      = "Describe your suggestion, bug, or vouch...",
         Default          = "",
         Flag             = "BuiltIn_SuggestText",
         ClearTextOnFocus = false,
-        Tooltip          = "Write your suggestion here.",
+        Tooltip          = "Write your message here.",
         Callback         = function(v) suggestText = v or "" end,
     })
 
     suggestSection:AddButton({
         Name    = "Submit",
-        Tooltip = "Post your suggestion to the Discord forum channel.",
+        Tooltip = "Post to the Discord channel for the selected category.",
         Callback = function()
             if suggestText == "" then
                 self:Notify({
@@ -7709,23 +7713,50 @@ function Library:_BuildSuggestionsTab(window)
                 })
                 return
             end
+            local webhook = WEBHOOKS[suggestCategory]
+            if not webhook then return end
             local ok = pcall(function()
                 local HS       = game:GetService("HttpService")
-                local username = game:GetService("Players").LocalPlayer.Name
-                local body = HS:JSONEncode({
-                    thread_name = "[" .. suggestCategory .. "] " .. username,
-                    username    = "Seisen Hub",
-                    embeds      = {{
-                        title       = suggestCategory,
-                        description = suggestText,
-                        color       = 5793266,
-                        footer      = { text = "From: " .. username },
-                    }},
-                })
+                local lp       = game:GetService("Players").LocalPlayer
+                local username  = lp and lp.Name or "Unknown"
+                local userId    = lp and tostring(lp.UserId) or "0"
+                local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=420&height=420&format=png"
+                local body
+                if suggestCategory == "Vouch" then
+                    body = HS:JSONEncode({
+                        thread_name = "Vouch from " .. username,
+                        username    = "Seisen Hub",
+                        embeds = {{
+                            title       = "New vouch for Seisen Hub created!",
+                            description = "⭐⭐⭐⭐⭐",
+                            color       = 16766720,
+                            thumbnail   = { url = avatarUrl },
+                            fields      = {
+                                { name = "Vouch:",      value = suggestText,                       inline = false },
+                                { name = "Vouched by:", value = "@" .. username,                   inline = true  },
+                                { name = "Vouched at:", value = os.date("%Y-%m-%d %H:%M:%S"),      inline = true  },
+                            },
+                            footer = { text = "Seisen Hub Script" },
+                        }},
+                    })
+                else
+                    local colors = { ["Suggestion"] = 5793266, ["Bug Report"] = 15548997 }
+                    body = HS:JSONEncode({
+                        thread_name = "[" .. suggestCategory .. "] " .. username,
+                        username    = "Seisen Hub",
+                        embeds = {{
+                            title       = suggestCategory,
+                            description = suggestText,
+                            color       = colors[suggestCategory] or 5793266,
+                            thumbnail   = { url = avatarUrl },
+                            footer      = { text = "From: " .. username },
+                        }},
+                    })
+                end
                 local fn = request or (syn and syn.request) or (http and http.request)
                 if fn then
                     fn({
-                        Url     = SUGGEST_WEBHOOK,
+                        Url     = webhook,
                         Method  = "POST",
                         Headers = { ["Content-Type"] = "application/json" },
                         Body    = body,
@@ -7734,7 +7765,7 @@ function Library:_BuildSuggestionsTab(window)
             end)
             if ok then
                 self:Notify({
-                    Title = "Suggestions", Content = "Suggestion sent! Thank you.",
+                    Title = "Suggestions", Content = "Sent! Thank you.",
                     Duration = 4, Type = "success",
                 })
                 if self.Options and self.Options["BuiltIn_SuggestText"] then
