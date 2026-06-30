@@ -7704,12 +7704,12 @@ function Library:_BuildSuggestionsTab(window)
     })
 
     suggestSection:AddTextbox({
-        Name             = "Console Error (Bug Report only)",
-        Placeholder      = "Paste the error from the developer console (F9) or an image URL...",
+        Name             = "Error Screenshot URL (Bug Report only)",
+        Placeholder      = "Upload screenshot to Imgur/Gyazo and paste the image URL here...",
         Default          = "",
         Flag             = "BuiltIn_SuggestError",
         ClearTextOnFocus = false,
-        Tooltip          = "Required for Bug Reports. Paste the console error text or a screenshot link.",
+        Tooltip          = "Required for Bug Reports. Take a screenshot of the console error, upload it, and paste the URL.",
         Callback         = function(v) suggestError = v or "" end,
     })
 
@@ -7726,7 +7726,7 @@ function Library:_BuildSuggestionsTab(window)
             end
             if suggestCategory == "Bug Report" and suggestError == "" then
                 self:Notify({
-                    Title = "Bug Report", Content = "Please include the console error (F9) before submitting.",
+                    Title = "Bug Report", Content = "Please attach a screenshot URL of the console error before submitting.",
                     Duration = 4, Type = "warning",
                 })
                 return
@@ -7741,9 +7741,9 @@ function Library:_BuildSuggestionsTab(window)
                 local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=420&height=420&format=png"
                 local body
                 if suggestCategory == "Vouch" then
+                    -- Vouch uses a regular text channel (no thread_name)
                     body = HS:JSONEncode({
-                        thread_name = "Vouch from " .. username,
-                        username    = "Seisen Hub",
+                        username = "Seisen Hub",
                         embeds = {{
                             title       = "New vouch for Seisen Hub created!",
                             description = "⭐⭐⭐⭐⭐",
@@ -7766,10 +7766,8 @@ function Library:_BuildSuggestionsTab(window)
                             description = suggestText,
                             color       = 16711684,
                             thumbnail   = { url = avatarUrl },
-                            fields      = {
-                                { name = "Console Error:", value = suggestError, inline = false },
-                            },
-                            footer = { text = "From: " .. username },
+                            image       = { url = suggestError },
+                            footer      = { text = "From: " .. username },
                         }},
                     })
                 else
